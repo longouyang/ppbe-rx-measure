@@ -5,7 +5,8 @@ var React = require('react'),
 
 var Example = React.createClass({
   render: function() {
-    var updateExample = this.props.updateExample,
+    var comp = this,
+        updateExample = this.props.updateExample,
         time = this.props.time + '';
     var updateString = function(e) {
       updateExample({time: time, string: e.target.value});
@@ -13,10 +14,16 @@ var Example = React.createClass({
     var updateKind = function(e) {
       updateExample({time: time, kind: e.target.value});
     }
+    var deleteExample = function(e) {
+      comp.props.deleteExample(comp);
+      e.preventDefault();
+    }
     var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
     var string = this.props.string == null ? "" : this.props.string;
     return (<form>
-            [x] The string <input type="text" name="string" onChange={updateString} value={string} />
+            <button className="delete-example" onClick={deleteExample} type="button">X</button>
+
+            The string <input type="text" name="string" onChange={updateString} value={string} />
             <label>
             <input type="radio" name="type" value="positive" onChange={updateKind} />
             matches
@@ -24,16 +31,17 @@ var Example = React.createClass({
             <label>
             <input type="radio" name="type" value="negative" onChange={updateKind} />
             {doesnt} match </label>
-            </form>)
+            </form>
+           )
   }
 })
 
 var ExamplesList = React.createClass({
   render: function() {
-    var updateExample = this.props.updateExample;
+    var comp = this;
     var listObj = _.mapObject(this.props.examples,
                            function(ex, key) {
-                             return (<Example kind={ex.polarity} string={ex.string} time={key} key={key} updateExample={updateExample}/>)
+                             return (<Example kind={ex.polarity} string={ex.string} time={key} key={key} updateExample={comp.props.updateExample} deleteExample={comp.props.deleteExample}/>)
                            }),
         list = _.values(listObj);
 
@@ -43,7 +51,11 @@ var ExamplesList = React.createClass({
 
 var ExamplesEditor = React.createClass({
   getBlankExample: function() {
-    return _.object([[(new Date().getTime()) + '', {kind: null, string: null}]]);
+    var timeString = (new Date()).getTime() + '';
+    return _.object([[timeString, {kind: null, string: null}]]);
+  },
+  finish: function() {
+    // make sure all examples are marked as either match or non-match
   },
   addExample: function() {
     this.setState(_.extend(this.getBlankExample(), this.state));
@@ -59,18 +71,32 @@ var ExamplesEditor = React.createClass({
                               string: ex.string || old.string}
                             ]]))
   },
+  deleteExample: function(ex) {
+    this.replaceState(_.omit(this.state, ex.props.time));
+  },
   render: function() {
     var examples = this.state;
-    return (<div>
-            <ExamplesList examples={examples} updateExample={this.updateExample} />
-            <button onClick={this.addExample}>Add example</button>
+
+    return (<div className='examplesEditor'>
+            <p>Imagine that you want to communicate this rule to another person by giving examples of strings that it either does or does not match:</p>
+            <p className='rule-wrapper'>Rule: <span className='rule'>{this.props.rule}</span></p>
+            <p>What examples would you give for this rule?</p>
+            <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
+            <button className='add-example' onClick={this.addExample}><span className='plus'>+</span> Add an example</button>
+            <div className='clear'></div>
+
+            <button className='done-adding' onClick={this.finish}>Finish adding examples <span className='forward'>&gt;</span>
+            </button>
+
            </div>)
   }
 });
 
-var r = React.createElement(ExamplesEditor);
+var r = React.createElement(ExamplesEditor,
+                            {rule: 'Three or more a\'s'}
+                           );
 
-var dummyDiv = $('#dummy')[0];
+var dummyDiv = $('#give-examples')[0];
 
 
 ReactDOM.render(r, dummyDiv, function() {
