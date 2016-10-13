@@ -22,7 +22,7 @@ var Example = React.createClass({
     var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
     var string = this.props.string == null ? "" : this.props.string;
     return (<form>
-            <span className='remove' onContextMenu={deleteExample}>	&#9679;</span> The string <input type="text" name="string" onChange={updateString} value={string} />
+            <span className='remove' onClick={deleteExample}>	&#9679;</span> The string <input type="text" name="string" onChange={updateString} value={string} />
             <label>
             <input type="radio" name="type" value="positive" onChange={updateKind} />
             matches
