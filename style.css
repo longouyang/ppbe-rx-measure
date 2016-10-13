@@ -77,38 +77,37 @@ button:active {
 }
 
 
-.ExamplesEditor button.delete-example {
-    background-color: #d88e8e;
-    color: white;
-    min-width: 0;
-    font-size: 9px;
-    text-align: center;
-    padding: 1px 3px 1px 3px;
-    vertical-align: 20%;
-    margin-left: -5%;
-    margin-right: 2%;
-}
-
-.ExamplesEditor button.delete-example:hover {
-    color: black;
-}
-
-.ExamplesEditor button.delete-example:active {
-    background-color: #940000;
-}
-
 .add-example {
-    float: right;
+    float: left;
 }
 
-.add-example .plus {
+.remove {
+    color: #c09898;
     font-size: 120%;
-    background-color: #4e8e4e;
-    color: white;
+}
+
+.remove {
+    cursor: pointer;
+}
+
+
+.icon {
+    font-size: 120%;
     padding: 0px 4px 0px 4px;
     font-weight: bold;
     font-family: monospace;
     opacity: 0.5;
+}
+
+.icon.minus {
+    background-color: red;
+    color: white;
+}
+
+.icon.plus {
+    background-color: #4e8e4e;
+    color: white;
+
 }
 
 .done-adding {
@@ -116,7 +115,7 @@ button:active {
     float: right;
 }
 
-.done-adding .forward {
+.icon.forward {
     font-size: 120%;
     background-color: #3d95ed;
     color: white;
@@ -132,4 +131,8 @@ input[name='string'] {
 
 .hide {
     display: none;
+}
+
+.interface-instructions {
+    font-style: italic
 }

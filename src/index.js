@@ -15,15 +15,14 @@ var Example = React.createClass({
       updateExample({time: time, kind: e.target.value});
     }
     var deleteExample = function(e) {
-      comp.props.deleteExample(comp);
       e.preventDefault();
+      console.log(e);
+      comp.props.deleteExample(comp);
     }
     var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
     var string = this.props.string == null ? "" : this.props.string;
     return (<form>
-            <button className="delete-example" onClick={deleteExample} type="button">X</button>
-
-            The string <input type="text" name="string" onChange={updateString} value={string} />
+            <span className='remove' onContextMenu={deleteExample}>	&#9679;</span> The string <input type="text" name="string" onChange={updateString} value={string} />
             <label>
             <input type="radio" name="type" value="positive" onChange={updateKind} />
             matches
@@ -31,6 +30,8 @@ var Example = React.createClass({
             <label>
             <input type="radio" name="type" value="negative" onChange={updateKind} />
             {doesnt} match </label>
+
+
             </form>
            )
   }
@@ -81,12 +82,14 @@ var ExamplesEditor = React.createClass({
             <p>Imagine that you want to communicate this rule to another person by giving examples of strings that it either does or does not match:</p>
             <p className='rule-wrapper'>Rule: <span className='rule'>{this.props.rule}</span></p>
             <p>What examples would you give for this rule?</p>
+            <p className='interface-instructions'>To add an example, click the Add an Example button. To remove an example, click the red dot next to it.</p>
             <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
-            <button className='add-example' onClick={this.addExample}><span className='plus'>+</span> Add an example</button>
+
+            <button className='add-example' onClick={this.addExample}><span className='icon plus'>+</span> Add an example</button>
+
             <div className='clear'></div>
 
-            <button className='done-adding' onClick={this.finish}>Finish adding examples <span className='forward'>&gt;</span>
-            </button>
+            <button className='done-adding' onClick={this.finish}>Done for this rule</button>
 
            </div>)
   }
