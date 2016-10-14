@@ -80,7 +80,7 @@ var ExamplesEditor = React.createClass({
 
     this.setState(_.object([[ex.time,
                              {kind: ex.kind || old.kind,
-                              string: ex.string || old.string}
+                              string: _.isNull(ex.string) ? old.string : ex.string}
                             ]]))
   },
   deleteExample: function(ex) {
