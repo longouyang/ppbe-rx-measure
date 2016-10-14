@@ -56,8 +56,6 @@ var ExamplesEditor = React.createClass({
     return _.object([[timeString, {kind: null, string: null}]]);
   },
   finish: function() {
-    // make sure all examples are marked as either match or non-match
-
     this.props.after(this.state);
   },
   addExample: function() {
@@ -86,7 +84,8 @@ var ExamplesEditor = React.createClass({
     this.replaceState(_.omit(this.state, ex.props.time));
   },
   render: function() {
-    var examples = _.omit(this.state,'revealRule', 'revealInterface');
+    var examples = _.omit(this.state,'revealRule', 'revealInterface'),
+        numExamples = _.size(examples);
 
     var ruleContents = {__html: this.props.rule.description} ;
 
@@ -100,6 +99,14 @@ var ExamplesEditor = React.createClass({
 
     var revealInterfaceButtonClass = 'reveal-interface' + (revealRule ? (revealInterface ? ' hide' : '') : ' hide');
     var interfaceClass = 'interface' + (revealInterface ? '' : ' hide')
+
+    var examplesComplete = _.every(examples, function(ex) { return ex.string && ex.kind });
+    var canFinish = numExamples > 0 && examplesComplete;
+    var finishTitle = (canFinish
+                       ? ''
+                       : (numExamples == 0
+                          ? 'Add at least one example to continue'
+                          : 'Complete all your examples to continue'));
 
     return (<div className='examplesEditor'>
             <p>{communicationFraming}</p>
@@ -117,7 +124,7 @@ var ExamplesEditor = React.createClass({
 
               <p className='interface-instructions'>To remove an example, click the red dot next to it.</p>
 
-              <button className='done-adding' onClick={this.finish}>Done for this rule</button>
+              <button className='done-adding' onClick={this.finish} disabled={!canFinish} title={finishTitle}>Done for this rule</button>
               </div>
               </div>)
     }
