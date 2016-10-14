@@ -48,9 +48,18 @@ var receiving = bound({
   },
   next: function() {
     var i = receiving.outputs.length;
+    var n = receiving.inputs.length;
+
     if (i == receiving.inputs.length) {
       receiving.after(receiving)
     } else {
+      // advance progress indicator
+      $('#give-examples .progress span').text('Completed: ' + i + '/' + n)
+
+      $('#give-examples .progress .completed').css({
+        width: Math.round(100 * i / n) + '%'
+      })
+
       receiving.trial(receiving.inputs[i]);
     }
   }
@@ -60,8 +69,6 @@ global.receiving = receiving;
 
 // flow of experiment
 
-$('#intro button.next').one('click',
-                            function() {
-                              receiving.next()
-                             }
-                            )
+$('#intro button.next').one('click', receiving.next)
+
+receiving.after = function() { showSlide('demographics') }

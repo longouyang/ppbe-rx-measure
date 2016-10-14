@@ -66,8 +66,7 @@ button:active {
 
 .ExamplesEditor {
     text-align: justify;
-    width: 500px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 
@@ -147,4 +146,34 @@ input[name='string'] {
 
 .interface-instructions {
     font-style: italic
+}
+
+#give-examples .container {
+    width: 500px;
+    margin: 0 auto;
+}
+
+.progress {
+    border: 1px solid gray;
+    border-radius: 2px;
+    width: 100%;
+    height: 1.5em;
+    padding: 0;
+    position: relative;
+    color: gray;
+    font-size: 80%;
+}
+
+.progress span {
+    position: absolute;
+    top: 0;
+    left: 0.5em;
+}
+
+.completed {
+    background-color: #cfe4fa;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
