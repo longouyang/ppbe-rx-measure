@@ -4,9 +4,12 @@ var React = require('react'),
     _ = require('underscore'),
     ExamplesEditor = require('./examples-editor');
 
-global.React = React;
-global.$ = $;
-global._ = _;
+function pollute(names) {
+  _.each(names, function(name) {
+    global[name] = eval(name);
+  })
+}
+
 
 function bound(obj) {
   _.each(_.methods(obj), function(name) {
@@ -35,11 +38,14 @@ var receiving = bound({
   inputs: receivingRules,
   outputs: [],
   trial: function(input) {
-    var comp = React.createElement(ExamplesEditor,
-                                   {rule: input, after: function(output) {
-                                     receiving.outputs.push(output)
-                                     receiving.next();
-                                   }});
+    var comp = React.createElement(
+      ExamplesEditor,
+      {rule: input,
+       after: function(output) {
+         receiving.outputs.push(output);
+         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
+         receiving.next();
+       }});
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function() {
       showSlide('give-examples')
@@ -47,11 +53,11 @@ var receiving = bound({
 
   },
   next: function() {
-    var i = receiving.outputs.length;
-    var n = receiving.inputs.length;
+    var i = this.outputs.length;
+    var n = this.inputs.length;
 
     if (i == receiving.inputs.length) {
-      receiving.after(receiving)
+      this.after(this)
     } else {
       // advance progress indicator
       $('#give-examples .progress span').text('Completed: ' + i + '/' + n)
@@ -60,7 +66,7 @@ var receiving = bound({
         width: Math.round(100 * i / n) + '%'
       })
 
-      receiving.trial(receiving.inputs[i]);
+      this.trial(this.inputs[i]);
     }
   }
 });
@@ -71,4 +77,9 @@ global.receiving = receiving;
 
 $('#intro button.next').one('click', receiving.next)
 
-receiving.after = function() { showSlide('demographics') }
+receiving.after = function(outputs) {
+  showSlide('demographics')
+}
+
+// debugging
+pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receiving'])

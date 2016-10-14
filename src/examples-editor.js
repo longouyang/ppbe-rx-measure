@@ -63,8 +63,17 @@ var ExamplesEditor = React.createClass({
   addExample: function() {
     this.setState(_.extend(this.getBlankExample(), this.state));
   },
+  revealRule: function() {
+    this.setState({revealRule: true})
+  },
+  revealInterface: function() {
+    this.setState({revealInterface: true})
+  },
   getInitialState: function() {
-    return this.getBlankExample();
+    return {
+      revealRule: false,
+      revealInterface: false
+    };
   },
   updateExample: function(ex) {
     var old = this.state[ex.time];
@@ -78,25 +87,42 @@ var ExamplesEditor = React.createClass({
     this.replaceState(_.omit(this.state, ex.props.time));
   },
   render: function() {
-    var examples = this.state;
+    var examples = _.omit(this.state,'revealRule', 'revealInterface');
 
     var ruleContents = {__html: this.props.rule.description} ;
 
+    var communicationFraming = 'Imagine that you want to inform another person about a rule for making strings:';
+
+    var revealRule = this.state.revealRule,
+        revealInterface = this.state.revealInterface;
+
+    var revealRuleButtonClass = 'reveal-rule' + (revealRule ? ' hide' : '');
+    var ruleWrapperClass = 'rule-wrapper' + (revealRule ? '' : ' hide');
+
+    var revealInterfaceButtonClass = 'reveal-interface' + (revealRule ? (revealInterface ? ' hide' : '') : ' hide');
+    var interfaceClass = 'interface' + (revealInterface ? '' : ' hide')
+
     return (<div className='examplesEditor'>
-            <p>Imagine that you want to communicate this rule to another person by giving examples of strings that it either does or does not match:</p>
-            <p className='rule-wrapper'>Rule: <span className='rule' dangerouslySetInnerHTML={ruleContents} /></p>
-            <p>What examples would you give for this rule?</p>
-            <p className='interface-instructions'>To add an example, click the Add an Example button. To remove an example, click the red dot next to it.</p>
-            <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
+            <p>{communicationFraming}</p>
+            <button type="button" className={revealRuleButtonClass} onClick={this.revealRule}>Click here to show the rule</button>
+            <p className={ruleWrapperClass}> Rule: <span className='rule' dangerouslySetInnerHTML={ruleContents} /></p>
+            <button type="button" className={revealInterfaceButtonClass} onClick={this.revealInterface}>Continue</button>
+            <div className={interfaceClass}>
+            <p>If you could only give examples of strings that either match or don't match the rule, what examples would you give?</p>
 
-            <button className='add-example' onClick={this.addExample}><span className='icon plus'>+</span> Add an example</button>
+              <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
 
-            <div className='clear'></div>
+              <button className='add-example' onClick={this.addExample}><span className='icon plus'>+</span> Add an example</button>
 
-            <button className='done-adding' onClick={this.finish}>Done for this rule</button>
+              <div className='clear'></div>
 
-            </div>)
-  }
+              <p className='interface-instructions'>To remove an example, click the red dot next to it.</p>
+
+              <button className='done-adding' onClick={this.finish}>Done for this rule</button>
+              </div>
+              </div>)
+    }
+
 });
 
 module.exports = ExamplesEditor;
