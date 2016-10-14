@@ -8,6 +8,14 @@ global.React = React;
 global.$ = $;
 global._ = _;
 
+function bound(obj) {
+  _.each(_.methods(obj), function(name) {
+    var method = obj[name];
+    obj[name] = _.bind(method, obj);
+  })
+  return obj;
+}
+
 function showSlide(id) {
   var current = '#' + id;
   var others = '.slide:not(' + current + ')';
@@ -18,21 +26,42 @@ function showSlide(id) {
 global.showSlide = showSlide;
 
 
-var rules = [
+var receivingRules = [
   {'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
   {'id': '3a', description: "The string contains only <code>a</code>'s and has at least three of them"}
-]
+];
 
-function trial(rule) {
+var receiving = bound({
+  inputs: receivingRules,
+  outputs: [],
+  trial: function(input) {
+    var comp = React.createElement(ExamplesEditor,
+                                   {rule: input, after: function(output) {
+                                     receiving.outputs.push(output)
+                                     receiving.next();
+                                   }});
 
-  var comp = React.createElement(ExamplesEditor, {rule: rule});
+    ReactDOM.render(comp, $('.examples-editor-container')[0], function() {
+      showSlide('give-examples')
+    })
 
-  ReactDOM.render(comp, $('#give-examples')[0], function() {
-    showSlide('give-examples')
-  })
+  },
+  next: function() {
+    var i = receiving.outputs.length;
+    if (i == receiving.inputs.length) {
+      receiving.after(receiving)
+    } else {
+      receiving.trial(receiving.inputs[i]);
+    }
+  }
+});
+global.receiving = receiving;
 
-}
 
-setTimeout(function() {
-  trial(rules[0])
-}, 2000)
+// flow of experiment
+
+$('#intro button.next').one('click',
+                            function() {
+                              receiving.next()
+                             }
+                            )
