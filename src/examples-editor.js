@@ -78,10 +78,9 @@ var ExamplesEditor = React.createClass({
   updateExample: function(ex) {
     var old = this.state[ex.time];
 
-    this.setState(_.object([[ex.time,
-                             {kind: ex.kind || old.kind,
-                              string: _.isNull(ex.string) ? old.string : ex.string}
-                            ]]))
+    var newEntry = _.extend({}, old, ex);
+
+    this.setState(_.object([[ex.time, newEntry]]))
   },
   deleteExample: function(ex) {
     this.replaceState(_.omit(this.state, ex.props.time));
