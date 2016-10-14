@@ -57,6 +57,8 @@ var ExamplesEditor = React.createClass({
   },
   finish: function() {
     // make sure all examples are marked as either match or non-match
+
+    this.props.after(this.state);
   },
   addExample: function() {
     this.setState(_.extend(this.getBlankExample(), this.state));
@@ -98,7 +100,3 @@ var ExamplesEditor = React.createClass({
 });
 
 module.exports = ExamplesEditor;
-
-// ReactDOM.render(r, dummyDiv, function() {
-//   console.log('made a thing');
-// })
