@@ -4,6 +4,8 @@ var React = require('react'),
     _ = require('underscore'),
     ExamplesEditor = require('./examples-editor');
 
+global.jQuery = $; // for form validation library
+
 function pollute(names) {
   _.each(names, function(name) {
     global[name] = eval(name);
@@ -26,12 +28,13 @@ function showSlide(id) {
   $(current).addClass('show');
 }
 
-global.showSlide = showSlide;
-
 
 var receivingRules = [
   {'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
-  {'id': '3a', description: "The string contains only <code>a</code>'s and has at least three of them"}
+  {'id': '3a', description: "The string contains only <code>a</code>'s and has at least three of them"},
+  {'id': 'zip-code', description: "The string must be a valid US zip code (contains exactly 5 numbers)"},
+  {'id': 'consonants-only', description: "The string must contain all consonants"},
+  {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
 ];
 
 var receiving = bound({
@@ -70,16 +73,49 @@ var receiving = bound({
     }
   }
 });
-global.receiving = receiving;
 
+
+
+var questionnaire = {
+  start: function() {
+    showSlide('questionnaire')
+  },
+  outputs: {},
+  submit: function() {
+    $('#q textarea, #q :checked').each(function(i,x) {
+      var key = x.name.replace("q_",""), val = $(x).val();
+      questionnaire.outputs[key] = val
+    });
+
+    questionnaire.after()
+  }
+}
+
+$(global.document).ready(function() {
+  var questionnaireValidator = $("#q").validate({submitHandler: questionnaire.submit});
+})
+
+
+function finishExperiment() {
+  showSlide('submitting-results')
+
+  var results = {
+    receiving: receiving.outputs,
+    questionnaire: questionnaire.outputs
+  };
+
+  setTimeout(function() { turk.submit(results) }, 2000);
+}
 
 // flow of experiment
 
 $('#intro button.next').one('click', receiving.next)
 
-receiving.after = function(outputs) {
-  showSlide('demographics')
-}
+receiving.after = questionnaire.start;
+
+questionnaire.after = finishExperiment;
 
 // debugging
-pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receiving'])
+pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
+         'receiving','questionnaire',
+         'finishExperiment'])

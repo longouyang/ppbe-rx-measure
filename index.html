@@ -1,6 +1,7 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="mmturkey.js?nowarn"></script>
   </head>
   <body>
     <div id="container">
@@ -21,20 +22,76 @@
         </div>
       </div>
 
-      <div id="demographics" class="slide">
-        <ul>
-          <li>Did you encounter any issues with the study?</li>
-          <li>How much did you enjoy the study?</li>
-          <li>How old are you?</li>
-          <li>What gender are you?</li>
-          <li>What is your education level:</li>
-          <li>Profession</li>
-          <li>Do you have any experience with programming computers? If so, how much?</li>
-          <li>Do you know what a "regular expression" is? If so, how much experience do you have with creating them?</li>
+      <div id="questionnaire" class="slide">
+		    <div style='width: 600px; margin:0 auto'>
+		      <form id="q" method="get" action="">
+            <fieldset style='border: none'>
+              <p>Just answer these final questions, click submit, and the HIT will be finished.</p>
+
+              <ol>
+                <li>
+                  <label for="q_bugs">Did you encounter any issues with the HIT?</label>
+                  <p><textarea id="q_bugs" name="q_bugs" cols="60" rows="4" minlength="2" class="required" /></textarea></p>
+                </li>
+
+                <li>
+                  <label for="q_enjoy">How much did you enjoy the HIT?</label>
+                  <p><textarea id="q_enjoy" name="q_enjoy" cols="60" rows="4" minlength="6" class="required" /></textarea></p>
+                </li>
+
+                <li>
+                  <label for="q_age">Age: </label>
+                  <p><textarea id="q_age" name="q_age" cols="3" rows="1" class="required" minlength="1"></textarea></p>
+                  <label for="q_age" class="error">Please enter your age</label>
+                </li>
+                <li>
+                  <label for="q_gender">Gender: </label>
+                  <p><textarea id="q_gender" name="q_gender" cols="12" rows="1" class="required" minlength="1"></textarea></p>
+                  <label for="q_gender" class="error">Please enter your gender</label>
+                </li>
+                <li>
+                  <label for="q_education">Highest level of education: </label><br />
+                  <input class="required"  type="radio" name="q_education" value="less_than_high_school"> Less than high school<br />
+                  <input  type="radio" name="q_education" value="high_school"> High school (or equivalent)<br />
+                  <input  type="radio" name="q_education" value="some_college"> Some college (or equivalent)<br />
+                  <input  type="radio" name="q_education" value="college"> College (or equivalent)<br />
+                  <input  type="radio" name="q_education" value="masters"> Master's degree<br />
+                  <input  type="radio" name="q_education" value="doctoral"> Doctoral degree<br />
+                  <input  type="radio" name="q_education" value="professional"> Professional degree<br />
+
+                  <label for="q_education" class="error">Please select your education</label>
+                </li>
+
+                <li>
+                  <label for="q_programming">Do you have any experience with programming computers? If so, how much?</label>
+                  <p><textarea id="q_programming" name="q_programming" cols="60" rows="2" minlength="6" class="required" /></textarea></p>
+                </li>
+
+
+                <li>
+                  <label for="q_regex">Do you know what a <i>regular expression</i> is? If so, how much experience do you have with creating them?</label>
+                  <p><textarea id="q_regex" name="q_regex" cols="60" rows="4" minlength="2" class="required" /></textarea></p>
+                </li>
+
+
+              </ol>
+
+              <p>
+                <input class="zen" type="submit"></input>
+              </p>
+            </fieldset>
+          </form>
+        </div>
+	    </div>
+
+
+      <div id="submitting-results" class="slide">
+        <p>Submitting your results...</p>
+
+        You will be automatically paid in 5 minutes
       </div>
-
-
     </div>
   </body>
   <script src="bundle.js"></script>
+  <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js"></script>
 </html>

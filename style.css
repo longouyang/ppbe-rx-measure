@@ -187,3 +187,14 @@ input[name='string'] {
     left: 0;
     top: 0;
 }
+
+label.error {
+    display: none;
+    float: ;
+	  color: red;
+	}
+
+textarea {
+    font-family: Source Sans Pro;
+    font-size: 16px;
+}
