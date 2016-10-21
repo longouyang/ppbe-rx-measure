@@ -71,6 +71,9 @@ var receive = bound({
 
       this.trial(this.inputs[i]);
     }
+  },
+  start: function() {
+    this.next()
   }
 });
 
@@ -92,7 +95,7 @@ var questionnaire = {
 }
 
 $(global.document).ready(function() {
-  var questionnaireValidator = $("#q").validate({submitHandler: questionnaire.submit});
+ questionnaire.validator = $("#q").validate({submitHandler: questionnaire.submit});
 })
 
 
