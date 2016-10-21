@@ -30,7 +30,7 @@ function showSlide(id) {
 
 
 var receivingRules = [
-  {'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
+  //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
   {'id': '3a', description: "The string contains only <code>a</code>'s and has at least three of them"},
   {'id': 'zip-code', description: "The string must be a valid US zip code (contains exactly 5 numbers)"},
   {'id': 'consonants-only', description: "The string must contain all consonants"},
