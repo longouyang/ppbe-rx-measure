@@ -116,6 +116,23 @@ receive.after = questionnaire.start;
 questionnaire.after = finishExperiment;
 
 // debugging
-pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
-         'receiving','questionnaire',
-         'finishExperiment'])
+
+if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
+  pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
+           'receive','questionnaire',
+           'finishExperiment'])
+
+  function handleHash(e) {
+    var key = global.location.hash.replace("#","");
+    var obj = eval(key);
+    if (obj && _.has(obj, 'start')) {
+      obj.start()
+    }
+  }
+
+  global.onhashchange = handleHash;
+
+  if (global.location.hash) {
+    handleHash();
+  }
+}
