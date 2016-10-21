@@ -37,7 +37,7 @@ var receivingRules = [
   {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
 ];
 
-var receiving = bound({
+var receive = bound({
   inputs: receivingRules,
   outputs: [],
   trial: function(input) {
@@ -45,9 +45,9 @@ var receiving = bound({
       ExamplesEditor,
       {rule: input,
        after: function(output) {
-         receiving.outputs.push(output);
+         receive.outputs.push(output);
          ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-         receiving.next();
+         receive.next();
        }});
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function() {
@@ -59,7 +59,7 @@ var receiving = bound({
     var i = this.outputs.length;
     var n = this.inputs.length;
 
-    if (i == receiving.inputs.length) {
+    if (i == receive.inputs.length) {
       this.after(this)
     } else {
       // advance progress indicator
@@ -109,9 +109,9 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', receiving.next)
+$('#intro button.next').one('click', receive.next)
 
-receiving.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
