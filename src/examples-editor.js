@@ -89,7 +89,7 @@ var ExamplesEditor = React.createClass({
 
     var ruleContents = {__html: this.props.rule.description} ;
 
-    var communicationFraming = 'Imagine that you want to inform another person about a rule for making strings:';
+    var communicationFraming = 'Imagine that you want to tell a friend of yours about a rule for making strings:';
 
     var revealRule = this.state.revealRule,
         revealInterface = this.state.revealInterface;
