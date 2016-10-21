@@ -102,10 +102,22 @@ $(global.document).ready(function() {
 function finishExperiment() {
   showSlide('submitting-results')
 
+
   var results = {
-    receiving: receiving.outputs,
-    questionnaire: questionnaire.outputs
+    questionnaire: _.pick(questionnaire, 'outputs')
   };
+
+  // clean up receive results
+  results.receive = _.map(
+    receive.outputs,
+    function(x,i) {
+      return _.extend({},
+                      // add rule info
+                      receive.inputs[i],
+                      // ditch reveal info, munge into data frame
+                      {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) })
+
+  global.results = results;
 
   setTimeout(function() { turk.submit(results) }, 2000);
 }
