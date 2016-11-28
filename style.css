@@ -99,6 +99,7 @@ button:active {
 
 .add-example {
     float: left;
+    margin-right: 0.5em;
 }
 
 .remove {

@@ -35,7 +35,11 @@ var Example = React.createClass({
             </form>
            )
   }
-})
+});
+
+var removeExample = function() {
+  alert('To remove an example, click the red circle next to it');
+}
 
 var ExamplesList = React.createClass({
   render: function() {
@@ -108,6 +112,9 @@ var ExamplesEditor = React.createClass({
                           ? 'Add at least one example to continue'
                           : 'Complete all your examples to continue'));
 
+    var addButtonLabel = (numExamples == 0 ? 'Add first example' : 'Add another example');
+    var removeButtonClassName = 'add-example' + (numExamples == 0 ? ' hide' : '');
+
     return (<div className='examplesEditor'>
             <p>{communicationFraming}</p>
             <button type="button" className={revealRuleButtonClass} onClick={this.revealRule}>Click here to show the rule</button>
@@ -118,11 +125,10 @@ var ExamplesEditor = React.createClass({
 
               <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
 
-              <button className='add-example' onClick={this.addExample}><span className='icon plus'>+</span> Add an example</button>
+              <button className='add-example' onClick={this.addExample}><span className='icon plus'>+</span> {addButtonLabel}</button>
+              <button className={removeButtonClassName} onClick={removeExample}><span className='icon minus'>-</span> Remove an example</button>
 
               <div className='clear'></div>
-
-              <p className='interface-instructions'>To remove an example, click the red dot next to it.</p>
 
               <button className='done-adding' onClick={this.finish} disabled={!canFinish} title={finishTitle}>Done for this rule</button>
               </div>
