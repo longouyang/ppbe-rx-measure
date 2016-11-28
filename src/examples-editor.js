@@ -130,7 +130,7 @@ var ExamplesEditor = React.createClass({
 
               <div className='clear'></div>
 
-              <button className='done-adding' onClick={this.finish} disabled={!canFinish} title={finishTitle}>Done for this rule</button>
+              <button className='done-adding' onClick={this.finish} disabled={!canFinish} title={finishTitle}>Next rule &gt;&gt;</button>
               </div>
               </div>)
     }
