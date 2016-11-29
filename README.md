@@ -5,10 +5,15 @@ npm install
 virtualenv env
 source env/bin/activate
 pip install -r requirements.txt
-
 ```
 
-# how i installed cosub
+# compiling from source
+
+``` shell
+npm run build
+```
+
+# dev notes: how i installed cosub
 
 ``` shell
 pip install -e git+https://github.com/longouyang/cosub.git#egg=cosub
