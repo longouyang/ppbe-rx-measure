@@ -127,7 +127,7 @@ function finishExperiment() {
 
   global.results = results;
 
-  setTimeout(function() { turk.submit(results) }, 2000);
+  setTimeout(function() { submitter(results) }, 2000);
 }
 
 // flow of experiment
