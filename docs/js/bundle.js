@@ -32748,6 +32748,7 @@ function finishExperiment() {
   showSlide('submitting-results');
 
   var results = {
+    fingerprint: global.fingerprint,
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 

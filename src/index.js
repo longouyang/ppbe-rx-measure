@@ -112,6 +112,7 @@ function finishExperiment() {
 
 
   var results = {
+    fingerprint: global.fingerprint,
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
