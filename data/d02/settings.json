@@ -1,0 +1,14 @@
+{
+    "title":               "Strings game",
+    "description":         "A game about making rules for strings",
+    "keywords":            "Strings, rules",
+    "url":                 "https://longouyang.github.io/pri-measure/preview.html",
+    "frame_height":         450,
+    "assignment_duration":  "30 minutes",
+    "auto_approval_delay":  "5 minutes",
+    "reward":               0.75,
+    "qualifications": {
+        "location": "US",
+        "approval_percentage": 85
+    }
+}
