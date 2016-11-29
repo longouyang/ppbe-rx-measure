@@ -17,8 +17,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify -t [ babelify --presets [ react ] ] src/index.js --outfile js/bundle.js",
-    "watch": "watchify -v -t [ babelify --presets [ react ] ] src/index.js --outfile js/bundle.js"
+    "build": "browserify -t [ babelify --presets [ react ] ] src/index.js --outfile docs/js/bundle.js",
+    "watch": "watchify -v -t [ babelify --presets [ react ] ] src/index.js --outfile docs/js/bundle.js"
   },
   "author": "Long Ouyang",
   "license": "ISC",
