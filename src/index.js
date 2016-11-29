@@ -98,6 +98,14 @@ $(global.document).ready(function() {
  questionnaire.validator = $("#q").validate({submitHandler: questionnaire.submit});
 })
 
+function submitter(results) {
+  var opener = global.opener;
+  (opener ? opener : window).turk.submit(results, true);
+
+  if (opener) {
+    setTimeout(window.close, 250);
+  }
+}
 
 function finishExperiment() {
   showSlide('submitting-results')
