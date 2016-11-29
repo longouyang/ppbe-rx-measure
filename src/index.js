@@ -138,8 +138,7 @@ receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
-// debugging:
-// example URL: index.html?debug#questionnaire
+// debugging (example URL: index.html?debug#questionnaire)
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
   pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
