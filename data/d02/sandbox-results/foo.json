@@ -1,0 +1,129 @@
+{
+    "AutoApprovalTime": "2016-11-29T21:06:36Z",
+    "AssignmentId": "test3OS46CRSLFZT0O2RGWXKH8BVRED6VN",
+    "WorkerId": "A11MX7O9QOX4MB",
+    "answers": {
+        "receive": [
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "sdf",
+                        "time": "1480453256647"
+                    }
+                ],
+                "id": "3a",
+                "description": "The string contains only <code>a</code>'s and has at least three of them"
+            },
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "234234",
+                        "time": "1480453261447"
+                    }
+                ],
+                "id": "zip-code",
+                "description": "The string must be a valid US zip code (contains exactly 5 numbers)"
+            },
+            {
+                "examples": [
+                    {
+                        "polarity": "negative",
+                        "string": "sdfsdfd",
+                        "time": "1480453266320"
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "sdfsdf",
+                        "time": "1480453268193"
+                    }
+                ],
+                "id": "consonants-only",
+                "description": "The string contains only consonants"
+            },
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "[[x]",
+                        "time": "1480453273926"
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "x[x]x]",
+                        "time": "1480453277632"
+                    }
+                ],
+                "id": "delimiters",
+                "description": "The string must begin with <code>[</code> and end with <code>]</code>"
+            }
+        ],
+        "questionnaire": {
+            "outputs": {
+                "enjoy": "235u34",
+                "regex": "sdfsdfsdg",
+                "gender": "male",
+                "age": "26",
+                "programming": "some",
+                "bugs": "none",
+                "education": "doctoral"
+            }
+        },
+        "fingerprint": {
+            "ip": "205.154.244.240",
+            "screenHeight": 900,
+            "plugins": [
+                {
+                    "description": "Enables Widevine licenses for playback of HTML audio/video content. (version: 1.4.8.903)",
+                    "filename": "widevinecdmadapter.plugin"
+                },
+                {
+                    "description": "Shockwave Flash 23.0 r0",
+                    "filename": "PepperFlashPlayer.plugin"
+                },
+                {
+                    "description": "",
+                    "filename": "mhjfbmdgcfjbbpaeojofohoefgiehjai"
+                },
+                {
+                    "description": "",
+                    "filename": "internal-nacl-plugin"
+                },
+                {
+                    "description": "Portable Document Format",
+                    "filename": "internal-pdf-viewer"
+                }
+            ],
+            "timezone": 480,
+            "colorDepth": 24,
+            "screenWidth": 1440,
+            "geo": {
+                "city": "Berkeley",
+                "region_code": "CA",
+                "region_name": "California",
+                "ip": "205.154.244.240",
+                "time_zone": "America/Los_Angeles",
+                "longitude": -122.2728,
+                "metro_code": 807,
+                "latitude": 37.8716,
+                "country_code": "US",
+                "country_name": "United States",
+                "zip_code": "94701"
+            },
+            "browser": {
+                "a": true,
+                "name": "Chrome",
+                "chrome": true,
+                "blink": true,
+                "mac": true,
+                "version": "54.0"
+            }
+        }
+    },
+    "AcceptTime": "2016-11-29T21:00:12Z",
+    "HITId": "37SQU136V7OFK7N2DAWDR4IHI6511D",
+    "Assignment": "",
+    "AssignmentStatus": "Submitted",
+    "SubmitTime": "2016-11-29T21:01:36Z"
+}
