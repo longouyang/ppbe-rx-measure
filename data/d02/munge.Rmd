@@ -1,0 +1,123 @@
+---
+title: "munge d02"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(lubridate)
+library(stringr)
+library(digest)
+```
+
+```{r}
+results.dir = "sandbox-results/"
+# results.dir = "production-results/"
+```
+
+```{r}
+parsed.json = Map(fromJSON, paste0(results.dir, list.files(results.dir, pattern = "*.json")))
+# strip results dir from names in parsed.json
+names(parsed.json) = gsub(names(parsed.json),pattern = results.dir, replacement = "")
+
+# also strip ".json"
+names(parsed.json) = gsub(names(parsed.json),pattern = ".json", replacement = "")
+```
+
+```{r}
+from.turk.time <- function(x) {
+  parse_date_time(x, "%Y-%m-%d%H:%M%:%S%z")
+}
+```
+
+
+```{r}
+all.assignments = do.call(
+  rbind,
+  Map(unname(parsed.json),
+      f = function(x) {
+        
+        d = with(x,
+                 data.frame(id = AssignmentId,
+                            worker.id = substring(sha1(paste0(WorkerId, "dummy")), 0, 7),
+                            accept.time = from.turk.time(AcceptTime),
+                            submit.time = from.turk.time(SubmitTime),
+                            ip = answers$fingerprint$geo$ip,
+                            fingerprintHash = digest(toJSON(answers$fingerprint), algo = "md5")
+                 ))
+        
+        d.questionnaire = as.data.frame(x$answers$questionnaire$outputs) %>%
+          rename(regex.experience = regex,
+                 programming.experience = programming)
+        
+        cbind(d, d.questionnaire)
+      }
+  ))
+```
+
+# exclude data
+
+```{r}
+exclude = list()
+```
+
+## exclude duplicate IPs
+
+```{r}
+exclude$duplicate.ip <- filter(all.assignments, !is.na(ip), duplicated(ip))$id
+```
+
+## apply exclusions
+
+```{r}
+excluded.assignment.ids = unlist(exclude$duplicate.ip)
+assignments = all.assignments %>% filter(!(id %in% excluded.assignment.ids))
+```
+
+# write out assignments
+
+```{r}
+write.csv(assignments, file = paste0(results.dir, "assignments.csv"), row.names = FALSE)
+```
+
+# write out responses for assignments
+
+```{r}
+raw.responses = parsed.json[assignments$id]
+```
+
+```{r}
+responses = do.call(
+  rbind,
+  Map(unname(raw.responses),
+      f = function(x) {
+        
+        d = with(x,
+                 data.frame(assignment.id = AssignmentId,
+                            worker.id = substring(sha1(paste0(WorkerId, "dummy")), 0, 7)))
+        
+        # join examples for each rule with the metadata about the rule (id, desc, trial num)
+        d.responses = do.call(rbind,
+                              with(x$answers$receive,
+                                   Map(1:length(id),
+                                       examples,
+                                       id,
+                                       description,
+                                       f = function(trial.num, example, id, description) {
+                                         merge(data.frame(trial.num = trial.num,
+                                                          rule.id = id,
+                                                          rule.desc = description),
+                                               example)
+                                       }
+                                   )))
+        
+        merge(d, d.responses)
+      }
+  ))
+```
+
+
+```{r}
+write.csv(responses, file = paste0(results.dir, "responses.csv"), row.names = FALSE)
+```
