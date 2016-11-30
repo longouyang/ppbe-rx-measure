@@ -11,8 +11,8 @@ var Example = React.createClass({
     var updateString = function(e) {
       updateExample({time: time, string: e.target.value});
     };
-    var updateKind = function(e) {
-      updateExample({time: time, kind: e.target.value});
+    var updatePolarity = function(e) {
+      updateExample({time: time, polarity: e.target.value});
     }
     var deleteExample = function(e) {
       e.preventDefault();
@@ -24,11 +24,11 @@ var Example = React.createClass({
     return (<form>
             <span className='remove' onClick={deleteExample}>	&#9679;</span> The string <input type="text" name="string" onChange={updateString} value={string} />
             <label>
-            <input type="radio" name="type" value="positive" onChange={updateKind} />
+            <input type="radio" name="type" value="positive" onChange={updatePolarity} />
             matches
             </label>
             <label>
-            <input type="radio" name="type" value="negative" onChange={updateKind} />
+            <input type="radio" name="type" value="negative" onChange={updatePolarity} />
             {doesnt} match </label>
 
 
@@ -46,7 +46,7 @@ var ExamplesList = React.createClass({
     var comp = this;
     var listObj = _.mapObject(this.props.examples,
                               function(ex, key) {
-                                return (<Example kind={ex.polarity} string={ex.string} time={key} key={key} updateExample={comp.props.updateExample} deleteExample={comp.props.deleteExample}/>)
+                                return (<Example polarity={ex.polarity} string={ex.string} time={key} key={key} updateExample={comp.props.updateExample} deleteExample={comp.props.deleteExample}/>)
                               }),
         list = _.values(listObj);
 
@@ -57,7 +57,7 @@ var ExamplesList = React.createClass({
 var ExamplesEditor = React.createClass({
   getBlankExample: function() {
     var timeString = (new Date()).getTime() + '';
-    return _.object([[timeString, {kind: null, string: null}]]);
+    return _.object([[timeString, {polarity: null, string: null}]]);
   },
   finish: function() {
     this.props.after(this.state);
@@ -104,7 +104,7 @@ var ExamplesEditor = React.createClass({
     var revealInterfaceButtonClass = 'reveal-interface' + (revealRule ? (revealInterface ? ' hide' : '') : ' hide');
     var interfaceClass = 'interface' + (revealInterface ? '' : ' hide')
 
-    var examplesComplete = _.every(examples, function(ex) { return ex.string && ex.kind });
+    var examplesComplete = _.every(examples, function(ex) { return ex.string && ex.polarity });
     var canFinish = numExamples > 0 && examplesComplete;
     var finishTitle = (canFinish
                        ? ''
