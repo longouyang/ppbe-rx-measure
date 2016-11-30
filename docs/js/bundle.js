@@ -32543,8 +32543,8 @@ var Example = React.createClass({
     var updateString = function (e) {
       updateExample({ time: time, string: e.target.value });
     };
-    var updateKind = function (e) {
-      updateExample({ time: time, kind: e.target.value });
+    var updatePolarity = function (e) {
+      updateExample({ time: time, polarity: e.target.value });
     };
     var deleteExample = function (e) {
       e.preventDefault();
@@ -32553,7 +32553,7 @@ var Example = React.createClass({
     };
     var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
     var string = this.props.string == null ? "" : this.props.string;
-    return React.createElement('form', null, React.createElement('span', { className: 'remove', onClick: deleteExample }, ' \u25CF'), ' The string ', React.createElement('input', { type: 'text', name: 'string', onChange: updateString, value: string }), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'positive', onChange: updateKind }), 'matches'), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'negative', onChange: updateKind }), doesnt, ' match '));
+    return React.createElement('form', null, React.createElement('span', { className: 'remove', onClick: deleteExample }, ' \u25CF'), ' The string ', React.createElement('input', { type: 'text', name: 'string', onChange: updateString, value: string }), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'positive', onChange: updatePolarity }), 'matches'), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'negative', onChange: updatePolarity }), doesnt, ' match '));
   }
 });
 
@@ -32567,7 +32567,7 @@ var ExamplesList = React.createClass({
   render: function () {
     var comp = this;
     var listObj = _.mapObject(this.props.examples, function (ex, key) {
-      return React.createElement(Example, { kind: ex.polarity, string: ex.string, time: key, key: key, updateExample: comp.props.updateExample, deleteExample: comp.props.deleteExample });
+      return React.createElement(Example, { polarity: ex.polarity, string: ex.string, time: key, key: key, updateExample: comp.props.updateExample, deleteExample: comp.props.deleteExample });
     }),
         list = _.values(listObj);
 
@@ -32580,7 +32580,7 @@ var ExamplesEditor = React.createClass({
 
   getBlankExample: function () {
     var timeString = new Date().getTime() + '';
-    return _.object([[timeString, { kind: null, string: null }]]);
+    return _.object([[timeString, { polarity: null, string: null }]]);
   },
   finish: function () {
     this.props.after(this.state);
@@ -32628,7 +32628,7 @@ var ExamplesEditor = React.createClass({
     var interfaceClass = 'interface' + (revealInterface ? '' : ' hide');
 
     var examplesComplete = _.every(examples, function (ex) {
-      return ex.string && ex.kind;
+      return ex.string && ex.polarity;
     });
     var canFinish = numExamples > 0 && examplesComplete;
     var finishTitle = canFinish ? '' : numExamples == 0 ? 'Add at least one example to continue' : 'Complete all your examples to continue';
