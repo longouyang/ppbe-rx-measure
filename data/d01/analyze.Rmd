@@ -12,11 +12,26 @@ knitr::opts_chunk$set(echo = FALSE, dev="svg", cache=TRUE)
 ```{r libraries}
 library(tidyverse)
 library(jsonlite)
+library(memoise)
 ```
 
 ```{r theme}
 source('theme.R')
 ```
+
+```{r utilities}
+generic.ci_ <- function(x, n = 5000, seed = 1) {
+  set.seed(seed)
+  structure(
+    quantile(
+      replicate(n, mean(sample(x, replace = TRUE))),
+      c(0.025, 0.975)),
+    names=c("ci.l","ci.u"))
+}
+
+generic.ci <- memoise(generic.ci_)
+```
+
 
 
 # read in data
@@ -39,17 +54,14 @@ responses = do.call(
         
         do.call(rbind,
                 with(x$receive,
-                     Map(1:length(id),
-                         examples,
-                         id,
-                         description,
+                     Map(1:length(id), examples, id, description,
                          f = function(trial.num, example, id, description) {
-                           merge(data.frame(worker.id = paste0("s", subject.num),
+                           merge(y = cbind(example.num = 1:nrow(example),
+                                           example),
+                                 x = data.frame(worker.id = paste0("s", subject.num),
                                             trial.num = trial.num,
                                             rule.id = id,
-                                            rule.desc = description
-                           ),
-                           example)
+                                            rule.desc = description))
                          }
                      )))
       }
@@ -266,3 +278,38 @@ qplot(data = responses,
 ```
 
 ## do people give examples in particular orders? e.g., shorter ones first or positive ones first?
+
+length:
+```{r}
+e = responses %>%
+  transform(len = nchar(string)) %>%
+  group_by(example.num) %>%
+  summarise(length.mean = mean(len),
+            length.cl = generic.ci(len)['ci.l'],
+            length.cu = generic.ci(len)['ci.u']) %>% ungroup
+
+qplot(data = e,
+      x = example.num,
+      y = length.mean,
+      ymin = length.cl,
+      ymax = length.cu,
+      geom = c('pointrange','line'))
+```
+
+polarity:
+
+```{r}
+e = responses %>%
+        group_by(example.num) %>%
+        summarise(frac.pos = sum(polarity == 'positive') / n(),
+                  ci.l = generic.ci(polarity == 'positive')['ci.l'],
+                  ci.u = generic.ci(polarity == 'positive')['ci.u'])
+
+qplot(data = e,
+      x = example.num,
+      y = frac.pos,
+      ymin = ci.l,
+      ymax = ci.u,
+      geom = c('pointrange','line'))
+```
+
