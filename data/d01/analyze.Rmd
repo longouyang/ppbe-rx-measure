@@ -55,7 +55,8 @@ responses = do.call(
         
         d
       }
-  ))
+  )) %>%
+  rename(polarity = kind)
 ```
 
 # research
@@ -85,8 +86,8 @@ ggplot(data = e.agg) +
 
 ```{r, fig.width = 11, height = 3}
 e.agg = responses %>% group_by(worker.id, rule.id) %>%
-  summarise(num.pos = sum(kind == "positive"),
-            num.neg = sum(kind == "negative"))
+  summarise(num.pos = sum(polarity == "positive"),
+            num.neg = sum(polarity == "negative"))
 
 qplot(data = e.agg,
       facets = . ~ rule.id,
