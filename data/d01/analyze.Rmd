@@ -1,0 +1,168 @@
+---
+title: "analyze d01"
+output:
+  html_document:
+    self_contained: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, dev="svg", cache=TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(jsonlite)
+```
+
+```{r}
+source('theme.R')
+```
+
+
+# read in data
+
+```{r}
+parsed.json = Map(f = fromJSON,
+                 list.files(pattern = "*.json"))
+```
+
+# munge
+
+```{r make-responses}
+responses = do.call(
+  rbind,
+  Map(unname(parsed.json),
+      1:length(parsed.json),
+      f = function(x, subject.num) {
+        
+        # join examples for each rule with the metadata about the rule (id, desc, trial num)
+        d = do.call(rbind,
+                    with(x$receive,
+                         Map(1:length(id),
+                             examples,
+                             id,
+                             description,
+                             f = function(trial.num, example, id, description) {
+                               merge(data.frame(worker.id = paste0("s", subject.num),
+                                 trial.num = trial.num,
+                                                rule.id = id,
+                                                rule.desc = description
+                                                
+                                                ),
+                                     example)
+                             }
+                         )))
+        
+        d
+      }
+  ))
+```
+
+# research
+
+## how many examples do people give?
+
+```{r, fig.width = 11, height = 3}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.examples = n()) %>%
+  group_by(worker.id, rule.id, num.examples) %>%
+  summarise(freq = n())
+
+xmin = 1 #min(e.agg$num.examples)
+xmax = max(e.agg$num.examples)
+
+e.agg$num.examples.fct = factor(e.agg$num.examples, levels = as.character(xmin:xmax))
+
+
+ggplot(data = e.agg) +
+  theme_pub + 
+  facet_grid(. ~ rule.id) +
+  geom_bar(mapping = aes(x = num.examples.fct, y = freq), stat = 'identity') +
+  scale_x_discrete(breaks = as.character(xmin:xmax), drop = FALSE, name = 'number of examples')
+```
+
+## how many positive examples versus negative examples?
+
+```{r, fig.width = 11, height = 3}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.pos = sum(kind == "positive"),
+            num.neg = sum(kind == "negative"))
+
+qplot(data = e.agg,
+      facets = . ~ rule.id,
+      x = num.pos,
+      y = num.neg, alpha = I(0.6)) +
+  theme_pub + 
+  geom_abline() + 
+  scale_x_continuous(name = '# positive examples', breaks = c(0, 5, 10), limits = c(0, 10)) +
+  scale_y_continuous(name = '# negative examples', breaks = c(0, 5, 10), limits = c(0, 10))
+```
+
+## how related are the examples in edit distance?
+
+```{r}
+appendList <- function (x, val)  {
+    stopifnot(is.list(x), is.list(val))
+    xnames <- names(x)
+    for (v in names(val)) {
+        x[[v]] <- if (v %in% xnames && is.list(x[[v]]) && is.list(val[[v]])) 
+            appendList(x[[v]], val[[v]])
+        else c(x[[v]], val[[v]])
+    }
+    x
+}
+
+
+cluster.examples = function(strings, distance.threshold = 2) {
+  distance.matrix = adist(strings)
+  
+  # for each string, figure out which other strings it's similar to
+  # (i.e., has edit distance less than the threshold)
+  similarities = apply(distance.matrix,
+        1,# by row
+        function(row) {
+          which(row <= distance.threshold)
+        })
+  clusters = list()
+  print(similarities)
+  
+  # make the clusters
+  Map(1:length(strings),
+      f = function(i) {
+        # j is the index of the previously created cluster that can contain this string
+        j = Position(x = clusters,
+                     f = function(cluster) { i %in% cluster })
+        
+        if (is.na(j)) {
+          clusters[[length(clusters) + 1]] <<- c(similarities[[i]], i)
+        } else {
+          clusters[[j]] <<- union(clusters[[j]], similarities[[i]])
+        }
+      })
+  
+  Map(clusters,
+      f = function(indices) { strings[indices] })
+}
+
+## testing
+#strings = responses %>% filter(worker.id == 's1', trial.num == 2) %>% {.$string}
+## strings = c('aaa','aa','aaab','baaaab','bbaaabb')
+strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
+print(strings)
+cluster.examples(strings)
+```
+
+
+```{r}
+e = responses %>%
+  group_by(worker.id, rule.id) %>%
+  summarise(num.example.clusters = length(cluster.examples(string)))
+```
+
+
+## how many mistakes do people make? (e.g., positive examples that don't actually match or negative examples that do match)
+
+## how long are the examples that people give?
+
+## do people give examples in particular orders? e.g., shorter ones first or positive ones first?
