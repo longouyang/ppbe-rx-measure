@@ -9,13 +9,12 @@ output:
 knitr::opts_chunk$set(echo = FALSE, dev="svg", cache=TRUE)
 ```
 
-```{r}
+```{r libraries}
 library(tidyverse)
-library(lubridate)
 library(jsonlite)
 ```
 
-```{r}
+```{r theme}
 source('theme.R')
 ```
 
