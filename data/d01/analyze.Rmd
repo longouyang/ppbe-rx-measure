@@ -229,6 +229,23 @@ sum(bootstrap.samples < mean.num.clusters) / length(bootstrap.samples)
 
 ## how many mistakes do people make? (e.g., positive examples that don't actually match or negative examples that do match)
 
+
+by stimulus:
+
+```{r}
+responses %>%
+  group_by(rule.id) %>%
+  summarise(error.rate = sum(!correct) / n())
+```
+
+by person:
+```{r}
+responses %>%
+  group_by(worker.id) %>%
+  summarise(error.rate = sum(!correct) / n())
+```
+
+
 ## how long are the examples that people give?
 
 ## do people give examples in particular orders? e.g., shorter ones first or positive ones first?
