@@ -113,10 +113,13 @@ responses = do.call(
                                        id,
                                        description,
                                        f = function(trial.num, example, id, description) {
-                                         merge(data.frame(trial.num = trial.num,
-                                                          rule.id = id,
-                                                          rule.desc = description),
-                                               example)
+                                         
+                                         merge(y = cbind(example.num = 1:nrow(example),
+                                                         example),
+                                               x = data.frame(trial.num = trial.num,
+                                                              rule.id = id,
+                                                              rule.desc = description))
+                                         
                                        }
                                    )))
         
