@@ -12,8 +12,8 @@ library(digest)
 ```
 
 ```{r}
-results.dir = "sandbox-results/"
-# results.dir = "production-results/"
+# results.dir = "sandbox-results/"
+results.dir = "production-results/"
 ```
 
 ```{r}
