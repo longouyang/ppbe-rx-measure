@@ -36,24 +36,22 @@ responses = do.call(
       f = function(x, subject.num) {
         
         # join examples for each rule with the metadata about the rule (id, desc, trial num)
-        d = do.call(rbind,
-                    with(x$receive,
-                         Map(1:length(id),
-                             examples,
-                             id,
-                             description,
-                             f = function(trial.num, example, id, description) {
-                               merge(data.frame(worker.id = paste0("s", subject.num),
-                                 trial.num = trial.num,
-                                                rule.id = id,
-                                                rule.desc = description
-                                                
-                                                ),
-                                     example)
-                             }
-                         )))
         
-        d
+        do.call(rbind,
+                with(x$receive,
+                     Map(1:length(id),
+                         examples,
+                         id,
+                         description,
+                         f = function(trial.num, example, id, description) {
+                           merge(data.frame(worker.id = paste0("s", subject.num),
+                                            trial.num = trial.num,
+                                            rule.id = id,
+                                            rule.desc = description
+                           ),
+                           example)
+                         }
+                     )))
       }
   )) %>%
   rename(polarity = kind)
