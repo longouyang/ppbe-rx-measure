@@ -57,6 +57,38 @@ responses = do.call(
   rename(polarity = kind)
 ```
 
+```{r compute-example-correctness}
+regexes = c('3a' = 'aaa+',
+            'zip-code' = '[0123456789]{5}',
+            'consonants-only' = '[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]*',
+            'delimiters' = "\\[.*\\]")
+
+example.matches = function(example, rx) {
+  res = regexpr(pattern = rx, text = example)
+  # make sure we match and that the *entire* string is what matches, not a substring
+  res > 0 & attr(res, "match.length") == nchar(example)
+}
+# example.correct(example = 'aaa', rx = 'aaa+')
+# example.correct(example = 'baaa', rx = 'aaa+')
+# example.correct(example = 'aaaa', rx = 'aaa+')
+
+responses = responses %>%
+  mutate(rx = regexes[rule.id])
+
+responses_match = apply(responses[,c('string','rx')],
+      1,
+      function(e) { example.matches(example = e['string'], rx = e['rx']) })
+
+responses = mutate(responses,
+                   match = responses_match,
+                   correct = !xor(polarity == 'positive', match)) %>%
+  select(-rx, -rule.desc) # hide these cause they're verbose
+
+# # testing
+# View(responses %>% select(rule.id, polarity, string, correct, match) %>% arrange(rule.id, polarity))
+```
+
+
 # research
 
 ## how many examples do people give?
