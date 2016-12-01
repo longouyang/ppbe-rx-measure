@@ -1,3 +1,3 @@
 boto==2.43.0
--e git+https://github.com/longouyang/cosub.git@56c99e776c36a6644d2a3caad2a4c9825d52e6be#egg=cosub
+-e git+https://github.com/longouyang/cosub.git@2603df890007fe37ec419b39c02b7dd8c87d9ed6#egg=cosub
 pytimeparse==1.1.5
