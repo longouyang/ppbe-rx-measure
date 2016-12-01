@@ -248,4 +248,21 @@ responses %>%
 
 ## how long are the examples that people give?
 
+by stimulus:
+
+```{r}
+qplot(data = responses,
+      x = rule.id,
+      y = nchar(string),
+      alpha = I(0.5))
+```
+
+by person:
+
+```{r}
+qplot(data = responses,
+      x = worker.id,
+      y = nchar(string), alpha = I(0.5))
+```
+
 ## do people give examples in particular orders? e.g., shorter ones first or positive ones first?
