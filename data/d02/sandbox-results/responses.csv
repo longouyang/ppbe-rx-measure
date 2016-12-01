@@ -1,0 +1,7 @@
+"assignment.id","worker.id","trial.num","rule.id","rule.desc","polarity","string","time"
+"3OS46CRSLFZT0O2RGWXKH8BVRED6VN","8a010f8",1,"3a","The string contains only <code>a</code>'s and has at least three of them","positive","sdf","1480453256647"
+"3OS46CRSLFZT0O2RGWXKH8BVRED6VN","8a010f8",2,"zip-code","The string must be a valid US zip code (contains exactly 5 numbers)","positive","234234","1480453261447"
+"3OS46CRSLFZT0O2RGWXKH8BVRED6VN","8a010f8",3,"consonants-only","The string contains only consonants","negative","sdfsdfd","1480453266320"
+"3OS46CRSLFZT0O2RGWXKH8BVRED6VN","8a010f8",3,"consonants-only","The string contains only consonants","negative","sdfsdf","1480453268193"
+"3OS46CRSLFZT0O2RGWXKH8BVRED6VN","8a010f8",4,"delimiters","The string must begin with <code>[</code> and end with <code>]</code>","positive","[[x]","1480453273926"
+"3OS46CRSLFZT0O2RGWXKH8BVRED6VN","8a010f8",4,"delimiters","The string must begin with <code>[</code> and end with <code>]</code>","negative","x[x]x]","1480453277632"
