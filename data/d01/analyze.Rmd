@@ -132,18 +132,6 @@ qplot(data = e.agg,
 ## how related are the examples in edit distance?
 
 ```{r}
-appendList <- function (x, val)  {
-    stopifnot(is.list(x), is.list(val))
-    xnames <- names(x)
-    for (v in names(val)) {
-        x[[v]] <- if (v %in% xnames && is.list(x[[v]]) && is.list(val[[v]])) 
-            appendList(x[[v]], val[[v]])
-        else c(x[[v]], val[[v]])
-    }
-    x
-}
-
-
 cluster.examples = function(strings, distance.threshold = 2) {
   distance.matrix = adist(strings)
   
@@ -155,7 +143,7 @@ cluster.examples = function(strings, distance.threshold = 2) {
           which(row <= distance.threshold)
         })
   clusters = list()
-  print(similarities)
+  # print(similarities)
   
   # make the clusters
   Map(1:length(strings),
@@ -165,7 +153,7 @@ cluster.examples = function(strings, distance.threshold = 2) {
                      f = function(cluster) { i %in% cluster })
         
         if (is.na(j)) {
-          clusters[[length(clusters) + 1]] <<- c(similarities[[i]], i)
+          clusters[[length(clusters) + 1]] <<- similarities[[i]]
         } else {
           clusters[[j]] <<- union(clusters[[j]], similarities[[i]])
         }
@@ -175,12 +163,11 @@ cluster.examples = function(strings, distance.threshold = 2) {
       f = function(indices) { strings[indices] })
 }
 
-## testing
-#strings = responses %>% filter(worker.id == 's1', trial.num == 2) %>% {.$string}
-## strings = c('aaa','aa','aaab','baaaab','bbaaabb')
-strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
-print(strings)
-cluster.examples(strings)
+# # testing
+# strings = c("01234", "012a4", "62804", "628041", "y6280", "0123", "280", "a280b")
+# #strings = c('aaa','aa','aaab','baaaab','bbaaabb')
+# ## strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
+# cluster.examples(strings)
 ```
 
 
