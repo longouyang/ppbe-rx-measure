@@ -172,11 +172,60 @@ cluster.examples = function(strings, distance.threshold = 2) {
 
 
 ```{r}
-e = responses %>%
+responses.clustered = responses %>%
   group_by(worker.id, rule.id) %>%
-  summarise(num.example.clusters = length(cluster.examples(string)))
+  summarise(num.examples = n(),
+            num.clusters = length(cluster.examples(string)))
+
+responses.clustered %>% group_by(worker.id) %>% summarise(mean_num.clusters = mean(num.clusters))
+
+mean.num.clusters = mean(responses.clustered$num.clusters)
+mean.num.clusters
 ```
 
+TODO: do there tend to be more negative examples within a cluster? (i think people might come up with one example and then demonstrate various ways it can be perturbed to be a non-example)
+
+comparison to permutation test: sample random participants by sampling from pool of all participants' responses (note that this is sampling *without* replacement, as people wouldn't give the same example twice)
+
+```{r}
+sample.bootstrap.subject = function(worker.id, rule.id) {
+  # get examples given by all participants for this rule
+  ## written in non-dplyr syntax because i think it might be faster?
+  pool = responses[responses$rule.id == rule.id,]
+  pool.pos = pool[pool$polarity == 'positive',]$string
+  pool.neg = pool[pool$polarity == 'negative',]$string
+  
+  # get this worker's examples
+  this = pool[pool$worker.id == worker.id,]
+  
+  num.pos = sum(this$polarity == 'positive')
+  num.neg = sum(this$polarity == 'negative')
+  
+  syn.pos = sample(x = pool.pos, size = num.pos, replace = FALSE)
+  syn.neg = sample(x = pool.neg, size = num.neg, replace = FALSE)
+  
+  c(num.clusters = length(cluster.examples(c(syn.pos, syn.neg))))
+}
+
+workers.and.rules = responses.clustered[,c('worker.id', 'rule.id')]
+
+clusters.bootstrap = function() {
+  num.clusters = apply(workers.and.rules,
+                       1,
+                       function(e) { 
+                         sample.bootstrap.subject(e['worker.id'], e['rule.id'])
+                       })
+  
+  mean(num.clusters)
+}
+
+# a little slow because my clustering function is not vectorized
+system.time(bootstrap.samples <- replicate(1000, clusters.bootstrap()))['elapsed']
+
+# one-tailed test: how many bootstrap samples have a mean
+# number of clusters less than the observed sample?
+sum(bootstrap.samples < mean.num.clusters) / length(bootstrap.samples)
+```
 
 ## how many mistakes do people make? (e.g., positive examples that don't actually match or negative examples that do match)
 
