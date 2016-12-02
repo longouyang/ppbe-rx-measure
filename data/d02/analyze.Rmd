@@ -333,3 +333,8 @@ qplot(data = e,
 ```
 
 interesting -- first example tends to be positive
+
+# TODO
+
+- do positive examples tend to be followed by negative examples?
+- do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples) [metaphor -- a positive example as a primary tentpole that supports a number of negative example tentpoles]
