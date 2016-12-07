@@ -429,4 +429,73 @@ interesting -- first example tends to be positive
 # TODO
 
 - do positive examples tend to be followed by negative examples?
-- do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples) [metaphor -- a positive example as a primary tentpole that supports a number of negative example tentpoles]
+- do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples) [metaphor -- a positive example as a primary tentpole that supports a number of negative example tentpoles]#### within a cluster, does the first example tend to be positive?
+
+TODO
+
+# misc
+
+did 90210 show up as a zip code much?
+```{r}
+responses %>% filter(rule.id == 'zip-code', string == '90210')
+```
+
+no -- only once. i wonder if people were more likely to use their own zip code (could try reconciling with geolocation)
+
+
+# looking at raw examples
+
+## 3a
+
+## consonants-only
+
+4 people gave "aeiou":
+```{r}
+filter(responses, rule.id == 'consonants-only') %>% filter(string == 'aeiou') %>% nrow
+```
+
+
+i think this is a good example sequence:
+
+```{r}
+filter(responses, worker.id == '1ec52d4', rule.id == 'consonants-only') %>% select(example.num, polarity, string)
+```
+
+i think this is a bad example sequence, as it doesn't make clear the difference between positive and negative examples (also, there is an error -- #6 is a negative example but it actually doesn't contain any consonants. DOH -- there are other alternatives to the consonants-only rule besides vowels. you can include numbers too.)
+
+```{r}
+filter(responses, worker.id == '26e3c2f', rule.id == 'consonants-only') %>% select(example.num, polarity, string)
+```
+
+(initially i was a little worried that this person was just mashing random keys but they didn't do that for the other rules, so it seems unlikely)
+
+an interesting sequence i'm curious how good these examples are:
+```{r}
+filter(responses, worker.id == '4ba0325', rule.id == 'consonants-only') %>% select(example.num, polarity, string)
+```
+
+
+## delimiters
+
+### no one nested the brackets (either positively or negatively)
+
+```{r}
+responses %>% filter(rule.id == 'delimiters')
+```
+
+
+## zip-code
+
+### negative examples tend to be purely numeric (though there are a few exceptions)
+
+```{r}
+e = responses %>%
+  filter(rule.id == 'zip-code', polarity == 'negative') %>%
+  {example.matches(.$string, "[0123456789]+")}
+
+print(table(e))
+
+prop.test(x = sum(e == TRUE), n = length(e))
+```
+
+
