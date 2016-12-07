@@ -345,24 +345,67 @@ qplot(data = responses,
 ## do people give examples in particular orders? e.g., shorter ones first or positive ones first?
 
 ### length
+
+un-zscored:
 ```{r}
 e = responses %>%
   transform(len = nchar(string)) %>%
   group_by(example.num) %>%
-  summarise(length.mean = mean(len),
-            length.cl = generic.ci(len)['ci.l'],
-            length.cu = generic.ci(len)['ci.u']) %>%
+  summarise(mean.len = mean(len),
+            cl.len = generic.ci(len)['ci.l'],
+            cu.len = generic.ci(len)['ci.u']) %>%
   ungroup
 
 qplot(data = e,
       x = example.num,
-      y = length.mean,
-      ymin = length.cl,
-      ymax = length.cu,
+      y = mean.len,
+      ymin = cl.len,
+      ymax = cu.len,
       geom = c('pointrange','line'))
 ```
 
 note: confidence intervals for last two points are actually huge (very few unique data values, e.g., 1)
+
+z-scoring length per subject per rule:
+```{r}
+z.score <- function(xs) {
+  centered = xs - mean(xs)
+  if (length(xs) == 1) {
+    centered
+  } else {
+    # NB: deliberately doesn't catch the case where all xs are the same
+    # because i filter for this later on
+    centered / sd(xs)
+  }
+}
+
+e = responses %>%
+  transform(len = nchar(string)) %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(z.len = z.score(len)) %>%
+  filter(!is.nan(z.len)) %>%
+  group_by(example.num) %>%
+  summarise(mean.z.len = mean(z.len),
+            cl.len = generic.ci(z.len)['ci.l'],
+            cu.len = generic.ci(z.len)['ci.u']) %>%
+  ungroup
+
+qplot(data = e,
+      x = example.num,
+      y = mean.z.len,
+      ymin = cl.len,
+      ymax = cu.len,
+      geom = c('pointrange','line'))
+```
+
+doesn't appear to be any sequencing over all the participants, though there are certainly cases where this happens:
+
+```{r}
+responses %>% filter(worker.id == '26e3c2f', rule.id == '3a')
+```
+
+i wonder if such simple->complex sequencing is better for receivers (ERRATUM-minor: i called this d02 task receiving but it's actually sending). i could test this by presenting receivers with different permutations of a given sequence.
+
 
 ### polarity
 
