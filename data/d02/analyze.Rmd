@@ -121,7 +121,56 @@ ggplot(data = e.agg) +
 
 exactly 2 seems to be common
 
-q: in cases of 2 examples, is it one positive and one negative?
+## q: do 2-examples tend to be *balanced*? i.e., one positive and one negative?
+
+```{r}
+e.agg = responses %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(num.examples = length(string)) %>%
+  filter(num.examples == 2) %>%
+  group_by(worker.id, rule.id) %>%
+  summarise(num.pos = sum(polarity == 'positive'),
+            num.neg = sum(polarity == 'negative'))
+
+print(table(e.agg$num.pos, e.agg$num.neg))
+
+# proportion test on the frequency of balanced 2-examples
+prop.test(x = sum(e.agg$num.pos == 1), nrow(e.agg))
+```
+
+overwhelmingly, yes (nb: would need to collect more data for the proportion test, which i believe operates better if the minimum cell count is 5)
+
+### for balanced 2-examples, what is the mean edit distance?
+
+```{r}
+e.agg = responses %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(num.examples = length(string)) %>%
+  filter(num.examples == 2, sum(polarity == 'positive') == 1) %>%
+  summarise(edit.distance = adist(string)[1,2])
+
+qplot(data = e.agg,
+      x = edit.distance,
+      color = I('white'),
+      binwidth = 1) + scale_x_continuous(breaks = with(e.agg, min(edit.distance):max(edit.distance)))
+```
+
+TODO: figure out if these examples are closer than you'd expect by chance (permutation test)
+
+#### the second most likely edit distance for balanced 2-examples is 5: is there a pattern there? or is that just the zip code rule?
+
+```{r}
+responses %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(num.examples = length(string)) %>%
+  filter(num.examples == 2, sum(polarity == 'positive') == 1) %>%
+  summarise(edit.distance = adist(string)[1,2]) %>%
+  filter(edit.distance == 5) %>%
+  select(-edit.distance) %>%
+  merge(responses)
+```
+
+yes, mostly
 
 ## how many positive examples versus negative examples?
 
