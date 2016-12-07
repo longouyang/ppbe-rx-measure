@@ -218,8 +218,19 @@ cluster.examples = function(strings, distance.threshold = 2) {
         }
       })
   
-  Map(clusters,
-      f = function(indices) { strings[indices] })
+  # return a list of clusters (each cluster is a vector containing strings that are clustered together)
+  Map(clusters, f = function(indices) { strings[indices] })
+
+  ### WIP ###
+  # # return a data frame with two columns: string and cluster number
+  # do.call(rbind,
+  #         Map(clusters,
+  #             1:length(clusters),
+  #             f = function(indices, cluster.label) {
+  #               data.frame(string = strings[indices],
+  #                          cluster.label = cluster.label)
+  #             }
+  #         ))
 }
 
 # # testing
@@ -228,6 +239,8 @@ cluster.examples = function(strings, distance.threshold = 2) {
 # ## strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
 # cluster.examples(strings)
 ```
+
+mean number of clusters for an example sequence:
 
 ```{r}
 responses.clustered = responses %>%
@@ -241,8 +254,9 @@ mean.num.clusters = mean(responses.clustered$num.clusters)
 mean.num.clusters
 ```
 
-
 TODO: do there tend to be more negative examples within a cluster? (i think people might come up with one example and then demonstrate various ways it can be perturbed to be a non-example)
+
+TODO: do examples within a cluster tend to be nearby in the sequence of examples the user gave?
 
 comparison to permutation test: sample random participants by sampling from pool of all participants' responses (note that this is sampling *without* replacement, as people wouldn't give the same example twice)
 
@@ -426,10 +440,7 @@ qplot(data = e,
 
 interesting -- first example tends to be positive
 
-# TODO
-
-- do positive examples tend to be followed by negative examples?
-- do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples) [metaphor -- a positive example as a primary tentpole that supports a number of negative example tentpoles]#### within a cluster, does the first example tend to be positive?
+#### within a cluster, does the first example tend to be positive?
 
 TODO
 
@@ -498,4 +509,11 @@ print(table(e))
 prop.test(x = sum(e == TRUE), n = length(e))
 ```
 
+
+# TODO
+
+- do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples)
+  - metaphor: a positive example as a primary tentpole that supports a number of negative example tentpoles
+  - another metaphor: a positive example as a nucleus around which negative examples orbit
+  - there are clearly cases where you wouldn't expect this to be true (e.g., for 3a rule, you might give aaa, aaaa, aaaaa)
 
