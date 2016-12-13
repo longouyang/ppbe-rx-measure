@@ -401,6 +401,27 @@ qplot(data = e,
 
 note: confidence intervals for last two points are actually huge (very few unique data values, e.g., 1)
 
+un-z-scored, broken down by rule:
+
+```{r}
+e = responses %>%
+  transform(len = nchar(string)) %>%
+  group_by(example.num, rule.id) %>%
+  summarise(mean.len = mean(len),
+            cl.len = generic.ci(len)['ci.l'],
+            cu.len = generic.ci(len)['ci.u']) %>%
+  ungroup
+
+qplot(data = e,
+      facets = . ~ rule.id,
+      x = example.num,
+      y = mean.len,
+      ymin = cl.len,
+      ymax = cu.len,
+      geom = c('pointrange','line'))
+```
+
+
 z-scoring length per subject per rule:
 ```{r}
 z.score <- function(xs) {
@@ -418,7 +439,7 @@ e = responses %>%
   transform(len = nchar(string)) %>%
   group_by(worker.id, rule.id) %>%
   mutate(z.len = z.score(len)) %>%
-  filter(!is.nan(z.len)) %>%
+  mutate(z.len = ifelse(is.nan(z.len), 0, z.len)) %>%
   group_by(example.num) %>%
   summarise(mean.z.len = mean(z.len),
             cl.len = generic.ci(z.len)['ci.l'],
@@ -440,6 +461,70 @@ responses %>% filter(worker.id == '26e3c2f', rule.id == '3a')
 ```
 
 i wonder if such simple->complex sequencing is better for receivers (ERRATUM-minor: i called this d02 task receiving but it's actually sending). i could test this by presenting receivers with different permutations of a given sequence.
+
+break out previous plot by rule.id:
+
+```{r, fig.width = 11, fig.height = 3}
+z.score <- function(xs) {
+  centered = xs - mean(xs)
+  if (length(xs) == 1) {
+    centered
+  } else {
+    # NB: deliberately doesn't catch the case where all xs are the same
+    # because i filter for this later on
+    centered / sd(xs)
+  }
+}
+
+e = responses %>%
+  transform(len = nchar(string)) %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(z.len = z.score(len)) %>%
+  mutate(z.len = ifelse(is.nan(z.len), 0, z.len)) %>%
+  group_by(example.num, rule.id) %>%
+  summarise(mean.z.len = mean(z.len),
+            cl.len = generic.ci(z.len)['ci.l'],
+            cu.len = generic.ci(z.len)['ci.u']) %>%
+  ungroup
+
+qplot(data = e,
+      facets = . ~ rule.id,
+      x = example.num,
+      y = mean.z.len,
+      ymin = cl.len,
+      ymax = cu.len,
+      geom = c('pointrange','line'))
+```
+
+
+for each rule, plot each person's length curve individually:
+
+```{r, fig.width = 8, fig.height = 4, dev="svg"}
+e = responses %>%
+  transform(len = nchar(string)) %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(z.len = z.score(len), num.examples = max(example.num)) %>%
+  mutate(z.len = ifelse(is.nan(z.len), 0, z.len)) %>%
+  filter(num.examples > 1)
+
+qplot(data = e,
+      facets = rule.id ~ num.examples,
+      x = example.num,
+      y = z.len,
+      geom = 'line',
+      group = worker.id) +
+  geom_point(mapping = aes(color = polarity)) +
+  scale_color_brewer(palette = "Set1")
+```
+
+in the bottom row (zip code), there appears to be a pattern of examples starting off all the same length. but this  is just an artifact of the rule itself being a constraint on length and people tending to give strings of positive examples first.
+
+there don't appear to be very obvious length patterns here.
+
+but there are some polarity templates:
+- all positive, then all negative
+- shit sandwich: positive, negative, positive
+- interleaving
 
 
 ### polarity
