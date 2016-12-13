@@ -280,6 +280,7 @@ TODO: do there tend to be more negative examples within a cluster? (i think peop
 TODO: do examples within a cluster tend to be nearby in the sequence of examples the user gave?
 
 comparison to permutation test: sample random participants by sampling from pool of all participants' responses (note that this is sampling *without* replacement, as people wouldn't give the same example twice)
+- runtime note: takes around 300 seconds for 5k bootstrap samples. it's a little slow because my clustering function is not vectorized
 
 ```{r}
 sample.bootstrap.subject = function(worker.id, rule.id) {
@@ -324,6 +325,8 @@ writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c
 # number of clusters less than the observed sample?
 sum(bootstrap.samples < mean.num.clusters) / length(bootstrap.samples)
 ```
+
+TODO: the ways i've done both permutation tests are, i think, reasonable, but there are also reasonable alternatives. talk through my choices with mike, then write down rationale.
 
 ## how many mistakes do people make? (e.g., positive examples that don't actually match or negative examples that do match)
 
