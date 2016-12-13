@@ -192,6 +192,23 @@ qplot(data = e.agg,
   scale_y_continuous(name = '# negative examples', breaks = c(0, 3, 6), limits = c(0, 6))
 ```
 
+things are somewhat balanced -- people tend to give some negative examples.
+
+### q: do people give more positive examples than negative?
+
+simple check -- paired t-test between number of positive and number of negative examples for each trial X user.
+
+```{r}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.pos = sum(polarity == "positive"),
+            num.neg = sum(polarity == "negative"))
+
+with(e.agg, t.test(num.pos, num.neg, paired = TRUE))
+```
+
+there don't appear to be more positive examples than negative, though i want a better model.
+TODO: hierarchical model with by-rule and by-user random effects.
+
 ## how related are the examples in edit distance?
 
 ```{r}
