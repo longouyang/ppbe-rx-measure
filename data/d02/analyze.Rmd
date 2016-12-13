@@ -177,12 +177,16 @@ mostly the zip code rule
 ```{r, fig.width = 11, fig.height = 3}
 e.agg = responses %>% group_by(worker.id, rule.id) %>%
   summarise(num.pos = sum(polarity == "positive"),
-            num.neg = sum(polarity == "negative"))
+            num.neg = sum(polarity == "negative")) %>%
+  ungroup() %>%
+  group_by(num.pos, num.neg, rule.id) %>%
+  summarise(freq = n())
 
 qplot(data = e.agg,
       facets = . ~ rule.id,
       x = num.pos,
-      y = num.neg, alpha = I(0.6)) +
+      y = num.neg,
+      size = freq) +
   geom_abline() + 
   scale_x_continuous(name = '# positive examples', breaks = c(0, 3, 6), limits = c(0, 6)) +
   scale_y_continuous(name = '# negative examples', breaks = c(0, 3, 6), limits = c(0, 6))
