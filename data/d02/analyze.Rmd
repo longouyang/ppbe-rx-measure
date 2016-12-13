@@ -285,25 +285,25 @@ cluster.examples = function(strings, distance.threshold = 2) {
       })
   
   # return a list of clusters (each cluster is a vector containing strings that are clustered together)
-  Map(clusters, f = function(indices) { strings[indices] })
+  # Map(clusters, f = function(indices) { strings[indices] })
 
   ### WIP ###
-  # # return a data frame with two columns: string and cluster number
-  # do.call(rbind,
-  #         Map(clusters,
-  #             1:length(clusters),
-  #             f = function(indices, cluster.label) {
-  #               data.frame(string = strings[indices],
-  #                          cluster.label = cluster.label)
-  #             }
-  #         ))
+  # return a data frame with two columns: string and cluster number
+  do.call(rbind,
+          Map(clusters,
+              1:length(clusters),
+              f = function(indices, cluster.label) {
+                data.frame(string = strings[indices],
+                           cluster.label = cluster.label)
+              }
+          ))
 }
 
 # # testing
-# strings = c("01234", "012a4", "62804", "628041", "y6280", "0123", "280", "a280b")
+strings = c("01234", "012a4", "62804", "628041", "y6280", "0123", "280", "a280b")
 # #strings = c('aaa','aa','aaab','baaaab','bbaaabb')
 # ## strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
-# cluster.examples(strings)
+cluster.examples(strings)
 ```
 
 mean number of clusters for an example sequence:
@@ -311,13 +311,15 @@ mean number of clusters for an example sequence:
 ```{r}
 responses.clustered = responses %>%
   group_by(worker.id, rule.id) %>%
-  summarise(num.examples = n(),
-            num.clusters = length(cluster.examples(string)))
+  mutate(cluster.label = cluster.examples(string)$cluster.label)
 
-responses.clustered %>% group_by(worker.id) %>% summarise(mean_num.clusters = mean(num.clusters))
-
-mean.num.clusters = mean(responses.clustered$num.clusters)
-mean.num.clusters
+responses.clustered %>%
+  group_by(worker.id, rule.id) %>%
+  summarise(num.clusters = max(cluster.label)) %>%
+  group_by(worker.id) %>%
+  summarise(mean_num.clusters = mean(num.clusters)) %>%
+  select(mean_num.clusters) %>%
+  summary
 ```
 
 TODO: do there tend to be more negative examples within a cluster? (i think people might come up with one example and then demonstrate various ways it can be perturbed to be a non-example)
@@ -325,7 +327,7 @@ TODO: do there tend to be more negative examples within a cluster? (i think peop
 TODO: do examples within a cluster tend to be nearby in the sequence of examples the user gave?
 
 comparison to permutation test: sample random participants by sampling from pool of all participants' responses (note that this is sampling *without* replacement, as people wouldn't give the same example twice)
-- runtime note: takes around 300 seconds for 5k bootstrap samples. it's a little slow because my clustering function is not vectorized
+- runtime note: takes around 770 seconds for 5k bootstrap samples. it's a little slow because my clustering function is not vectorized
 
 ```{r}
 sample.bootstrap.subject = function(worker.id, rule.id) {
@@ -344,7 +346,7 @@ sample.bootstrap.subject = function(worker.id, rule.id) {
   syn.pos = sample(x = pool.pos, size = num.pos, replace = FALSE)
   syn.neg = sample(x = pool.neg, size = num.neg, replace = FALSE)
   
-  c(num.clusters = length(cluster.examples(c(syn.pos, syn.neg))))
+  c(num.clusters = max(cluster.examples(c(syn.pos, syn.neg))$cluster.label))
 }
 
 workers.and.rules = responses.clustered[,c('worker.id', 'rule.id')]
@@ -359,7 +361,7 @@ clusters.bootstrap = function() {
   mean(num.clusters)
 }
 
-time = system.time(bootstrap.samples <- replicate(5000, clusters.bootstrap()))
+time = system.time(bootstrap.samples <- replicate(500, clusters.bootstrap()))
 
 writeLines(paste0("elapsed seconds: ", round(unname(time['elapsed']), 1)))
 
@@ -595,7 +597,20 @@ interesting -- first example tends to be positive
 
 #### within a cluster, does the first example tend to be positive?
 
-TODO
+```{r}
+e = responses.clustered %>%
+  group_by(worker.id, rule.id, cluster.label) %>%
+  summarise(first.cluster.example.polarity = polarity[1]) %>%
+  ungroup() %>%
+  select(first.cluster.example.polarity) %>%
+  table
+
+print(e)
+
+prop.test(x = e['positive'], n = sum(e))
+```
+
+no. looks like it's just the very first example that tends to be positive
 
 # misc
 
