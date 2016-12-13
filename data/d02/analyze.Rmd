@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r libraries}
+library(plyr)
 library(tidyverse)
 library(lubridate)
 library(memoise)
@@ -149,13 +150,57 @@ e.agg = responses %>%
   filter(num.examples == 2, sum(polarity == 'positive') == 1) %>%
   summarise(edit.distance = adist(string)[1,2])
 
+mean.balanced.pair.edit.distance = mean(e.agg$edit.distance)
+
 qplot(data = e.agg,
       x = edit.distance,
       color = I('white'),
-      binwidth = 1) + scale_x_continuous(breaks = with(e.agg, min(edit.distance):max(edit.distance)))
+      binwidth = 1) + scale_x_continuous(breaks = with(e.agg, min(edit.distance):max(edit.distance))) +
+  geom_vline(xintercept = mean.balanced.pair.edit.distance, color = I('red'))
 ```
 
-TODO: figure out if these examples are closer than you'd expect by chance (permutation test)
+are these examples are closer than you'd expect by chance? (permutation test)
+
+```{r}
+e.agg = responses %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(num.examples = length(string)) %>%
+  filter(num.examples == 2, sum(polarity == 'positive') == 1)
+
+workers.and.rules = e.agg[,c('worker.id', 'rule.id')]
+
+balanced.example.pair.edit.distance.bootstrap = function(pool) {
+  # sample a permuted dataset:
+  # for each rule, shuffle all the examples and then pair them off
+  # then for each pair, compute edit distance
+  
+  syn.df = ddply(pool,
+        .(rule.id), function(e) {
+          pool.pos = e[e$polarity == 'positive',]$string
+          pool.neg = e[e$polarity == 'negative',]$string
+          
+          syn.pos = sample(pool.pos)
+          syn.neg = sample(pool.neg)
+          
+          syn = rbind(syn.pos, syn.neg)
+          
+          data.frame(distance = apply(X = syn, MARGIN = 2, F = function(pair) { adist(pair)[1,2] }))
+        })
+  
+  mean(syn.df$dist)
+}
+
+time = system.time(bootstrap.samples <- replicate(5000, balanced.example.pair.edit.distance.bootstrap(e.agg)))
+
+writeLines(paste0("elapsed seconds: ", round(unname(time['elapsed']), 1)))
+
+writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c(0.025, 0.0975)), collapse = " - ")))
+
+# one-tailed test: how many bootstrap samples have a mean
+# number of clusters less than the observed sample?
+sum(bootstrap.samples < mean.balanced.pair.edit.distance) / length(bootstrap.samples)
+```
+
 
 #### the second most likely edit distance for balanced 2-examples is 5: is there a pattern there? or is that just the zip code rule?
 
@@ -314,7 +359,6 @@ clusters.bootstrap = function() {
   mean(num.clusters)
 }
 
-# a little slow because my clustering function is not vectorized
 time = system.time(bootstrap.samples <- replicate(5000, clusters.bootstrap()))
 
 writeLines(paste0("elapsed seconds: ", round(unname(time['elapsed']), 1)))
