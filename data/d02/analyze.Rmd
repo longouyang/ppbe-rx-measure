@@ -170,7 +170,7 @@ responses %>%
   merge(responses)
 ```
 
-yes, mostly
+mostly the zip code rule
 
 ## how many positive examples versus negative examples?
 
