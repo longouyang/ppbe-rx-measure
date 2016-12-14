@@ -32674,19 +32674,19 @@ function showSlide(id) {
   $(current).addClass('show');
 }
 
-var receivingRules = [
+var sendingRules = [
 //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
 { 'id': '3a', description: "The string contains only <code>a</code>'s and has at least three of them" }, { 'id': 'zip-code', description: "The string must be a valid US zip code (contains exactly 5 numbers)" }, { 'id': 'consonants-only', description: "The string contains only consonants" }, { 'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>' }];
 
-var receive = bound({
-  inputs: receivingRules,
+var send = bound({
+  inputs: sendingRules,
   outputs: [],
   trial: function (input) {
     var comp = React.createElement(ExamplesEditor, { rule: input,
       after: function (output) {
-        receive.outputs.push(output);
+        send.outputs.push(output);
         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-        receive.next();
+        send.next();
       } });
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function () {
@@ -32697,7 +32697,7 @@ var receive = bound({
     var i = this.outputs.length;
     var n = this.inputs.length;
 
-    if (i == receive.inputs.length) {
+    if (i == send.inputs.length) {
       this.after(this);
     } else {
       // advance progress indicator
@@ -32752,11 +32752,11 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up receive results
-  results.receive = _.map(receive.outputs, function (x, i) {
+  // clean up send results
+  results.send = _.map(send.outputs, function (x, i) {
     return _.extend({},
     // add rule info
-    receive.inputs[i],
+    send.inputs[i],
     // ditch reveal info, munge into data frame
     { examples: _.values(_.omit(x, 'revealRule', 'revealInterface')) });
   });
@@ -32770,16 +32770,16 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', receive.next);
+$('#intro button.next').one('click', send.next);
 
-receive.after = questionnaire.start;
+send.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
 // debugging (example URL: index.html?debug#questionnaire)
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
-  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receive', 'questionnaire', 'finishExperiment']);
+  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'send', 'questionnaire', 'finishExperiment']);
 
   function handleHash(e) {
     var key = global.location.hash.replace("#", "");
