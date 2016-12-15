@@ -121,7 +121,7 @@ var ExamplesEditor = React.createClass({
             <p className={ruleWrapperClass}> Rule: <span className='rule' dangerouslySetInnerHTML={ruleContents} /></p>
             <button type="button" className={revealInterfaceButtonClass} onClick={this.revealInterface}>Continue</button>
             <div className={interfaceClass}>
-            <p>If you could only give examples of strings that either match or don't match the rule, what examples would you give?</p>
+            <p>How would you communicate this rule by giving examples of strings that either match or don't match the rule? You can give any number of examples but try to give enough and make them helpful  so that your friend would guess the correct rule.</p>
 
               <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
 
