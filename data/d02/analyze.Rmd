@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r libraries}
+library(MASS)
 library(plyr)
 library(tidyverse)
 library(lubridate)
@@ -121,6 +122,35 @@ ggplot(data = e.agg) +
 ```
 
 exactly 2 seems to be common
+
+maybe people are giving exactly 2 because they think that's what i'm asking for?
+if this were true, i'd expect there to be people that give all (or mostly) 2-examples and other people that give various ones.
+
+```{r}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.examples = n()) %>%
+  spread(rule.id, num.examples)
+
+# todo: use select()
+parcoord(e.agg[,2:5], col = adjustcolor("black", alpha = 0.2))
+```
+
+(this doesn't show up in the notebook but it works in the console). still, this graph sucks though. i wish this were easier.
+
+```{r}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.examples = n()) %>%
+  spread(rule.id, num.examples)
+
+names(e.agg) = c("worker.id", paste0("r",gsub("-",".",names(e.agg)[2:5])))
+e.agg %>% group_by(r3a, rconsonants.only, rdelimiters, rzip.code) %>%
+  summarise(freq=n()) %>% arrange(desc(freq))
+```
+
+so it looks like not everyone is giving all 2-examples (though 3/20 people did).
+but it looks possible that 7 people thought that you could give at most one example of each polarity (the top 4 rows of this table)
+
+so i think i should still add verbiage saying that (1) you can give as many examples as you want and (2) you should be helpful.
 
 ## q: do 2-examples tend to be *balanced*? i.e., one positive and one negative?
 
