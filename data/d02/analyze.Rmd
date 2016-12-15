@@ -78,7 +78,7 @@ responses = mutate(responses,
 ```
 
 
-# user experience
+# auxiliary
 
 ## how long does the task take?
 
@@ -101,6 +101,49 @@ qplot(x = fair.pay,
       color = I('white')
       )
 ```
+
+## how old are people?
+
+```{r}
+qplot(data = assignments,
+      x = age,
+      binwidth = 5)
+```
+
+they all tend to be older
+
+## what gender are they?
+
+```{r}
+table(tolower(substr(assignments$gender, start = 1, stop = 1)))
+```
+
+## what is their programming experience?
+
+```{r}
+assignments %>% select(worker.id, gender, age, programming.experience) %>% arrange(desc(nchar(programming.experience)))
+```
+
+### did the one guy with a cs degree give interesting examples?
+
+```{r}
+responses %>% filter(worker.id == 'aacaf2c') %>% select(rule.id, example.num, polarity, string)
+```
+
+not particularly
+
+## any bugs?
+
+```{r}
+assignments %>% select(bugs) %>% arrange(desc(nchar(bugs)))
+```
+
+## how much did they enjoy the task?
+
+```{r}
+assignments %>% select(enjoy) %>% arrange(desc(nchar(enjoy)))
+```
+
 
 # research
 
