@@ -15,6 +15,8 @@ library(lubridate)
 library(memoise)
 ```
 
+TODO: upgrade to R 3.3.2 so that ggplot warning goes away
+
 
 ```{r utilities}
 generic.ci_ <- function(x, n = 5000, seed = 1) {
@@ -132,7 +134,7 @@ e.agg = responses %>% group_by(worker.id, rule.id) %>%
   spread(rule.id, num.examples)
 
 # todo: use select()
-parcoord(e.agg[,2:5], col = adjustcolor("black", alpha = 0.2))
+parcoord(e.agg %>% select(-worker.id), col = adjustcolor("black", alpha = 0.2))
 ```
 
 (this doesn't show up in the notebook but it works in the console). still, this graph sucks though. i wish this were easier.
@@ -642,7 +644,7 @@ prop.test(x = e['positive'], n = sum(e))
 
 no. looks like it's just the very first example that tends to be positive
 
-# misc
+## misc
 
 did 90210 show up as a zip code much?
 ```{r}
@@ -652,7 +654,7 @@ responses %>% filter(rule.id == 'zip-code', string == '90210')
 no -- only once. i wonder if people were more likely to use their own zip code (could try reconciling with geolocation)
 
 
-# looking at raw examples
+## looking at raw examples
 
 ## 3a
 
@@ -708,7 +710,7 @@ prop.test(x = sum(e == TRUE), n = length(e))
 ```
 
 
-# TODO
+## TODO
 
 - do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples)
   - metaphor: a positive example as a primary tentpole that supports a number of negative example tentpoles
