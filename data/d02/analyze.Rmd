@@ -106,7 +106,7 @@ qplot(x = fair.pay,
 ```{r, fig.width = 11, fig.height = 3}
 e.agg = responses %>% group_by(worker.id, rule.id) %>%
   summarise(num.examples = n()) %>%
-  group_by(worker.id, rule.id, num.examples) %>%
+  group_by(rule.id, num.examples) %>%
   summarise(freq = n())
 
 xmin = 1 #min(e.agg$num.examples)
