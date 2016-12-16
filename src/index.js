@@ -31,8 +31,8 @@ function showSlide(id) {
 
 var sendingRules = [
   //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
-  {'id': '3a', description: "The string contains only <code>a</code>'s and has at least three of them"},
-  {'id': 'zip-code', description: "The string must be a valid US zip code (contains exactly 5 numbers)"},
+  {'id': '3a', description: "The string is three or more lowercase <code>a</code>'s"},
+  {'id': 'zip-code', description: "The string is 5 digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>) in a row"},
   {'id': 'consonants-only', description: "The string contains only consonants"},
   {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
 ];
