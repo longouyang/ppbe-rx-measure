@@ -177,7 +177,7 @@ e.agg = responses %>% group_by(worker.id, rule.id) %>%
   spread(rule.id, num.examples)
 
 # todo: use select()
-parcoord(e.agg %>% select(-worker.id), col = adjustcolor("black", alpha = 0.2))
+parcoord(e.agg %>% ungroup() %>% select(-worker.id), col = adjustcolor("black", alpha = 0.2))
 ```
 
 (this doesn't show up in the notebook but it works in the console). still, this graph sucks though. i wish this were easier.
