@@ -1,11 +1,11 @@
 <html>
   <head>
     <script src="js/mmturkey.js?nowarn"></script>
-    <!-- <script src="js/verboten.js"></script> -->
+    <script src="js/verboten.js"></script>
     <script>
-     // if (verboten.indexOf(turk.workerId) > 0) {
-     // location.href = "already.html"
-     //  }
+     if (verboten.indexOf(turk.workerId) > -1) {
+         location.href = "already.html"
+     }
     </script>
     <script src="js/jquery-1.11.2.min.js"></script>
     <script src="js/bowser-1.5.0.min.js"></script>
