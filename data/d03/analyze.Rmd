@@ -43,6 +43,9 @@ assignments = read_csv(paste0(results.dir, "assignments.csv")) %>%
          duration = difftime(submit.time, accept.time, units = "mins"))
 responses = read_csv(paste0(results.dir, "responses.csv"),
                      col_types = cols(string = col_character()))
+
+## arrange assignments in order of time
+assignments = assignments %>% arrange(accept.time)
 ```
 
 
@@ -118,25 +121,35 @@ they all tend to be older
 table(tolower(substr(assignments$gender, start = 1, stop = 1)))
 ```
 
-## what is their programming experience?
+## what is their programming / regex experience?
 
 ```{r}
-assignments %>% select(worker.id, gender, age, programming.experience) %>% arrange(desc(nchar(programming.experience)))
+assignments %>% select(worker.id, age, gender, programming.experience, regex.experience) %>% arrange(desc(nchar(programming.experience)))
 ```
+there's maybe 10 people with some sort of experience.
 
-### did the one guy with a cs degree give interesting examples?
+### do the people with regex experience give interesting examples?
 
 ```{r}
-responses %>% filter(worker.id == 'aacaf2c') %>% select(rule.id, example.num, polarity, string)
+regex.knowers = c("7af1a7e", "85357a3", "f0cc52f", "6b3b421", "e91432b", "295bd50")
+responses %>% filter(worker.id %in% regex.knowers) %>% select(worker.id, rule.id, example.num, polarity, string)
 ```
 
-not particularly
+- 7af1a7e, delimiters: nested them in `[[valid]]`, also used semantics in `[anythingcouldgohere]`
+- 85357a3, delimiters: listed a bunch of negative examples and then transformed them into positive ones
+- 295bd50, delimiters: listed a bunch of negative examples and then transformed them into positive ones
+- 295bd50, consonants-only: listed individual vowels as negative examples
+- 85357a3, 3a: listed all lengths from 1 to 8 a's
+
+note that there is more interesting behavior here compared to d02. that could be because i changed the instructions to emphasize helpfulness. or it could be because i got more people with programming / regex experience in this sample (and had a larger sample).
 
 ## any bugs?
 
 ```{r}
-assignments %>% select(bugs) %>% arrange(desc(nchar(bugs)))
+assignments %>% select(bugs, worker.id) %>% arrange(desc(nchar(bugs)))
 ```
+
+not quite sure i understand the feedback from 6487c8d. they appear to have done everything correctly except for the delimiters example.
 
 ## how much did they enjoy the task?
 
@@ -166,36 +179,7 @@ ggplot(data = e.agg) +
   scale_x_discrete(breaks = as.character(xmin:xmax), drop = FALSE, name = 'number of examples')
 ```
 
-exactly 2 seems to be common
-
-maybe people are giving exactly 2 because they think that's what i'm asking for?
-if this were true, i'd expect there to be people that give all (or mostly) 2-examples and other people that give various ones.
-
-```{r}
-e.agg = responses %>% group_by(worker.id, rule.id) %>%
-  summarise(num.examples = n()) %>%
-  spread(rule.id, num.examples)
-
-# todo: use select()
-parcoord(e.agg %>% ungroup() %>% select(-worker.id), col = adjustcolor("black", alpha = 0.2))
-```
-
-(this doesn't show up in the notebook but it works in the console). still, this graph sucks though. i wish this were easier.
-
-```{r}
-e.agg = responses %>% group_by(worker.id, rule.id) %>%
-  summarise(num.examples = n()) %>%
-  spread(rule.id, num.examples)
-
-names(e.agg) = c("worker.id", paste0("r",gsub("-",".",names(e.agg)[2:5])))
-e.agg %>% group_by(r3a, rconsonants.only, rdelimiters, rzip.code) %>%
-  summarise(freq=n()) %>% arrange(desc(freq))
-```
-
-so it looks like not everyone is giving all 2-examples (though 3/20 people did).
-but it looks possible that 7 people thought that you could give at most one example of each polarity (the top 4 rows of this table)
-
-so i think i should still add verbiage saying that (1) you can give as many examples as you want and (2) you should be helpful.
+now 2 examples is no longer the mode.
 
 ## q: do 2-examples tend to be *balanced*? i.e., one positive and one negative?
 
@@ -290,7 +274,7 @@ responses %>%
   merge(responses)
 ```
 
-mostly the zip code rule
+in d02, it was mostly zip code. but here it's not.
 
 ## how many positive examples versus negative examples?
 
@@ -308,8 +292,8 @@ qplot(data = e.agg,
       y = num.neg,
       size = freq) +
   geom_abline() + 
-  scale_x_continuous(name = '# positive examples', breaks = c(0, 3, 6), limits = c(0, 6)) +
-  scale_y_continuous(name = '# negative examples', breaks = c(0, 3, 6), limits = c(0, 6))
+  scale_x_continuous(name = '# positive examples', breaks = c(0, 3, 6), limits = c(0, 7)) +
+  scale_y_continuous(name = '# negative examples', breaks = c(0, 3, 6), limits = c(0, 7))
 ```
 
 things are somewhat balanced -- people tend to give some negative examples.
@@ -326,8 +310,16 @@ e.agg = responses %>% group_by(worker.id, rule.id) %>%
 with(e.agg, t.test(num.pos, num.neg, paired = TRUE))
 ```
 
-there don't appear to be more positive examples than negative, though i want a better model.
-TODO: hierarchical model with by-rule and by-user random effects.
+there is a small preference to give positive examples:
+on average, people give 0.45 more positive examples than negative. people give 4.325 examples on average.
+and there is plenty of variation:
+
+```{r}
+e = data.frame(diff = e.agg$num.pos - e.agg$num.neg) %>% group_by(diff) %>% summarise(freq = n())
+ggplot(data = e) +
+  geom_bar(mapping = aes(x = diff, y = freq), stat = 'identity')
+```
+
 
 ## how related are the examples in edit distance?
 
@@ -473,18 +465,32 @@ responses %>% filter(!correct) %>% select(rule.id, worker.id, string, polarity, 
 ```
 
 issues
-- 3a: ambiguity about lower versus upper case. also, it needs to be clearer that the string contains *only* a's.
-- zip-code: the zip code framing might be too semantic. people might be thinking "give examples of *real* zip codes"
-
+- 3a: people largely interpreted this to be partial matching, not full. also, the issues with lower versus uppercase a's persists.
+- zip-code: people largely interpreted this to be partial matching, not full. 
 
 
 by person:
 ```{r}
-responses %>%
+e = responses %>%
   group_by(worker.id) %>%
   summarise(error.rate = sum(!correct) / n()) %>% 
   arrange(desc(error.rate))
+
+qplot(data = e,
+      x = error.rate,
+      geom = 'histogram')
 ```
+
+there's quite a heavy tail of people that make errors. one person seemed to have given entirely wrong examples though...
+
+what did that person do?
+
+```{r}
+e %>% filter(error.rate == 1) %>% merge(responses) %>%
+  select(rule.id, example.num, polarity, string)
+```
+
+ah, a lazy worker.
 
 ## how long are the examples that people give?
 
@@ -587,10 +593,10 @@ qplot(data = e,
 doesn't appear to be any sequencing over all the participants, though there are certainly cases where this happens:
 
 ```{r}
-responses %>% filter(worker.id == '26e3c2f', rule.id == '3a')
+responses %>% filter(worker.id == 'f0cc52f', rule.id == 'zip-code') %>% select(example.num, polarity, string)
 ```
 
-i wonder if such simple->complex sequencing is better for receivers (ERRATUM-minor: i called this d02 task receiving but it's actually sending). i could test this by presenting receivers with different permutations of a given sequence.
+in first 4 examples, we have two minimal pairs.
 
 break out previous plot by rule.id:
 
@@ -647,7 +653,34 @@ qplot(data = e,
   scale_color_brewer(palette = "Set1")
 ```
 
-in the bottom row (zip code), there appears to be a pattern of examples starting off all the same length. but this  is just an artifact of the rule itself being a constraint on length and people tending to give strings of positive examples first.
+very busy graph. just looking at polarity:
+```{r}
+e = responses %>%
+  transform(len = nchar(string)) %>%
+  group_by(worker.id, rule.id) %>%
+  mutate(z.len = z.score(len), num.examples = max(example.num)) %>%
+  mutate(z.len = ifelse(is.nan(z.len), 0, z.len))
+
+e = ddply(e, .(rule.id), function(ee) {
+  # add dummy indices that are used to layout example sequences vertically
+  ee = ee %>%
+    arrange(num.examples) %>%
+    transform(sort.order = 1:nrow(ee)) # merging will change the order so keep a way of restoring it
+  dummy.df = data.frame(worker.id = unique(ee$worker.id))
+  dummy.df$dummy.id = 1:nrow(dummy.df)
+  merge(ee, dummy.df) %>% arrange(sort.order)
+})
+
+qplot(data = e,
+      facets = . ~ rule.id,
+      x = example.num,
+      y = dummy.id,
+      fill = polarity,
+      geom = 'raster') +
+  scale_fill_brewer(palette = "Set1")
+```
+
+
 
 there don't appear to be very obvious length patterns here.
 
@@ -759,10 +792,18 @@ prop.test(x = sum(e == TRUE), n = length(e))
 ```
 
 
-## TODO
+# comparing afternoon versus morning workers
 
-- do positive examples tend to be dissimilar from other positive examples? (but similar to a subset of negative examples)
-  - metaphor: a positive example as a primary tentpole that supports a number of negative example tentpoles
-  - another metaphor: a positive example as a nucleus around which negative examples orbit
-  - there are clearly cases where you wouldn't expect this to be true (e.g., for 3a rule, you might give aaa, aaaa, aaaaa)
+```{r}
+t.test(assignments[1:20,]$age, assignments[21:40,]$age)
+```
+
+```{r}
+tbl.gender.time = rbind(table(substr(tolower(assignments[1:20,]$gender), 1, 1)),
+          table(substr(tolower(assignments[21:40,]$gender), 1, 1)))
+
+chisq.test(tbl.gender.time)
+```
+
+TODO: run the actually interesting analyses on afternoon people versus morning
 
