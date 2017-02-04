@@ -324,58 +324,75 @@ ggplot(data = e) +
 ## how related are the examples in edit distance?
 
 ```{r}
+# nb: cluster label numbers do not correspond to chronological order
 cluster.examples = function(strings, distance.threshold = 2) {
   distance.matrix = adist(strings)
   
   # for each string, figure out which other strings it's similar to
   # (i.e., has edit distance less than the threshold)
-  similarities = apply(distance.matrix,
-        1,# by row
-        function(row) {
-          which(row <= distance.threshold)
-        })
-  clusters = list()
+  similarities = Map(1:nrow(distance.matrix),
+                     f = function(row.num) {
+                       r = distance.matrix[row.num,]
+                       which(r <= distance.threshold)
+                     })
+  
+  dirty.clusters = list()
   # print(similarities)
   
-  # make the clusters
+  overlap = function(a,b) {
+    length(intersect(a,b)) > 0
+  }
+  
   Map(1:length(strings),
       f = function(i) {
         # j is the index of the previously created cluster that can contain this string
-        j = Position(x = clusters,
-                     f = function(cluster) { i %in% cluster })
+        j = Position(x = dirty.clusters,
+                     f = function(dcluster) { i %in% dcluster })
         
         if (is.na(j)) {
-          clusters[[length(clusters) + 1]] <<- similarities[[i]]
+          dirty.clusters[[length(dirty.clusters) + 1]] <<- similarities[[i]]
         } else {
-          clusters[[j]] <<- union(clusters[[j]], similarities[[i]])
+          dirty.clusters[[j]] <<- union(dirty.clusters[[j]], similarities[[i]])
         }
       })
   
-  # return a list of clusters (each cluster is a vector containing strings that are clustered together)
-  Map(clusters, f = function(indices) { strings[indices] })
+  ## clean up clusters
+  clusters = list()
+  for(i in 1:length(dirty.clusters)) {
+    x = dirty.clusters[[i]]
+    overlaps = unique(c(x, unlist(Filter(clusters, f = function(y) { overlap(x,y) }))))
+    nonoverlaps = Filter(clusters, f = function(y) { !overlap(x,y) })
+    clusters <- c(list(overlaps), nonoverlaps)
+    #print(clusters)
+    #browser()
+  }
 
-  # ### WIP ###
-  # # return a data frame with two columns: string and cluster number
-  # x = do.call(rbind,
-  #         Map(clusters,
-  #             1:length(clusters),
-  #             f = function(indices, cluster.label) {
-  #               data.frame(string = strings[indices],
-  #                          cluster.label = cluster.label)
-  #             }
-  #         ))
-  # 
-  # if (nrow(x) > length(strings)) {
-  #   browser()
-  # }
-  # 
-  # x
+  
+  # # return a list of clusters (each cluster is a vector containing strings that are clustered together)
+  # Map(clusters, f = function(indices) { strings[indices] })
+
+  ### WIP ###
+  # return a data frame with two columns: string and cluster number
+  x = do.call(rbind,
+          Map(clusters,
+              1:length(clusters),
+              f = function(indices, cluster.label) {
+                data.frame(string = strings[indices],
+                           cluster.label = cluster.label)
+              }
+          ))
+
+  x
 }
 
 # # testing
-strings = c("01234", "012a4", "62804", "628041", "y6280", "0123", "280", "a280b")
-# #strings = c('aaa','aa','aaab','baaaab','bbaaabb')
-# ## strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
+#strings = c("aa","bb","bbbb", "bbbbbb") # should be 1 cluster
+#strings = c("aa","ab","xxx","xxyy") # should be 2 clusters
+strings = c("11394", "95834", "13094", "52349", "1234b", "j1344", "123b4") # should be 2 clusters, 7 strings
+#strings = c("12345", "12a34", "72384", "7238l", "sdfgf", "75348", "98765")
+#strings = c("01234", "012a4", "62804", "628041", "y6280", "0123", "280", "a280b")
+#strings = c('aaa','aa','aaab','baaaab','bbaaabb')
+#strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
 cluster.examples(strings)
 ```
 
