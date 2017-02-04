@@ -676,18 +676,17 @@ qplot(data = e,
       x = example.num,
       y = dummy.id,
       fill = polarity,
-      geom = 'raster') +
+      color = I('white'),
+      geom = 'tile') +
   scale_fill_brewer(palette = "Set1")
 ```
 
 
 
-there don't appear to be very obvious length patterns here.
 
-but there are some polarity templates:
-- all positive, then all negative
-- shit sandwich: positive, negative, positive
-- interleaving
+- 2-examples are balanced
+- we see few entirely positive sequences
+- possible pattern: all positive followed by all negative
 
 
 ### polarity
@@ -707,7 +706,8 @@ qplot(data = e,
       geom = c('pointrange','line'))
 ```
 
-interesting -- first example tends to be positive
+interesting -- first example tends to be positive.
+also interesting: subsequent examples are roughly a coin flip between positive and negative. so maybe this is where the significant 0.45 more positive examples than negative comes from -- just the first one?
 
 #### within a cluster, does the first example tend to be positive?
 
@@ -733,7 +733,6 @@ did 90210 show up as a zip code much?
 responses %>% filter(rule.id == 'zip-code', string == '90210')
 ```
 
-no -- only once. i wonder if people were more likely to use their own zip code (could try reconciling with geolocation)
 
 
 ## looking at raw examples
@@ -742,30 +741,12 @@ no -- only once. i wonder if people were more likely to use their own zip code (
 
 ## consonants-only
 
-4 people gave "aeiou":
+11 people gave "aeiou":
 ```{r}
 filter(responses, rule.id == 'consonants-only') %>% filter(string == 'aeiou') %>% nrow
 ```
 
-
-i think this is a good example sequence:
-
-```{r}
-filter(responses, worker.id == '1ec52d4', rule.id == 'consonants-only') %>% select(example.num, polarity, string)
-```
-
-i think this is a bad example sequence, as it doesn't make clear the difference between positive and negative examples (also, there is an error -- #6 is a negative example but it actually doesn't contain any consonants. DOH -- there are other alternatives to the consonants-only rule besides vowels. you can include numbers too.)
-
-```{r}
-filter(responses, worker.id == '26e3c2f', rule.id == 'consonants-only') %>% select(example.num, polarity, string)
-```
-
-(initially i was a little worried that this person was just mashing random keys but they didn't do that for the other rules, so it seems unlikely)
-
-an interesting sequence i'm curious how good these examples are:
-```{r}
-filter(responses, worker.id == '4ba0325', rule.id == 'consonants-only') %>% select(example.num, polarity, string)
-```
+i wonder -- if i changed the rule to exclude some arbitrary collection of five characters, would people submit /that/ concatenation as a negative example?
 
 
 ## delimiters
@@ -791,19 +772,31 @@ print(table(e))
 prop.test(x = sum(e == TRUE), n = length(e))
 ```
 
+in d02, i framed this rule in terms of actual zip codes and the negative examples that people gave were, for the most part, entirely numeric.
+here, they tend to give more examples that are not entirely numeric.
 
 # comparing afternoon versus morning workers
 
-```{r}
+age difference?
+
+```{r}                      
 t.test(assignments[1:20,]$age, assignments[21:40,]$age)
 ```
+
+not really
+
+gender difference?
 
 ```{r}
 tbl.gender.time = rbind(table(substr(tolower(assignments[1:20,]$gender), 1, 1)),
           table(substr(tolower(assignments[21:40,]$gender), 1, 1)))
 
+print(tbl.gender.time)
+
 chisq.test(tbl.gender.time)
 ```
+
+not a significant one
 
 TODO: run the actually interesting analyses on afternoon people versus morning
 
