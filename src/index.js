@@ -1,8 +1,8 @@
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
-    _ = require('underscore'),
-    ExamplesEditor = require('./examples-editor');
+    ReceiveInterface = require('./receive-interface'),
+    _ = require('underscore');
 
 global.jQuery = $; // for form validation library
 
@@ -29,25 +29,31 @@ function showSlide(id) {
 }
 
 
-var sendingRules = [
-  //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
-  {'id': '3a', description: "The string is three or more lowercase <code>a</code>'s"},
-  {'id': 'zip-code', description: "The string is 5 digits in a row"},
-  {'id': 'consonants-only', description: "The string contains only consonants"},
-  {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
+// TODO: randomization
+var receivingExamples = [
+  {'id': '3a', examples: [{polarity: 'positive', string: 'aaa'},
+                          {polarity: 'negative', string: 'aa'},
+                          {polarity: 'positive', string: 'aaaa'}
+                         ]},
+  {'id': 'delimiters', examples: [{polarity: 'positive', string: '[abc]'},
+                                  {polarity: 'negative', string: '[abc'},
+                                  {polarity: 'negative', string: 'abc]'},
+                                  {polarity: 'positive', string: '[xyz]'},
+                                  {polarity: 'positive', string: '[koe]'},
+                                  {polarity: 'positive', string: '[jue'}]}
 ];
 
-var send = bound({
-  inputs: sendingRules,
+var receive = bound({
+  inputs: receivingExamples,
   outputs: [],
   trial: function(input) {
     var comp = React.createElement(
-      ExamplesEditor,
-      {rule: input,
+      ReceiveInterface,
+      {examples: input.examples,
        after: function(output) {
-         send.outputs.push(output);
+         receive.outputs.push(output);
          ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-         send.next();
+         receive.next();
        }});
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function() {
@@ -59,7 +65,7 @@ var send = bound({
     var i = this.outputs.length;
     var n = this.inputs.length;
 
-    if (i == send.inputs.length) {
+    if (i == receive.inputs.length) {
       this.after(this)
     } else {
       // advance progress indicator
@@ -116,13 +122,13 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up send results
-  results.send = _.map(
-    send.outputs,
+  // clean up receive results
+  results.receive = _.map(
+    receive.outputs,
     function(x,i) {
       return _.extend({},
                       // add rule info
-                      send.inputs[i],
+                      receive.inputs[i],
                       // ditch reveal info, munge into data frame
                       {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) })
 
@@ -133,9 +139,9 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', send.next)
+$('#intro button.next').one('click', receive.next)
 
-send.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
@@ -143,7 +149,7 @@ questionnaire.after = finishExperiment;
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
   pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
-           'send','questionnaire',
+           'receive','questionnaire',
            'finishExperiment'])
 
   function handleHash(e) {

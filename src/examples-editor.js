@@ -54,7 +54,7 @@ var ExamplesList = React.createClass({
   }
 });
 
-var ExamplesEditor = React.createClass({
+var ReceivingInterface = React.createClass({
   getBlankExample: function() {
     var timeString = (new Date()).getTime() + '';
     return _.object([[timeString, {polarity: null, string: null}]]);
@@ -137,4 +137,4 @@ var ExamplesEditor = React.createClass({
 
 });
 
-module.exports = ExamplesEditor;
+module.exports = ReceivingInterface;

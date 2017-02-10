@@ -32528,128 +32528,12 @@ module.exports = require('./lib/React');
 }.call(this));
 
 },{}],174:[function(require,module,exports){
-var React = require('react'),
-    ReactDOM = require('react-dom'),
-    $ = require('jquery'),
-    _ = require('underscore');
-
-var Example = React.createClass({
-  displayName: 'Example',
-
-  render: function () {
-    var comp = this,
-        updateExample = this.props.updateExample,
-        time = this.props.time + '';
-    var updateString = function (e) {
-      updateExample({ time: time, string: e.target.value });
-    };
-    var updatePolarity = function (e) {
-      updateExample({ time: time, polarity: e.target.value });
-    };
-    var deleteExample = function (e) {
-      e.preventDefault();
-      console.log(e);
-      comp.props.deleteExample(comp);
-    };
-    var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
-    var string = this.props.string == null ? "" : this.props.string;
-    return React.createElement('form', null, React.createElement('span', { className: 'remove', onClick: deleteExample }, ' \u25CF'), ' The string ', React.createElement('input', { type: 'text', name: 'string', onChange: updateString, value: string }), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'positive', onChange: updatePolarity }), 'matches'), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'negative', onChange: updatePolarity }), doesnt, ' match '));
-  }
-});
-
-var removeExample = function () {
-  alert('To remove an example, click the red circle next to it');
-};
-
-var ExamplesList = React.createClass({
-  displayName: 'ExamplesList',
-
-  render: function () {
-    var comp = this;
-    var listObj = _.mapObject(this.props.examples, function (ex, key) {
-      return React.createElement(Example, { polarity: ex.polarity, string: ex.string, time: key, key: key, updateExample: comp.props.updateExample, deleteExample: comp.props.deleteExample });
-    }),
-        list = _.values(listObj);
-
-    return React.createElement('div', null, list);
-  }
-});
-
-var ExamplesEditor = React.createClass({
-  displayName: 'ExamplesEditor',
-
-  getBlankExample: function () {
-    var timeString = new Date().getTime() + '';
-    return _.object([[timeString, { polarity: null, string: null }]]);
-  },
-  finish: function () {
-    this.props.after(this.state);
-  },
-  addExample: function () {
-    this.setState(_.extend(this.getBlankExample(), this.state));
-  },
-  revealRule: function () {
-    this.setState({ revealRule: true });
-  },
-  revealInterface: function () {
-    this.setState({ revealInterface: true });
-  },
-  getInitialState: function () {
-    return {
-      revealRule: false,
-      revealInterface: false
-    };
-  },
-  updateExample: function (ex) {
-    var old = this.state[ex.time];
-
-    var newEntry = _.extend({}, old, ex);
-
-    this.setState(_.object([[ex.time, newEntry]]));
-  },
-  deleteExample: function (ex) {
-    this.replaceState(_.omit(this.state, ex.props.time));
-  },
-  render: function () {
-    var examples = _.omit(this.state, 'revealRule', 'revealInterface'),
-        numExamples = _.size(examples);
-
-    var ruleContents = { __html: this.props.rule.description };
-
-    var communicationFraming = 'Imagine that you want to tell a friend of yours about a rule for making strings:';
-
-    var revealRule = this.state.revealRule,
-        revealInterface = this.state.revealInterface;
-
-    var revealRuleButtonClass = 'reveal-rule' + (revealRule ? ' hide' : '');
-    var ruleWrapperClass = 'rule-wrapper' + (revealRule ? '' : ' hide');
-
-    var revealInterfaceButtonClass = 'reveal-interface' + (revealRule ? revealInterface ? ' hide' : '' : ' hide');
-    var interfaceClass = 'interface' + (revealInterface ? '' : ' hide');
-
-    var examplesComplete = _.every(examples, function (ex) {
-      return ex.string && ex.polarity;
-    });
-    var canFinish = numExamples > 0 && examplesComplete;
-    var finishTitle = canFinish ? '' : numExamples == 0 ? 'Add at least one example to continue' : 'Complete all your examples to continue';
-
-    var addButtonLabel = numExamples == 0 ? 'Add first example' : 'Add another example';
-    var removeButtonClassName = 'add-example' + (numExamples == 0 ? ' hide' : '');
-
-    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('p', null, communicationFraming), React.createElement('button', { type: 'button', className: revealRuleButtonClass, onClick: this.revealRule }, 'Click here to show the rule'), React.createElement('p', { className: ruleWrapperClass }, ' Rule: ', React.createElement('span', { className: 'rule', dangerouslySetInnerHTML: ruleContents })), React.createElement('button', { type: 'button', className: revealInterfaceButtonClass, onClick: this.revealInterface }, 'Continue'), React.createElement('div', { className: interfaceClass }, React.createElement('p', null, 'How would you communicate this rule by giving examples of strings that either match or don\'t match the rule? You can give any number of examples but try to give enough and make them helpful  so that your friend would guess the correct rule.'), React.createElement(ExamplesList, { examples: examples, updateExample: this.updateExample, deleteExample: this.deleteExample }), React.createElement('button', { className: 'add-example', onClick: this.addExample }, React.createElement('span', { className: 'icon plus' }, '+'), ' ', addButtonLabel), React.createElement('button', { className: removeButtonClassName, onClick: removeExample }, React.createElement('span', { className: 'icon minus' }, '-'), ' Remove an example'), React.createElement('div', { className: 'clear' }), React.createElement('button', { className: 'done-adding', onClick: this.finish, disabled: !canFinish, title: finishTitle }, 'Next rule >>')));
-  }
-
-});
-
-module.exports = ExamplesEditor;
-
-},{"jquery":26,"react":172,"react-dom":29,"underscore":173}],175:[function(require,module,exports){
 (function (global){
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
-    _ = require('underscore'),
-    ExamplesEditor = require('./examples-editor');
+    ReceiveInterface = require('./receive-interface'),
+    _ = require('underscore');
 
 global.jQuery = $; // for form validation library
 
@@ -32674,19 +32558,18 @@ function showSlide(id) {
   $(current).addClass('show');
 }
 
-var sendingRules = [
-//{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
-{ 'id': '3a', description: "The string is three or more lowercase <code>a</code>'s" }, { 'id': 'zip-code', description: "The string is 5 digits in a row" }, { 'id': 'consonants-only', description: "The string contains only consonants" }, { 'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>' }];
+// TODO: randomization
+var receivingExamples = [{ 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }] }, { 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }] }];
 
-var send = bound({
-  inputs: sendingRules,
+var receive = bound({
+  inputs: receivingExamples,
   outputs: [],
   trial: function (input) {
-    var comp = React.createElement(ExamplesEditor, { rule: input,
+    var comp = React.createElement(ReceiveInterface, { examples: input.examples,
       after: function (output) {
-        send.outputs.push(output);
+        receive.outputs.push(output);
         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-        send.next();
+        receive.next();
       } });
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function () {
@@ -32697,7 +32580,7 @@ var send = bound({
     var i = this.outputs.length;
     var n = this.inputs.length;
 
-    if (i == send.inputs.length) {
+    if (i == receive.inputs.length) {
       this.after(this);
     } else {
       // advance progress indicator
@@ -32752,11 +32635,11 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up send results
-  results.send = _.map(send.outputs, function (x, i) {
+  // clean up receive results
+  results.receive = _.map(receive.outputs, function (x, i) {
     return _.extend({},
     // add rule info
-    send.inputs[i],
+    receive.inputs[i],
     // ditch reveal info, munge into data frame
     { examples: _.values(_.omit(x, 'revealRule', 'revealInterface')) });
   });
@@ -32770,16 +32653,16 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', send.next);
+$('#intro button.next').one('click', receive.next);
 
-send.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
 // debugging (example URL: index.html?debug#questionnaire)
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
-  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'send', 'questionnaire', 'finishExperiment']);
+  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receive', 'questionnaire', 'finishExperiment']);
 
   function handleHash(e) {
     var key = global.location.hash.replace("#", "");
@@ -32860,4 +32743,98 @@ window.setGeo = setGeo;
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./examples-editor":174,"jquery":26,"react":172,"react-dom":29,"underscore":173}]},{},[175]);
+},{"./receive-interface":175,"jquery":26,"react":172,"react-dom":29,"underscore":173}],175:[function(require,module,exports){
+var React = require('react'),
+    ReactDOM = require('react-dom'),
+    $ = require('jquery'),
+    _ = require('underscore');
+
+var ReceivedExample = React.createClass({
+  displayName: 'ReceivedExample',
+
+  render: function () {
+    var matchString = this.props.polarity == 'positive' ? 'fits' : 'doesn\'t fit';
+    var matchIconText = this.props.polarity == 'positive' ? '✔' : '✘';
+    var matchIconClass = 'matchIcon ' + this.props.polarity;
+
+    var revealed = this.props.revealed;
+
+    if (!revealed || revealed == 'on-deck') {
+      var isDisabled = !revealed;
+      return React.createElement('p', null, React.createElement('button', { disabled: isDisabled, onClick: this.props.revealNext }, 'Click to show example'));
+    } else {
+      return React.createElement('div', null, 'The string ', React.createElement('code', null, this.props.string), ' ', matchString, ' ', React.createElement('span', { className: matchIconClass }, matchIconText));
+    }
+  }
+});
+
+var ReceivedExamplesList = React.createClass({
+  displayName: 'ReceivedExamplesList',
+
+  getInitialState: function () {
+    return { numRevealed: 0 };
+  },
+  revealExample: function () {
+    this.setState({ numRevealed: this.state.numRevealed + 1 });
+  },
+  render: function () {
+    var comp = this;
+    var listObj = _.map(this.props.examples, function (ex, i) {
+      // revealed can be true, false, or "on-deck"
+      var revealed = i < comp.state.numRevealed;
+      if (i == comp.state.numRevealed) {
+        revealed = 'on-deck';
+      }
+      return React.createElement(ReceivedExample, { polarity: ex.polarity, string: ex.string, key: i, revealed: revealed, revealNext: comp.revealExample });
+    }),
+        list = _.values(listObj);
+
+    return React.createElement('div', { className: 'received-examples-list' }, list);
+  }
+});
+
+var ReceiveInterface = React.createClass({
+  displayName: 'ReceiveInterface',
+
+  getBlankExample: function () {
+    var timeString = new Date().getTime() + '';
+    return _.object([[timeString, { polarity: null, string: null }]]);
+  },
+  finish: function () {
+    this.props.after(this.state);
+  },
+  addExample: function () {
+    this.setState(_.extend(this.getBlankExample(), this.state));
+  },
+  revealRule: function () {
+    this.setState({ revealRule: true });
+  },
+  revealInterface: function () {
+    this.setState({ revealInterface: true });
+  },
+  getInitialState: function () {
+    return {
+      revealRule: false,
+      revealInterface: false
+    };
+  },
+  updateExample: function (ex) {
+    var old = this.state[ex.time];
+
+    var newEntry = _.extend({}, old, ex);
+
+    this.setState(_.object([[ex.time, newEntry]]));
+  },
+  deleteExample: function (ex) {
+    this.replaceState(_.omit(this.state, ex.props.time));
+  },
+  render: function () {
+
+    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:'), React.createElement(ReceivedExamplesList, { examples: this.props.examples }));
+  }
+
+});
+
+module.exports = ReceiveInterface;
+
+},{"jquery":26,"react":172,"react-dom":29,"underscore":173}]},{},[174]);

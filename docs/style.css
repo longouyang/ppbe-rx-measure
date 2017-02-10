@@ -162,6 +162,19 @@ input[name='string'] {
     margin: 0 auto;
 }
 
+.received-examples-list {
+    font-size: 24px;
+}
+
+.matchIcon.positive {
+    color: green
+}
+
+.matchIcon.negative {
+    color: red
+}
+
+
 .progress {
     border: 1px solid gray;
     border-radius: 2px;
