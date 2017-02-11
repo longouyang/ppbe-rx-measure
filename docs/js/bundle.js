@@ -32559,13 +32559,16 @@ function showSlide(id) {
 }
 
 // TODO: randomization
-var receivingExamples = [{ 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }] }, { 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }] }];
+var receivingExamples = [{ 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }],
+  questions: ['aaaa', 'a', 'AAA', 'aaab']
+}, { 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }] }];
 
 var receive = bound({
   inputs: receivingExamples,
   outputs: [],
   trial: function (input) {
     var comp = React.createElement(ReceiveInterface, { examples: input.examples,
+      questions: input.questions,
       after: function (output) {
         receive.outputs.push(output);
         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
@@ -32761,13 +32764,16 @@ var ReceivedExample = React.createClass({
 
     if (!revealed || revealed == 'on-deck') {
       var isDisabled = !revealed;
-      return React.createElement('p', null, React.createElement('button', { disabled: isDisabled, onClick: this.props.revealNext }, 'Click to show example'));
+      return React.createElement('button', { disabled: isDisabled, onClick: this.props.revealNext }, 'Click to show example');
     } else {
       return React.createElement('div', null, 'The string ', React.createElement('code', null, this.props.string), ' ', matchString, ' ', React.createElement('span', { className: matchIconClass }, matchIconText));
     }
   }
 });
 
+// props:
+// - examples
+// - onAllRevealed (a function)
 var ReceivedExamplesList = React.createClass({
   displayName: 'ReceivedExamplesList',
 
@@ -32775,7 +32781,14 @@ var ReceivedExamplesList = React.createClass({
     return { numRevealed: 0 };
   },
   revealExample: function () {
-    this.setState({ numRevealed: this.state.numRevealed + 1 });
+    var comp = this;
+    this.setState(function (oldState, props) {
+      var numRevealed = oldState.numRevealed + 1;
+      if (numRevealed == props.examples.length) {
+        comp.props.onAllRevealed();
+      }
+      return { numRevealed: numRevealed };
+    });
   },
   render: function () {
     var comp = this;
@@ -32785,52 +32798,87 @@ var ReceivedExamplesList = React.createClass({
       if (i == comp.state.numRevealed) {
         revealed = 'on-deck';
       }
-      return React.createElement(ReceivedExample, { polarity: ex.polarity, string: ex.string, key: i, revealed: revealed, revealNext: comp.revealExample });
+      return React.createElement('li', { key: i }, React.createElement(ReceivedExample, { polarity: ex.polarity, string: ex.string, revealed: revealed, revealNext: comp.revealExample }));
     }),
         list = _.values(listObj);
 
-    return React.createElement('div', { className: 'received-examples-list' }, list);
+    return React.createElement('ol', { className: 'received-examples-list' }, list);
   }
 });
 
+// props:
+// - questions (an array of strings)
+//
+// state:
+// - show (true, false, 'possible')
+//
+var GeneralizationQuestions = React.createClass({
+  displayName: 'GeneralizationQuestions',
+
+  getInitialState: function () {
+    return { show: false, actions: [] };
+  },
+  show: function () {
+    this.setState({ show: true });
+  },
+  // get the current set of responses
+  getResponses: function () {
+    var comp = this,
+        actions = comp.state.actions;
+    return this.props.questions.map(function (q) {
+      return _.findWhere(actions, { string: q }) || false;
+    });
+  },
+  render: function () {
+    var comp = this,
+        show = comp.state.show;
+
+    if (!show) {
+      return React.createElement('div', { className: 'generalization-questions' });
+    } else if (show == 'possible') {
+      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('button', { onClick: comp.show }, 'Next'));
+    } else {
+      var doesnt = "doesn't";
+      var questions = comp.props.questions.map(function (question, i) {
+        var inputName = "polarity_" + question;
+
+        var updatePolarity = function (e) {
+          var polarity = e.target.value;
+          comp.setState({ actions: [{ time: _.now(), string: question, polarity: polarity }].concat(comp.state.actions)
+          });
+        };
+
+        return React.createElement('tr', { key: question }, React.createElement('td', null, React.createElement('code', null, question)), React.createElement('td', null, React.createElement('center', null, React.createElement('input', { type: 'radio', name: inputName, value: 'positive', onChange: updatePolarity }))), React.createElement('td', null, React.createElement('center', null, React.createElement('input', { type: 'radio', name: inputName, value: 'negative', onChange: updatePolarity }))));
+      });
+
+      var Doesnt = "Doesn't";
+
+      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('p', null, 'Now, based on your best guess, judge whether these other strings match the rule:'), React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'String'), React.createElement('th', null, 'Matches'), React.createElement('th', null, Doesnt, ' match'))), React.createElement('tbody', null, questions)));
+    }
+  }
+});
+// props:
+// - examples (an array of examples, i.e., objects with string and polarity properties)
+// - questions (a list of generalization strings for the user to classify)
+// - after (a callback)
 var ReceiveInterface = React.createClass({
   displayName: 'ReceiveInterface',
 
-  getBlankExample: function () {
-    var timeString = new Date().getTime() + '';
-    return _.object([[timeString, { polarity: null, string: null }]]);
-  },
-  finish: function () {
-    this.props.after(this.state);
-  },
-  addExample: function () {
-    this.setState(_.extend(this.getBlankExample(), this.state));
-  },
-  revealRule: function () {
-    this.setState({ revealRule: true });
-  },
-  revealInterface: function () {
-    this.setState({ revealInterface: true });
-  },
   getInitialState: function () {
-    return {
-      revealRule: false,
-      revealInterface: false
+    return { showGeneralization: false };
+  },
+  showGeneralization: function () {
+    this.refs.generalization.setState({ show: 'possible' });
+  },
+  after: function () {
+    var outputData = {
+      generalization: this.ref.generalization.state,
+      gloss: 'TODO'
     };
-  },
-  updateExample: function (ex) {
-    var old = this.state[ex.time];
-
-    var newEntry = _.extend({}, old, ex);
-
-    this.setState(_.object([[ex.time, newEntry]]));
-  },
-  deleteExample: function (ex) {
-    this.replaceState(_.omit(this.state, ex.props.time));
   },
   render: function () {
 
-    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:'), React.createElement(ReceivedExamplesList, { examples: this.props.examples }));
+    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:'), React.createElement(ReceivedExamplesList, { onAllRevealed: this.showGeneralization, examples: this.props.examples }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions }));
   }
 
 });

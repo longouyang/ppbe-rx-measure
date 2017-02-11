@@ -34,7 +34,13 @@ var receivingExamples = [
   {'id': '3a', examples: [{polarity: 'positive', string: 'aaa'},
                           {polarity: 'negative', string: 'aa'},
                           {polarity: 'positive', string: 'aaaa'}
-                         ]},
+                         ],
+   questions: ['aaaa',
+               'a',
+               'AAA',
+               'aaab'
+              ]
+  },
   {'id': 'delimiters', examples: [{polarity: 'positive', string: '[abc]'},
                                   {polarity: 'negative', string: '[abc'},
                                   {polarity: 'negative', string: 'abc]'},
@@ -50,6 +56,7 @@ var receive = bound({
     var comp = React.createElement(
       ReceiveInterface,
       {examples: input.examples,
+       questions: input.questions,
        after: function(output) {
          receive.outputs.push(output);
          ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);

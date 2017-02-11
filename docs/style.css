@@ -162,8 +162,16 @@ input[name='string'] {
     margin: 0 auto;
 }
 
+.cover-story {
+    margin-top: 1em
+}
+
 .received-examples-list {
     font-size: 24px;
+}
+
+.received-examples-list li {
+    height: 50px;
 }
 
 .matchIcon.positive {
@@ -172,6 +180,32 @@ input[name='string'] {
 
 .matchIcon.negative {
     color: red
+}
+
+.generalization-questions table {
+    border-collapse: collapse;
+    margin-left: 1em
+}
+
+.generalization-questions td, .generalization-questions th {
+    font-size: 24px;
+    padding: 5px
+}
+
+.generalization-questions th, .generalization-questions th {
+    font-weight: normal;
+    font-size: 20px;
+}
+
+
+.generalization-questions tr {
+    border: 1px solid gray;
+
+}
+
+.generalization-questions input[type="radio"] {
+    height: 24px;
+    width: 24px;
 }
 
 

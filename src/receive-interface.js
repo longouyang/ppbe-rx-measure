@@ -13,19 +13,29 @@ var ReceivedExample = React.createClass({
 
     if (!revealed || revealed == 'on-deck') {
       var isDisabled = !revealed;
-      return (<p><button disabled={isDisabled} onClick={this.props.revealNext} >Click to show example</button></p>)
+      return (<button disabled={isDisabled} onClick={this.props.revealNext} >Click to show example</button>)
     } else {
         return (<div>The string <code>{this.props.string}</code> {matchString} <span className={matchIconClass}>{matchIconText}</span></div>)
     }
   }
 });
 
+// props:
+// - examples
+// - onAllRevealed (a function)
 var ReceivedExamplesList = React.createClass({
   getInitialState: function() {
     return {numRevealed: 0}
   },
   revealExample: function() {
-    this.setState({numRevealed: this.state.numRevealed + 1})
+    var comp = this;
+    this.setState(function(oldState, props) {
+      var numRevealed = oldState.numRevealed + 1;
+      if (numRevealed == props.examples.length) {
+        comp.props.onAllRevealed();
+      }
+      return {numRevealed: numRevealed};
+    })
   },
   render: function() {
     var comp = this;
@@ -36,52 +46,105 @@ var ReceivedExamplesList = React.createClass({
                           if (i == comp.state.numRevealed) {
                             revealed = 'on-deck'
                           }
-                          return (<ReceivedExample polarity={ex.polarity} string={ex.string} key={i} revealed={revealed} revealNext={comp.revealExample} />)
+                          return (<li key={i}><ReceivedExample polarity={ex.polarity} string={ex.string} revealed={revealed} revealNext={comp.revealExample} /></li>)
                         }),
         list = _.values(listObj);
 
-    return (<div className='received-examples-list'>{list}</div>)
+    return (<ol className='received-examples-list'>{list}</ol>)
   }
 });
 
-var ReceiveInterface = React.createClass({
-  getBlankExample: function() {
-    var timeString = (new Date()).getTime() + '';
-    return _.object([[timeString, {polarity: null, string: null}]]);
-  },
-  finish: function() {
-    this.props.after(this.state);
-  },
-  addExample: function() {
-    this.setState(_.extend(this.getBlankExample(), this.state));
-  },
-  revealRule: function() {
-    this.setState({revealRule: true})
-  },
-  revealInterface: function() {
-    this.setState({revealInterface: true})
-  },
+// props:
+// - questions (an array of strings)
+//
+// state:
+// - show (true, false, 'possible')
+//
+var GeneralizationQuestions = React.createClass({
   getInitialState: function() {
-    return {
-      revealRule: false,
-      revealInterface: false
-    };
+    return {show: false, actions: []}
   },
-  updateExample: function(ex) {
-    var old = this.state[ex.time];
-
-    var newEntry = _.extend({}, old, ex);
-
-    this.setState(_.object([[ex.time, newEntry]]))
+  show: function() {
+    this.setState({show: true})
   },
-  deleteExample: function(ex) {
-    this.replaceState(_.omit(this.state, ex.props.time));
+  // get the current set of responses
+  getResponses: function() {
+    var comp = this,
+        actions = comp.state.actions;
+    return this.props.questions.map(function(q) {
+      return _.findWhere(actions, {string: q}) || false
+    });
+  },
+  render: function() {
+    var comp = this,
+        show = comp.state.show;
+
+    if (!show) {
+      return (<div className='generalization-questions'></div>)
+    } else if (show == 'possible') {
+      return (<div className='generalization-questions'><button onClick={comp.show}>Next</button></div>)
+    } else {
+      var doesnt = "doesn't";
+      var questions = comp.props.questions.map(function(question, i) {
+        var inputName = "polarity_" + question;
+
+
+        var updatePolarity = function(e) {
+          var polarity = e.target.value;
+          comp.setState({actions:
+                         [{time: _.now(), string: question, polarity: polarity}].concat(comp.state.actions)
+                        })
+        }
+
+        return (<tr key={question}>
+                <td><code>{question}</code></td>
+                <td><center><input type="radio" name={inputName} value="positive" onChange={updatePolarity} /></center></td>
+                <td><center><input type="radio" name={inputName} value="negative" onChange={updatePolarity} /></center></td>
+                </tr>)
+      });
+
+      var Doesnt = "Doesn't";
+
+      return (<div className='generalization-questions'>
+              <p>Now, based on your best guess, judge whether these other strings match the rule:</p>
+              <table>
+              <thead>
+              <tr><th>String</th>
+              <th>Matches</th>
+              <th>{Doesnt} match</th>
+              </tr>
+              </thead>
+              <tbody>
+              {questions}
+              </tbody>
+              </table>
+              </div>);
+    }
+  }
+})
+// props:
+// - examples (an array of examples, i.e., objects with string and polarity properties)
+// - questions (a list of generalization strings for the user to classify)
+// - after (a callback)
+var ReceiveInterface = React.createClass({
+  getInitialState: function() {
+    return {showGeneralization: false}
+  },
+  showGeneralization: function() {
+    this.refs.generalization.setState({show: 'possible'});
+  },
+  after: function() {
+    var outputData = {
+      generalization: this.ref.generalization.state,
+      gloss: 'TODO'
+    }
   },
   render: function() {
 
     return (<div className='examplesEditor'>
             <div className='cover-story'>There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don’t fit the rule. Here are the examples they made:</div>
-            <ReceivedExamplesList examples={this.props.examples} />
+            <ReceivedExamplesList onAllRevealed={this.showGeneralization} examples={this.props.examples} />
+            <GeneralizationQuestions ref='generalization' questions={this.props.questions} />
             </div>)
     }
 
