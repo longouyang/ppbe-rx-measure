@@ -1,7 +1,8 @@
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
-    _ = require('underscore');
+    _ = require('underscore'),
+    scrollIntoViewIfNeeded = require('scroll-into-view-if-needed');
 
 var ReceivedExample = React.createClass({
   render: function() {
@@ -54,8 +55,10 @@ var ReceivedExamplesList = React.createClass({
   }
 });
 
+
 // props:
 // - questions (an array of strings)
+// - after (callback)
 //
 // state:
 // - show (true, false, 'possible')
@@ -65,7 +68,7 @@ var GeneralizationQuestions = React.createClass({
     return {show: false, actions: []}
   },
   show: function() {
-    this.setState({show: true})
+    this.setState({nextButtonClicked: false, show: true})
   },
   // get the current set of responses
   getResponses: function() {
@@ -74,6 +77,16 @@ var GeneralizationQuestions = React.createClass({
     return this.props.questions.map(function(q) {
       return _.findWhere(actions, {string: q}) || false
     });
+  },
+  finish: function() {
+    this.setState({nextButtonClicked: true},
+                  function() {
+                    var history = this.getResponses()
+                    this.props.after()
+                  });
+  },
+  scroll: function() {
+    scrollIntoViewIfNeeded(ReactDOM.findDOMNode(this), false, {duration: 240});
   },
   render: function() {
     var comp = this,
@@ -84,6 +97,7 @@ var GeneralizationQuestions = React.createClass({
     } else if (show == 'possible') {
       return (<div className='generalization-questions'><button onClick={comp.show}>Next</button></div>)
     } else {
+
       var doesnt = "doesn't";
       var questions = comp.props.questions.map(function(question, i) {
         var inputName = "polarity_" + question;
@@ -105,8 +119,13 @@ var GeneralizationQuestions = React.createClass({
 
       var Doesnt = "Doesn't";
 
+      var allQuestionsAnswered = _.filter(comp.getResponses()).length == questions.length,
+          finishButtonClass = allQuestionsAnswered ? (comp.state.nextButtonClicked ? 'invisible' : '') : 'invisible';
+
+      setTimeout(comp.scroll, 0);
+
       return (<div className='generalization-questions'>
-              <p>Now, based on your best guess, judge whether these other strings match the rule:</p>
+              <p>Now, based on your best guess about what the rule is, judge whether these other strings match the rule:</p>
               <table>
               <thead>
               <tr><th>String</th>
@@ -118,10 +137,51 @@ var GeneralizationQuestions = React.createClass({
               {questions}
               </tbody>
               </table>
+              <button className={finishButtonClass} onClick={comp.finish}>Next</button>
               </div>);
     }
   }
 })
+
+// props:
+// - after (a callback)
+var GlossQuestion = React.createClass({
+  getInitialState: function() {
+    return {show: false, value: ''}
+  },
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  },
+  finish: function() {
+    this.props.after(this.state.value)
+  },
+  scroll: function() {
+    scrollIntoViewIfNeeded(ReactDOM.findDOMNode(this));
+  },
+  componentDidMount: function() {
+    this.scroll()
+  },
+  componentDidUpdate: function() {
+    this.scroll()
+  },
+  render: function() {
+    if (!this.state.show) {
+      return (<div></div>)
+    } else {
+      var emptyText = this.state.value.length == 0,
+      buttonDisabled = emptyText,
+      buttonText = 'Next';
+
+      return (<div className='gloss-question'>
+              <p>Can you describe in words what you think the rule is?</p>
+              <textarea value={this.state.value} onChange={this.handleChange} rows="4" cols="60"></textarea>
+              <button disabled={buttonDisabled} onClick={this.finish}>{buttonText}</button>
+              </div>)
+    }
+  }
+})
+
+
 // props:
 // - examples (an array of examples, i.e., objects with string and polarity properties)
 // - questions (a list of generalization strings for the user to classify)
@@ -133,18 +193,29 @@ var ReceiveInterface = React.createClass({
   showGeneralization: function() {
     this.refs.generalization.setState({show: 'possible'});
   },
-  after: function() {
-    var outputData = {
-      generalization: this.ref.generalization.state,
-      gloss: 'TODO'
-    }
+  afterGeneralization: function() {
+    this.refs.gloss.setState({show: true})
+  },
+  afterGloss: function() {
+
+    var gen = this.refs.generalization;
+
+    this.props.after({
+      gloss: this.refs.gloss.state.value,
+      generalization: gen.getResponses(),
+      generalizationHistory: gen.state.actions
+    })
   },
   render: function() {
+    var comp = this;
+
+    var coverStory = (<div className='cover-story'>There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don’t fit the rule. Here are the examples they made:</div>);
 
     return (<div className='examplesEditor'>
-            <div className='cover-story'>There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don’t fit the rule. Here are the examples they made:</div>
+            {coverStory}
             <ReceivedExamplesList onAllRevealed={this.showGeneralization} examples={this.props.examples} />
-            <GeneralizationQuestions ref='generalization' questions={this.props.questions} />
+            <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={comp.afterGeneralization} />
+            <GlossQuestion ref='gloss' after={this.afterGloss} />
             </div>)
     }
 

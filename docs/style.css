@@ -31,12 +31,14 @@ code {
 }
 
 .slide {
-    width: 100%;
-    height: 100%;
+    width: 96%;
     padding: 2% 2%;
+    margin: 0;
     position: absolute;
     background-color: white;
     display: none;
+    top: 0;
+    left: 0;
 }
 
 .show {
@@ -153,6 +155,10 @@ input[name='string'] {
     display: none;
 }
 
+.invisible {
+    visibility: hidden;
+}
+
 .interface-instructions {
     font-style: italic
 }
@@ -168,6 +174,7 @@ input[name='string'] {
 
 .received-examples-list {
     font-size: 24px;
+    margin-bottom: 0.5em;
 }
 
 .received-examples-list li {
@@ -184,7 +191,7 @@ input[name='string'] {
 
 .generalization-questions table {
     border-collapse: collapse;
-    margin-left: 1em
+    margin: 1em;
 }
 
 .generalization-questions td, .generalization-questions th {
@@ -206,6 +213,11 @@ input[name='string'] {
 .generalization-questions input[type="radio"] {
     height: 24px;
     width: 24px;
+}
+
+.gloss-question textarea {
+    display: block;
+    margin: 0.5em;
 }
 
 

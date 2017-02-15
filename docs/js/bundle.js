@@ -30978,6 +30978,300 @@ module.exports = validateDOMNesting;
 module.exports = require('./lib/React');
 
 },{"./lib/React":55}],173:[function(require,module,exports){
+'use strict';
+
+/**
+ * https://github.com/gre/bezier-easing
+ * BezierEasing - use bezier curve for transition easing function
+ * by Gaëtan Renaudeau 2014 - 2015 – MIT License
+ */
+
+// These values are established by empiricism with tests (tradeoff: performance VS precision)
+var NEWTON_ITERATIONS = 4;
+var NEWTON_MIN_SLOPE = 0.001;
+var SUBDIVISION_PRECISION = 0.0000001;
+var SUBDIVISION_MAX_ITERATIONS = 10;
+
+var kSplineTableSize = 11;
+var kSampleStepSize = 1.0 / (kSplineTableSize - 1.0);
+
+var float32ArraySupported = typeof Float32Array === 'function';
+
+function A (aA1, aA2) { return 1.0 - 3.0 * aA2 + 3.0 * aA1; }
+function B (aA1, aA2) { return 3.0 * aA2 - 6.0 * aA1; }
+function C (aA1)      { return 3.0 * aA1; }
+
+// Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
+function calcBezier (aT, aA1, aA2) { return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT; }
+
+// Returns dx/dt given t, x1, and x2, or dy/dt given t, y1, and y2.
+function getSlope (aT, aA1, aA2) { return 3.0 * A(aA1, aA2) * aT * aT + 2.0 * B(aA1, aA2) * aT + C(aA1); }
+
+function binarySubdivide (aX, aA, aB, mX1, mX2) {
+  var currentX, currentT, i = 0;
+  do {
+    currentT = aA + (aB - aA) / 2.0;
+    currentX = calcBezier(currentT, mX1, mX2) - aX;
+    if (currentX > 0.0) {
+      aB = currentT;
+    } else {
+      aA = currentT;
+    }
+  } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+  return currentT;
+}
+
+function newtonRaphsonIterate (aX, aGuessT, mX1, mX2) {
+ for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
+   var currentSlope = getSlope(aGuessT, mX1, mX2);
+   if (currentSlope === 0.0) {
+     return aGuessT;
+   }
+   var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+   aGuessT -= currentX / currentSlope;
+ }
+ return aGuessT;
+}
+
+var index$2 = function bezier (mX1, mY1, mX2, mY2) {
+  if (!(0 <= mX1 && mX1 <= 1 && 0 <= mX2 && mX2 <= 1)) {
+    throw new Error('bezier x values must be in [0, 1] range');
+  }
+
+  // Precompute samples table
+  var sampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+  if (mX1 !== mY1 || mX2 !== mY2) {
+    for (var i = 0; i < kSplineTableSize; ++i) {
+      sampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+    }
+  }
+
+  function getTForX (aX) {
+    var intervalStart = 0.0;
+    var currentSample = 1;
+    var lastSample = kSplineTableSize - 1;
+
+    for (; currentSample !== lastSample && sampleValues[currentSample] <= aX; ++currentSample) {
+      intervalStart += kSampleStepSize;
+    }
+    --currentSample;
+
+    // Interpolate to provide an initial guess for t
+    var dist = (aX - sampleValues[currentSample]) / (sampleValues[currentSample + 1] - sampleValues[currentSample]);
+    var guessForT = intervalStart + dist * kSampleStepSize;
+
+    var initialSlope = getSlope(guessForT, mX1, mX2);
+    if (initialSlope >= NEWTON_MIN_SLOPE) {
+      return newtonRaphsonIterate(aX, guessForT, mX1, mX2);
+    } else if (initialSlope === 0.0) {
+      return guessForT;
+    } else {
+      return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize, mX1, mX2);
+    }
+  }
+
+  return function BezierEasing (x) {
+    if (mX1 === mY1 && mX2 === mY2) {
+      return x; // linear
+    }
+    // Because JavaScript number are imprecise, we should guarantee the extremes are right.
+    if (x === 0) {
+      return 0;
+    }
+    if (x === 1) {
+      return 1;
+    }
+    return calcBezier(getTForX(x), mY1, mY2);
+  };
+};
+
+var BezierEasing$1 = index$2;
+
+// Predefined set of animations. Similar to CSS easing functions
+var animations = {
+  ease:  BezierEasing$1(0.25, 0.1, 0.25, 1),
+  easeIn: BezierEasing$1(0.42, 0, 1, 1),
+  easeOut: BezierEasing$1(0, 0, 0.58, 1),
+  easeInOut: BezierEasing$1(0.42, 0, 0.58, 1),
+  linear: BezierEasing$1(0, 0, 1, 1)
+};
+
+
+var index$1 = animate;
+
+function animate(source, target, options) {
+  var start= Object.create(null);
+  var diff = Object.create(null);
+  options = options || {};
+  // We let clients specify their own easing function
+  var easing = (typeof options.easing === 'function') ? options.easing : animations[options.easing];
+
+  // if nothing is specified, default to ease (similar to CSS animations)
+  if (!easing) {
+    if (options.easing) {
+      console.warn('Unknown easing function in amator: ' + options.easing);
+    }
+    easing = animations.ease;
+  }
+
+  var step = typeof options.step === 'function' ? options.step : noop;
+  var done = typeof options.done === 'function' ? options.done : noop;
+
+  var scheduler = getScheduler(options.scheduler);
+
+  var keys = Object.keys(target);
+  keys.forEach(function(key) {
+    start[key] = source[key];
+    diff[key] = target[key] - source[key];
+  });
+
+  var durationInMs = options.duration || 400;
+  var durationInFrames = Math.max(1, durationInMs * 0.06); // 0.06 because 60 frames pers 1,000 ms
+  var previousAnimationId;
+  var frame = 0;
+
+  previousAnimationId = scheduler.next(loop);
+
+  return {
+    cancel: cancel
+  }
+
+  function cancel() {
+    scheduler.cancel(previousAnimationId);
+    previousAnimationId = 0;
+  }
+
+  function loop() {
+    var t = easing(frame/durationInFrames);
+    frame += 1;
+    setValues(t);
+    if (frame <= durationInFrames) {
+      previousAnimationId = scheduler.next(loop);
+      step(source);
+    } else {
+      previousAnimationId = 0;
+      setTimeout(function() { done(source); }, 0);
+    }
+  }
+
+  function setValues(t) {
+    keys.forEach(function(key) {
+      source[key] = diff[key] * t + start[key];
+    });
+  }
+}
+
+function noop() { }
+
+function getScheduler(scheduler) {
+  if (!scheduler) {
+    var canRaf = typeof window !== 'undefined' && window.requestAnimationFrame;
+    return canRaf ? rafScheduler() : timeoutScheduler()
+  }
+  if (typeof scheduler.next !== 'function') throw new Error('Scheduler is supposed to have next(cb) function')
+  if (typeof scheduler.cancel !== 'function') throw new Error('Scheduler is supposed to have cancel(handle) function')
+
+  return scheduler
+}
+
+function rafScheduler() {
+  return {
+    next: window.requestAnimationFrame.bind(window),
+    cancel: window.cancelAnimationFrame.bind(window)
+  }
+}
+
+function timeoutScheduler() {
+  return {
+    next: function(cb) {
+      return setTimeout(cb, 1000/60)
+    },
+    cancel: function (id) {
+      return clearTimeout(id)
+    }
+  }
+}
+
+var index = function (elem, centerIfNeeded, options) {
+  
+  if (!elem) throw new Error('Element is required in scrollIntoViewIfNeeded')
+  
+  function withinBounds(value, min, max, extent) {
+      if (false === centerIfNeeded || max <= value + extent && value <= min + extent) {
+          return Math.min(max, Math.max(min, value));
+      } else {
+          return (min + max) / 2;
+      }
+  }
+
+  function makeArea(left, top, width, height) {
+      return  { "left": left, "top": top, "width": width, "height": height
+              , "right": left + width, "bottom": top + height
+              , "translate":
+                  function (x, y) {
+                      return makeArea(x + left, y + top, width, height);
+                  }
+              , "relativeFromTo":
+                  function (lhs, rhs) {
+                      var newLeft = left, newTop = top;
+                      lhs = lhs.offsetParent;
+                      rhs = rhs.offsetParent;
+                      if (lhs === rhs) {
+                          return area;
+                      }
+                      for (; lhs; lhs = lhs.offsetParent) {
+                          newLeft += lhs.offsetLeft + lhs.clientLeft;
+                          newTop += lhs.offsetTop + lhs.clientTop;
+                      }
+                      for (; rhs; rhs = rhs.offsetParent) {
+                          newLeft -= rhs.offsetLeft + rhs.clientLeft;
+                          newTop -= rhs.offsetTop + rhs.clientTop;
+                      }
+                      return makeArea(newLeft, newTop, width, height);
+                  }
+              };
+  }
+
+  var parent, area = makeArea(
+      elem.offsetLeft, elem.offsetTop,
+      elem.offsetWidth, elem.offsetHeight);
+  while ((parent = elem.parentNode) instanceof HTMLElement) {
+      var clientLeft = parent.offsetLeft + parent.clientLeft;
+      var clientTop = parent.offsetTop + parent.clientTop;
+
+      // Make area relative to parent's client area.
+      area = area.
+          relativeFromTo(elem, parent).
+          translate(-clientLeft, -clientTop);
+
+      var scrollLeft = withinBounds(
+          parent.scrollLeft,
+          area.right - parent.clientWidth, area.left,
+          parent.clientWidth);
+      var scrollTop = withinBounds(
+          parent.scrollTop,
+          area.bottom - parent.clientHeight, area.top,
+          parent.clientHeight);
+      if(options) {
+        index$1(parent, {
+           scrollLeft: scrollLeft,
+          scrollTop: scrollTop
+        }, options);
+      } else {
+        parent.scrollLeft = scrollLeft;
+        parent.scrollTop = scrollTop;
+      }
+
+      // Determine actual scroll amount by reading back scroll properties.
+      area = area.translate(clientLeft - parent.scrollLeft,
+                            clientTop - parent.scrollTop);
+      elem = parent;
+  }
+};
+
+module.exports = index;
+
+},{}],174:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -32527,7 +32821,7 @@ module.exports = require('./lib/React');
   }
 }.call(this));
 
-},{}],174:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 (function (global){
 var React = require('react'),
     ReactDOM = require('react-dom'),
@@ -32559,9 +32853,11 @@ function showSlide(id) {
 }
 
 // TODO: randomization
-var receivingExamples = [{ 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }],
+var receivingExamples = [{ 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }],
+  questions: ['[xyzsf]', '(xyzsf)', '[091235]', '[gsg31', '[[ve#!N2]]', 'sd21p03']
+}, { 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }],
   questions: ['aaaa', 'a', 'AAA', 'aaab']
-}, { 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }] }];
+}];
 
 var receive = bound({
   inputs: receivingExamples,
@@ -32638,14 +32934,7 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up receive results
-  results.receive = _.map(receive.outputs, function (x, i) {
-    return _.extend({},
-    // add rule info
-    receive.inputs[i],
-    // ditch reveal info, munge into data frame
-    { examples: _.values(_.omit(x, 'revealRule', 'revealInterface')) });
-  });
+  results.receive = receive.outputs;
 
   global.results = results;
 
@@ -32746,11 +33035,12 @@ window.setGeo = setGeo;
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./receive-interface":175,"jquery":26,"react":172,"react-dom":29,"underscore":173}],175:[function(require,module,exports){
+},{"./receive-interface":176,"jquery":26,"react":172,"react-dom":29,"underscore":174}],176:[function(require,module,exports){
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
-    _ = require('underscore');
+    _ = require('underscore'),
+    scrollIntoViewIfNeeded = require('scroll-into-view-if-needed');
 
 var ReceivedExample = React.createClass({
   displayName: 'ReceivedExample',
@@ -32808,6 +33098,7 @@ var ReceivedExamplesList = React.createClass({
 
 // props:
 // - questions (an array of strings)
+// - after (callback)
 //
 // state:
 // - show (true, false, 'possible')
@@ -32819,7 +33110,7 @@ var GeneralizationQuestions = React.createClass({
     return { show: false, actions: [] };
   },
   show: function () {
-    this.setState({ show: true });
+    this.setState({ nextButtonClicked: false, show: true });
   },
   // get the current set of responses
   getResponses: function () {
@@ -32828,6 +33119,15 @@ var GeneralizationQuestions = React.createClass({
     return this.props.questions.map(function (q) {
       return _.findWhere(actions, { string: q }) || false;
     });
+  },
+  finish: function () {
+    this.setState({ nextButtonClicked: true }, function () {
+      var history = this.getResponses();
+      this.props.after();
+    });
+  },
+  scroll: function () {
+    scrollIntoViewIfNeeded(ReactDOM.findDOMNode(this), false, { duration: 240 });
   },
   render: function () {
     var comp = this,
@@ -32838,6 +33138,7 @@ var GeneralizationQuestions = React.createClass({
     } else if (show == 'possible') {
       return React.createElement('div', { className: 'generalization-questions' }, React.createElement('button', { onClick: comp.show }, 'Next'));
     } else {
+
       var doesnt = "doesn't";
       var questions = comp.props.questions.map(function (question, i) {
         var inputName = "polarity_" + question;
@@ -32853,10 +33154,52 @@ var GeneralizationQuestions = React.createClass({
 
       var Doesnt = "Doesn't";
 
-      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('p', null, 'Now, based on your best guess, judge whether these other strings match the rule:'), React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'String'), React.createElement('th', null, 'Matches'), React.createElement('th', null, Doesnt, ' match'))), React.createElement('tbody', null, questions)));
+      var allQuestionsAnswered = _.filter(comp.getResponses()).length == questions.length,
+          finishButtonClass = allQuestionsAnswered ? comp.state.nextButtonClicked ? 'invisible' : '' : 'invisible';
+
+      setTimeout(comp.scroll, 0);
+
+      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('p', null, 'Now, based on your best guess about what the rule is, judge whether these other strings match the rule:'), React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'String'), React.createElement('th', null, 'Matches'), React.createElement('th', null, Doesnt, ' match'))), React.createElement('tbody', null, questions)), React.createElement('button', { className: finishButtonClass, onClick: comp.finish }, 'Next'));
     }
   }
 });
+
+// props:
+// - after (a callback)
+var GlossQuestion = React.createClass({
+  displayName: 'GlossQuestion',
+
+  getInitialState: function () {
+    return { show: false, value: '' };
+  },
+  handleChange(event) {
+    this.setState({ value: event.target.value });
+  },
+  finish: function () {
+    this.props.after(this.state.value);
+  },
+  scroll: function () {
+    scrollIntoViewIfNeeded(ReactDOM.findDOMNode(this));
+  },
+  componentDidMount: function () {
+    this.scroll();
+  },
+  componentDidUpdate: function () {
+    this.scroll();
+  },
+  render: function () {
+    if (!this.state.show) {
+      return React.createElement('div', null);
+    } else {
+      var emptyText = this.state.value.length == 0,
+          buttonDisabled = emptyText,
+          buttonText = 'Next';
+
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is?'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText));
+    }
+  }
+});
+
 // props:
 // - examples (an array of examples, i.e., objects with string and polarity properties)
 // - questions (a list of generalization strings for the user to classify)
@@ -32870,19 +33213,29 @@ var ReceiveInterface = React.createClass({
   showGeneralization: function () {
     this.refs.generalization.setState({ show: 'possible' });
   },
-  after: function () {
-    var outputData = {
-      generalization: this.ref.generalization.state,
-      gloss: 'TODO'
-    };
+  afterGeneralization: function () {
+    this.refs.gloss.setState({ show: true });
+  },
+  afterGloss: function () {
+
+    var gen = this.refs.generalization;
+
+    this.props.after({
+      gloss: this.refs.gloss.state.value,
+      generalization: gen.getResponses(),
+      generalizationHistory: gen.state.actions
+    });
   },
   render: function () {
+    var comp = this;
 
-    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:'), React.createElement(ReceivedExamplesList, { onAllRevealed: this.showGeneralization, examples: this.props.examples }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions }));
+    var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:');
+
+    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivedExamplesList, { onAllRevealed: this.showGeneralization, examples: this.props.examples }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: comp.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
   }
 
 });
 
 module.exports = ReceiveInterface;
 
-},{"jquery":26,"react":172,"react-dom":29,"underscore":173}]},{},[174]);
+},{"jquery":26,"react":172,"react-dom":29,"scroll-into-view-if-needed":173,"underscore":174}]},{},[175]);

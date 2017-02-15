@@ -31,6 +31,20 @@ function showSlide(id) {
 
 // TODO: randomization
 var receivingExamples = [
+  {'id': 'delimiters', examples: [{polarity: 'positive', string: '[abc]'},
+                                  {polarity: 'negative', string: '[abc'},
+                                  {polarity: 'negative', string: 'abc]'},
+                                  {polarity: 'positive', string: '[xyz]'},
+                                  {polarity: 'positive', string: '[koe]'},
+                                  {polarity: 'positive', string: '[jue'}],
+   questions: ['[xyzsf]',
+               '(xyzsf)',
+               '[091235]',
+               '[gsg31',
+               '[[ve#!N2]]',
+               'sd21p03'
+              ]
+  },
   {'id': '3a', examples: [{polarity: 'positive', string: 'aaa'},
                           {polarity: 'negative', string: 'aa'},
                           {polarity: 'positive', string: 'aaaa'}
@@ -40,13 +54,8 @@ var receivingExamples = [
                'AAA',
                'aaab'
               ]
-  },
-  {'id': 'delimiters', examples: [{polarity: 'positive', string: '[abc]'},
-                                  {polarity: 'negative', string: '[abc'},
-                                  {polarity: 'negative', string: 'abc]'},
-                                  {polarity: 'positive', string: '[xyz]'},
-                                  {polarity: 'positive', string: '[koe]'},
-                                  {polarity: 'positive', string: '[jue'}]}
+  }
+
 ];
 
 var receive = bound({
@@ -129,15 +138,7 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up receive results
-  results.receive = _.map(
-    receive.outputs,
-    function(x,i) {
-      return _.extend({},
-                      // add rule info
-                      receive.inputs[i],
-                      // ditch reveal info, munge into data frame
-                      {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) })
+  results.receive = receive.outputs;
 
   global.results = results;
 
