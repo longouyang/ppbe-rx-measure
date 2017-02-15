@@ -181,6 +181,10 @@ input[name='string'] {
     height: 50px;
 }
 
+.received-examples-list li button {
+    vertical-align: middle
+}
+
 .matchIcon.positive {
     color: green
 }
