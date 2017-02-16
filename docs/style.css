@@ -269,3 +269,12 @@ textarea {
 #q ul li {
     padding-top: 0.5em;
 }
+
+#interstitial {
+    padding-top: 30%;
+    text-align: center;
+}
+
+#q textarea {
+    display: block;
+}

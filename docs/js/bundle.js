@@ -32853,10 +32853,10 @@ function showSlide(id) {
 }
 
 // TODO: randomization
-var receivingExamples = [{ 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }],
-  questions: ['[xyzsf]', '(xyzsf)', '[091235]', '[gsg31', '[[ve#!N2]]', 'sd21p03']
-}, { 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }],
+var receivingExamples = [{ 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }],
   questions: ['aaaa', 'a', 'AAA', 'aaab']
+}, { 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }],
+  questions: ['[xyzsf]', '(xyzsf)', '[091235]', '[gsg31', '[[ve#!N2]]', 'sd21p03']
 }];
 
 var receive = bound({
@@ -32868,7 +32868,12 @@ var receive = bound({
       after: function (output) {
         receive.outputs.push(output);
         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-        receive.next();
+
+        if (receive.outputs.length == receive.inputs.length) {
+          $('#interstitial p').text('Now, just fill out a brief questionnaire and the task will be finished.');
+        }
+        $('#interstitial button').one('click', receive.next);
+        showSlide('interstitial');
       } });
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function () {
