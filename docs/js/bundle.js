@@ -33061,56 +33061,50 @@ var ReceivedExample = React.createClass({
   }
 });
 
-// props:
-// - examples
-// - onAllRevealed (a function)
+// props: examples, after (a callback)
+// state: numRevealed, nextButtonClicked
 var ReceivedExamplesList = React.createClass({
   displayName: 'ReceivedExamplesList',
 
   getInitialState: function () {
-    return { numRevealed: 0 };
+    return { numRevealed: 0, nextButtonClicked: false };
+  },
+  after: function () {
+    this.setState({ nextButtonClicked: true }, this.props.after);
   },
   revealExample: function () {
-    var comp = this;
-    this.setState(function (oldState, props) {
-      var numRevealed = oldState.numRevealed + 1;
-      if (numRevealed == props.examples.length) {
-        comp.props.onAllRevealed();
-      }
-      return { numRevealed: numRevealed };
-    });
+    this.setState({ numRevealed: this.state.numRevealed + 1 });
   },
   render: function () {
-    var comp = this;
-    var listObj = _.map(this.props.examples, function (ex, i) {
+    var comp = this,
+        state = comp.state,
+        props = comp.props;
+    var listObj = _.map(props.examples, function (ex, i) {
       // revealed can be true, false, or "on-deck"
-      var revealed = i < comp.state.numRevealed;
-      if (i == comp.state.numRevealed) {
+      var revealed = i < state.numRevealed;
+      if (i == state.numRevealed) {
         revealed = 'on-deck';
       }
       return React.createElement('li', { key: i }, React.createElement(ReceivedExample, { polarity: ex.polarity, string: ex.string, revealed: revealed, revealNext: comp.revealExample }));
     }),
         list = _.values(listObj);
 
-    return React.createElement('ol', { className: 'received-examples-list' }, list);
+    var nextButton = state.numRevealed == props.examples.length && !state.nextButtonClicked ? React.createElement('button', { onClick: comp.after }, 'Next') : React.createElement('span', null);
+
+    return React.createElement('div', null, React.createElement('ol', { className: 'received-examples-list' }, list), nextButton);
   }
 });
 
-// props:
-// - questions (an array of strings)
-// - after (callback)
-//
-// state:
-// - show (true, false, 'possible')
-//
+// props: questions (an array of strings), after (callback)
+// state: show (true, false), nextButtonClicked
 var GeneralizationQuestions = React.createClass({
   displayName: 'GeneralizationQuestions',
 
   getInitialState: function () {
-    return { show: false, actions: [] };
+    return { show: false, actions: [], nextButtonClicked: false };
   },
   show: function () {
-    this.setState({ nextButtonClicked: false, show: true });
+    this.setState({ show: true });
   },
   // get the current set of responses
   getResponses: function () {
@@ -33131,12 +33125,11 @@ var GeneralizationQuestions = React.createClass({
   },
   render: function () {
     var comp = this,
-        show = comp.state.show;
+        state = comp.state,
+        show = state.show;
 
     if (!show) {
       return React.createElement('div', { className: 'generalization-questions' });
-    } else if (show == 'possible') {
-      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('button', { onClick: comp.show }, 'Next'));
     } else {
 
       var doesnt = "doesn't";
@@ -33155,17 +33148,17 @@ var GeneralizationQuestions = React.createClass({
       var Doesnt = "Doesn't";
 
       var allQuestionsAnswered = _.filter(comp.getResponses()).length == questions.length,
-          finishButtonClass = allQuestionsAnswered ? comp.state.nextButtonClicked ? 'invisible' : '' : 'invisible';
+          nextButton = allQuestionsAnswered && !state.nextButtonClicked ? React.createElement('button', { onClick: comp.finish }, 'Next') : React.createElement('span', null);
 
       setTimeout(comp.scroll, 0);
 
-      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('p', null, 'Now, based on your best guess about what the rule is, judge whether these other strings match the rule:'), React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'String'), React.createElement('th', null, 'Matches'), React.createElement('th', null, Doesnt, ' match'))), React.createElement('tbody', null, questions)), React.createElement('button', { className: finishButtonClass, onClick: comp.finish }, 'Next'));
+      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('p', null, 'Now, based on your best guess about what the rule is, judge whether these other strings match the rule:'), React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'String'), React.createElement('th', null, 'Matches'), React.createElement('th', null, Doesnt, ' match'))), React.createElement('tbody', null, questions)), nextButton);
     }
   }
 });
 
-// props:
-// - after (a callback)
+// props: after (a callback)
+// state: show (boolean), value
 var GlossQuestion = React.createClass({
   displayName: 'GlossQuestion',
 
@@ -33210,13 +33203,16 @@ var ReceiveInterface = React.createClass({
   getInitialState: function () {
     return { showGeneralization: false };
   },
-  showGeneralization: function () {
-    this.refs.generalization.setState({ show: 'possible' });
+  afterReceive: function () {
+    // show generalization
+    this.refs.generalization.setState({ show: true });
   },
   afterGeneralization: function () {
+    // show gloss
     this.refs.gloss.setState({ show: true });
   },
   afterGloss: function () {
+    // invoke this.props.after callback
 
     var gen = this.refs.generalization;
 
@@ -33231,7 +33227,7 @@ var ReceiveInterface = React.createClass({
 
     var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:');
 
-    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivedExamplesList, { onAllRevealed: this.showGeneralization, examples: this.props.examples }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: comp.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
+    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivedExamplesList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
   }
 
 });

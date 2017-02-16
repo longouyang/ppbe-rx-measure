@@ -21,54 +21,51 @@ var ReceivedExample = React.createClass({
   }
 });
 
-// props:
-// - examples
-// - onAllRevealed (a function)
+// props: examples, after (a callback)
+// state: numRevealed, nextButtonClicked
 var ReceivedExamplesList = React.createClass({
   getInitialState: function() {
-    return {numRevealed: 0}
+    return {numRevealed: 0, nextButtonClicked: false}
+  },
+  after: function() {
+    this.setState({nextButtonClicked: true}, this.props.after)
   },
   revealExample: function() {
-    var comp = this;
-    this.setState(function(oldState, props) {
-      var numRevealed = oldState.numRevealed + 1;
-      if (numRevealed == props.examples.length) {
-        comp.props.onAllRevealed();
-      }
-      return {numRevealed: numRevealed};
-    })
+    this.setState({numRevealed: this.state.numRevealed + 1})
   },
   render: function() {
-    var comp = this;
-    var listObj = _.map(this.props.examples,
+    var comp = this, state = comp.state, props = comp.props;
+    var listObj = _.map(props.examples,
                         function(ex, i) {
                           // revealed can be true, false, or "on-deck"
-                          var revealed = (i < comp.state.numRevealed);
-                          if (i == comp.state.numRevealed) {
+                          var revealed = (i < state.numRevealed);
+                          if (i == state.numRevealed) {
                             revealed = 'on-deck'
                           }
                           return (<li key={i}><ReceivedExample polarity={ex.polarity} string={ex.string} revealed={revealed} revealNext={comp.revealExample} /></li>)
                         }),
         list = _.values(listObj);
 
-    return (<ol className='received-examples-list'>{list}</ol>)
+    var nextButton = ((state.numRevealed == props.examples.length && !state.nextButtonClicked)
+                      ? (<button onClick={comp.after}>Next</button>)
+                      : (<span></span>));
+
+    return (<div>
+            <ol className='received-examples-list'>{list}</ol>
+            {nextButton}
+            </div>)
   }
 });
 
 
-// props:
-// - questions (an array of strings)
-// - after (callback)
-//
-// state:
-// - show (true, false, 'possible')
-//
+// props: questions (an array of strings), after (callback)
+// state: show (true, false), nextButtonClicked
 var GeneralizationQuestions = React.createClass({
   getInitialState: function() {
-    return {show: false, actions: []}
+    return {show: false, actions: [], nextButtonClicked: false}
   },
   show: function() {
-    this.setState({nextButtonClicked: false, show: true})
+    this.setState({show: true})
   },
   // get the current set of responses
   getResponses: function() {
@@ -90,12 +87,11 @@ var GeneralizationQuestions = React.createClass({
   },
   render: function() {
     var comp = this,
-        show = comp.state.show;
+        state = comp.state,
+        show = state.show;
 
     if (!show) {
       return (<div className='generalization-questions'></div>)
-    } else if (show == 'possible') {
-      return (<div className='generalization-questions'><button onClick={comp.show}>Next</button></div>)
     } else {
 
       var doesnt = "doesn't";
@@ -120,7 +116,9 @@ var GeneralizationQuestions = React.createClass({
       var Doesnt = "Doesn't";
 
       var allQuestionsAnswered = _.filter(comp.getResponses()).length == questions.length,
-          finishButtonClass = allQuestionsAnswered ? (comp.state.nextButtonClicked ? 'invisible' : '') : 'invisible';
+          nextButton = ((allQuestionsAnswered && !state.nextButtonClicked)
+                        ? (<button onClick={comp.finish}>Next</button>)
+                        : (<span></span>));
 
       setTimeout(comp.scroll, 0);
 
@@ -137,14 +135,14 @@ var GeneralizationQuestions = React.createClass({
               {questions}
               </tbody>
               </table>
-              <button className={finishButtonClass} onClick={comp.finish}>Next</button>
+              {nextButton}
               </div>);
     }
   }
 })
 
-// props:
-// - after (a callback)
+// props: after (a callback)
+// state: show (boolean), value
 var GlossQuestion = React.createClass({
   getInitialState: function() {
     return {show: false, value: ''}
@@ -181,7 +179,6 @@ var GlossQuestion = React.createClass({
   }
 })
 
-
 // props:
 // - examples (an array of examples, i.e., objects with string and polarity properties)
 // - questions (a list of generalization strings for the user to classify)
@@ -190,13 +187,13 @@ var ReceiveInterface = React.createClass({
   getInitialState: function() {
     return {showGeneralization: false}
   },
-  showGeneralization: function() {
-    this.refs.generalization.setState({show: 'possible'});
+  afterReceive: function() { // show generalization
+    this.refs.generalization.setState({show: true});
   },
-  afterGeneralization: function() {
+  afterGeneralization: function() { // show gloss
     this.refs.gloss.setState({show: true})
   },
-  afterGloss: function() {
+  afterGloss: function() { // invoke this.props.after callback
 
     var gen = this.refs.generalization;
 
@@ -213,8 +210,8 @@ var ReceiveInterface = React.createClass({
 
     return (<div className='examplesEditor'>
             {coverStory}
-            <ReceivedExamplesList onAllRevealed={this.showGeneralization} examples={this.props.examples} />
-            <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={comp.afterGeneralization} />
+            <ReceivedExamplesList examples={this.props.examples} after={this.afterReceive} />
+            <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={this.afterGeneralization} />
             <GlossQuestion ref='gloss' after={this.afterGloss} />
             </div>)
     }
