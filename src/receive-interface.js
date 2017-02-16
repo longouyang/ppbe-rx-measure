@@ -23,7 +23,7 @@ var ReceivedExample = React.createClass({
 
 // props: examples, after (a callback)
 // state: numRevealed, nextButtonClicked
-var ReceivedExamplesList = React.createClass({
+var ReceivingList = React.createClass({
   getInitialState: function() {
     return {numRevealed: 0, nextButtonClicked: false}
   },
@@ -210,7 +210,7 @@ var ReceiveInterface = React.createClass({
 
     return (<div className='examplesEditor'>
             {coverStory}
-            <ReceivedExamplesList examples={this.props.examples} after={this.afterReceive} />
+            <ReceivingList examples={this.props.examples} after={this.afterReceive} />
             <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={this.afterGeneralization} />
             <GlossQuestion ref='gloss' after={this.afterGloss} />
             </div>)

@@ -33063,8 +33063,8 @@ var ReceivedExample = React.createClass({
 
 // props: examples, after (a callback)
 // state: numRevealed, nextButtonClicked
-var ReceivedExamplesList = React.createClass({
-  displayName: 'ReceivedExamplesList',
+var ReceivingList = React.createClass({
+  displayName: 'ReceivingList',
 
   getInitialState: function () {
     return { numRevealed: 0, nextButtonClicked: false };
@@ -33227,7 +33227,7 @@ var ReceiveInterface = React.createClass({
 
     var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:');
 
-    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivedExamplesList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
+    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
   }
 
 });
