@@ -15,9 +15,6 @@ library(lubridate)
 library(memoise)
 ```
 
-TODO: upgrade to R 3.3.2 so that ggplot warning goes away
-
-
 ```{r utilities}
 generic.ci_ <- function(x, n = 5000, seed = 1) {
   set.seed(seed)
@@ -124,7 +121,7 @@ table(tolower(substr(assignments$gender, start = 1, stop = 1)))
 ## what is their programming / regex experience?
 
 ```{r}
-assignments %>% select(worker.id, age, gender, programming.experience, regex.experience) %>% arrange(desc(nchar(programming.experience)))
+assignments %>% select(programming.experience, regex.experience, worker.id, age, gender) %>% arrange(desc(nchar(programming.experience)))
 ```
 there's maybe 10 people with some sort of experience.
 
@@ -157,6 +154,7 @@ not quite sure i understand the feedback from 6487c8d. they appear to have done 
 assignments %>% select(enjoy) %>% arrange(desc(nchar(enjoy)))
 ```
 
+It wasn't terrible
 
 # research
 
@@ -179,7 +177,7 @@ ggplot(data = e.agg) +
   scale_x_discrete(breaks = as.character(xmin:xmax), drop = FALSE, name = 'number of examples')
 ```
 
-now 2 examples is no longer the mode.
+stil between 1 and 11 but now 2 examples is no longer the mode.
 
 ## q: do 2-examples tend to be *balanced*? i.e., one positive and one negative?
 
@@ -217,6 +215,8 @@ qplot(data = e.agg,
       binwidth = 1) + scale_x_continuous(breaks = with(e.agg, min(edit.distance):max(edit.distance))) +
   geom_vline(xintercept = mean.balanced.pair.edit.distance, color = I('red'))
 ```
+
+mean is red line -- 3.
 
 are these examples are closer than you'd expect by chance? (permutation test)
 
@@ -260,6 +260,7 @@ writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c
 sum(bootstrap.samples < mean.balanced.pair.edit.distance) / length(bootstrap.samples)
 ```
 
+yes, this fewer than you'd expect by chance.
 
 #### the second most likely edit distance for balanced 2-examples is 5: is there a pattern there? or is that just the zip code rule?
 
@@ -320,6 +321,19 @@ ggplot(data = e) +
   geom_bar(mapping = aes(x = diff, y = freq), stat = 'identity')
 ```
 
+if you don't count the very first example people give for a particular rule, do people give more positive or negative examples?
+
+```{r}
+e.agg = responses %>% 
+  filter(example.num > 1) %>%
+  group_by(worker.id, rule.id) %>%
+  summarise(num.pos = sum(polarity == "positive"),
+            num.neg = sum(polarity == "negative"))
+
+with(e.agg, t.test(num.pos, num.neg, paired = TRUE))
+```
+
+hmm -- after the first example, people actually tend to give more negative examples
 
 ## how related are the examples in edit distance?
 
@@ -403,13 +417,15 @@ responses.clustered = responses %>%
   group_by(worker.id, rule.id) %>%
   mutate(cluster.label = cluster.examples(string)$cluster.label)
 
-responses.clustered %>%
+e.agg = responses.clustered %>%
   group_by(worker.id, rule.id) %>%
   summarise(num.clusters = max(cluster.label)) %>%
   group_by(worker.id) %>%
-  summarise(mean_num.clusters = mean(num.clusters)) %>%
-  select(mean_num.clusters) %>%
-  summary
+  summarise(mean_num.clusters = mean(num.clusters))
+
+mean.num.clusters = mean(e.agg$mean_num.clusters)
+
+summary(e.agg$mean_num.clusters)
 ```
 
 TODO: do there tend to be more negative examples within a cluster? (i think people might come up with one example and then demonstrate various ways it can be perturbed to be a non-example)
@@ -461,6 +477,8 @@ writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c
 # number of clusters less than the observed sample?
 sum(bootstrap.samples < mean.num.clusters) / length(bootstrap.samples)
 ```
+
+bootstrapping takes ~2 seconds per sample
 
 TODO: the ways i've done both permutation tests are, i think, reasonable, but there are also reasonable alternatives. talk through my choices with mike, then write down rationale.
 
@@ -724,7 +742,7 @@ qplot(data = e,
 ```
 
 interesting -- first example tends to be positive.
-also interesting: subsequent examples are roughly a coin flip between positive and negative. so maybe this is where the significant 0.45 more positive examples than negative comes from -- just the first one?
+also interesting: subsequent examples are roughly a coin flip between positive and negative. so maybe this is where the significant 0.45 more positive examples than negative comes from -- just the first one? (no, see above)
 
 #### within a cluster, does the first example tend to be positive?
 
@@ -768,16 +786,16 @@ i wonder -- if i changed the rule to exclude some arbitrary collection of five c
 
 ## delimiters
 
-### no one nested the brackets (either positively or negatively)
+### only one person nested the brackets (either positively or negatively)
 
 ```{r}
-responses %>% filter(rule.id == 'delimiters')
+responses %>% filter(grepl("\\[\\[", string)) %>% select(worker.id, trial.num, example.num, polarity, string)
 ```
 
 
 ## zip-code
 
-### negative examples tend to be purely numeric (though there are a few exceptions)
+### negative examples are somewhat purely numeric (less than d02 though)
 
 ```{r}
 e = responses %>%
