@@ -32852,12 +32852,64 @@ function showSlide(id) {
   $(current).addClass('show');
 }
 
+var ruleData = {
+  '3a': {
+    generalizationQuestions: ['aaaa', 'a', 'AAA', 'aaab'],
+    exampleSequences: {
+      '85357a3': [{ polarity: 'negative', string: 'a' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaa' }, { polarity: 'positive', string: 'aaaa' }, { polarity: 'positive', string: 'aaaaa' }, { polarity: 'positive', string: 'aaaaaa' }, { polarity: 'positive', string: 'aaaaaaa' }, { polarity: 'positive', string: 'aaaaaaaaaa' }],
+
+      '13d1cf2': [{ polarity: 'positive', string: 'aaa' }, { polarity: 'positive', string: 'aaaa' }, { polarity: 'positive', string: 'aaaaa' }, { polarity: 'negative', string: 'aab' }, { polarity: 'negative', string: 'aaba' }, { polarity: 'negative', string: 'bcdef' }],
+
+      'e91432b': [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aca' }, { polarity: 'negative', string: 'a33' }, { polarity: 'negative', string: 'fds' }, { polarity: 'positive', string: 'aaaaaaaaaaaa' }] }
+  },
+  'zip-code': {
+    generalizationQuestions: ['TODOTODO'],
+    exampleSequences: {
+      '07e8a36': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234' }, { polarity: 'negative', string: '123' }, { polarity: 'negative', string: '12' }, { polarity: 'negative', string: '123456' }],
+
+      '6113a67': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234' }, { polarity: 'negative', string: '123456' }],
+
+      '08af176': [{ polarity: 'positive', string: '12344' }, { polarity: 'negative', string: '4k3kk' }, { polarity: 'negative', string: 'kkkkk' }],
+
+      '51aa397': [{ polarity: 'positive', string: '13685' }, { polarity: 'positive', string: '99999' }, { polarity: 'negative', string: 'AB67D' }, { polarity: 'positive', string: '68392' }, { polarity: 'negative', string: 'AGDUL' }],
+
+      '37bd336': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234a' }]
+    }
+  },
+  'consonants-only': {
+    generalizationQuestions: ['TODOTODO'],
+    exampleSequences: {
+      '08af176': [{ polarity: 'negative', string: 'aeiou' }, { polarity: 'positive', string: 'ccccs' }, { polarity: 'positive', string: 'bkjnn' }],
+
+      '112df88': [{ polarity: 'positive', string: 'qwrty' }, { polarity: 'negative', string: 'aeiou' }, { polarity: 'negative', string: "12345=?*'" }],
+
+      'f0cc52f': [{ polarity: 'positive', string: 'tzg' }, { polarity: 'negative', string: 'teg' }, { polarity: 'negative', string: 'tag' }, { polarity: 'positive', string: 'jkl' }, { polarity: 'positive', string: 'plt' }, { polarity: 'negative', string: 'ukl' }, { polarity: 'negative', string: 'fet' }, { polarity: 'negative', string: 'abc' }, { polarity: 'positive', string: 'fgh' }, { polarity: 'negative', string: 'iou' }]
+    }
+  },
+  'delimiters': {
+    generalizationQuestions: ['[xyzsf]', '(xyzsf)', '[091235]', '[gsg31', '[[ve#!N2]]', 'sd21p03'],
+    exampleSequences: {
+      '295bd50': [{ polarity: 'positive', string: '[jh23]' }, { polarity: 'negative', string: 'jh23' }, { polarity: 'positive', string: '[4784]' }, { polarity: 'negative', string: '4784' }],
+
+      '4bf1c95': [{ polarity: 'positive', string: '[625458]' }, { polarity: 'negative', string: '{78779}' }, { polarity: 'negative', string: '[564564]' }, { polarity: 'negative', string: 'tfytry]' }, { polarity: 'negative', string: 'rtyrty5646' }],
+      'a4dd5fc': [{ polarity: 'positive', string: '[56TGH]' }, { polarity: 'positive', string: '[DFRU76]' }, { polarity: 'positive', string: '[ASDF321]' }, { polarity: 'positive', string: '[NM734D]' }]
+    }
+  }
+};
+
 // TODO: randomization
-var receivingExamples = [{ 'id': '3a', examples: [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaaa' }],
-  questions: ['aaaa', 'a', 'AAA', 'aaab']
-}, { 'id': 'delimiters', examples: [{ polarity: 'positive', string: '[abc]' }, { polarity: 'negative', string: '[abc' }, { polarity: 'negative', string: 'abc]' }, { polarity: 'positive', string: '[xyz]' }, { polarity: 'positive', string: '[koe]' }, { polarity: 'positive', string: '[jue' }],
-  questions: ['[xyzsf]', '(xyzsf)', '[091235]', '[gsg31', '[[ve#!N2]]', 'sd21p03']
-}];
+var receivingExamples = _.map(ruleData, function (entry, k) {
+
+  var seqs = entry.exampleSequences,
+      seqId = _.sample(_.keys(seqs)),
+      examples = seqs[seqId];
+
+  return { id: k,
+    seqId: seqId,
+    examples: examples,
+    questions: entry.generalizationQuestions
+  };
+});
 
 var receive = bound({
   inputs: receivingExamples,
@@ -32872,6 +32924,7 @@ var receive = bound({
         if (receive.outputs.length == receive.inputs.length) {
           $('#interstitial p').text('Now, just fill out a brief questionnaire and the task will be finished.');
         }
+
         $('#interstitial button').one('click', receive.next);
         showSlide('interstitial');
       } });
@@ -32888,7 +32941,7 @@ var receive = bound({
       this.after(this);
     } else {
       // advance progress indicator
-      $('#give-examples .progress span').text('Completed: ' + i + '/' + n);
+      $('#give-examples .progress span').text('Rules completed: ' + i + '/' + n);
 
       $('#give-examples .progress .completed').css({
         width: Math.round(100 * i / n) + '%'
