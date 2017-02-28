@@ -33036,7 +33036,7 @@ window.fingerprint = {};
 
 // conservatively, just get the IP (should always work, as long as web.stanford.edu doesn't go down)
 function setIp(ip) {
-  console.log('set ip');
+  //console.log('set ip');
   window.fingerprint.ip = ip;
 
   // now, try to get more detailed geolocation info (will work if freegeoip is up and we haven't hit their limit)
@@ -33054,7 +33054,7 @@ window.setIp = setIp;
 
 // try to get geo-located data
 function setGeo(data) {
-  console.log('set geo');
+  //console.log('set geo');
   window.fingerprint.ip = data.ip;
   window.fingerprint.geo = data;
 }
