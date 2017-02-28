@@ -30978,6 +30978,300 @@ module.exports = validateDOMNesting;
 module.exports = require('./lib/React');
 
 },{"./lib/React":55}],173:[function(require,module,exports){
+'use strict';
+
+/**
+ * https://github.com/gre/bezier-easing
+ * BezierEasing - use bezier curve for transition easing function
+ * by Gaëtan Renaudeau 2014 - 2015 – MIT License
+ */
+
+// These values are established by empiricism with tests (tradeoff: performance VS precision)
+var NEWTON_ITERATIONS = 4;
+var NEWTON_MIN_SLOPE = 0.001;
+var SUBDIVISION_PRECISION = 0.0000001;
+var SUBDIVISION_MAX_ITERATIONS = 10;
+
+var kSplineTableSize = 11;
+var kSampleStepSize = 1.0 / (kSplineTableSize - 1.0);
+
+var float32ArraySupported = typeof Float32Array === 'function';
+
+function A (aA1, aA2) { return 1.0 - 3.0 * aA2 + 3.0 * aA1; }
+function B (aA1, aA2) { return 3.0 * aA2 - 6.0 * aA1; }
+function C (aA1)      { return 3.0 * aA1; }
+
+// Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
+function calcBezier (aT, aA1, aA2) { return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT; }
+
+// Returns dx/dt given t, x1, and x2, or dy/dt given t, y1, and y2.
+function getSlope (aT, aA1, aA2) { return 3.0 * A(aA1, aA2) * aT * aT + 2.0 * B(aA1, aA2) * aT + C(aA1); }
+
+function binarySubdivide (aX, aA, aB, mX1, mX2) {
+  var currentX, currentT, i = 0;
+  do {
+    currentT = aA + (aB - aA) / 2.0;
+    currentX = calcBezier(currentT, mX1, mX2) - aX;
+    if (currentX > 0.0) {
+      aB = currentT;
+    } else {
+      aA = currentT;
+    }
+  } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+  return currentT;
+}
+
+function newtonRaphsonIterate (aX, aGuessT, mX1, mX2) {
+ for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
+   var currentSlope = getSlope(aGuessT, mX1, mX2);
+   if (currentSlope === 0.0) {
+     return aGuessT;
+   }
+   var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+   aGuessT -= currentX / currentSlope;
+ }
+ return aGuessT;
+}
+
+var index$2 = function bezier (mX1, mY1, mX2, mY2) {
+  if (!(0 <= mX1 && mX1 <= 1 && 0 <= mX2 && mX2 <= 1)) {
+    throw new Error('bezier x values must be in [0, 1] range');
+  }
+
+  // Precompute samples table
+  var sampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+  if (mX1 !== mY1 || mX2 !== mY2) {
+    for (var i = 0; i < kSplineTableSize; ++i) {
+      sampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+    }
+  }
+
+  function getTForX (aX) {
+    var intervalStart = 0.0;
+    var currentSample = 1;
+    var lastSample = kSplineTableSize - 1;
+
+    for (; currentSample !== lastSample && sampleValues[currentSample] <= aX; ++currentSample) {
+      intervalStart += kSampleStepSize;
+    }
+    --currentSample;
+
+    // Interpolate to provide an initial guess for t
+    var dist = (aX - sampleValues[currentSample]) / (sampleValues[currentSample + 1] - sampleValues[currentSample]);
+    var guessForT = intervalStart + dist * kSampleStepSize;
+
+    var initialSlope = getSlope(guessForT, mX1, mX2);
+    if (initialSlope >= NEWTON_MIN_SLOPE) {
+      return newtonRaphsonIterate(aX, guessForT, mX1, mX2);
+    } else if (initialSlope === 0.0) {
+      return guessForT;
+    } else {
+      return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize, mX1, mX2);
+    }
+  }
+
+  return function BezierEasing (x) {
+    if (mX1 === mY1 && mX2 === mY2) {
+      return x; // linear
+    }
+    // Because JavaScript number are imprecise, we should guarantee the extremes are right.
+    if (x === 0) {
+      return 0;
+    }
+    if (x === 1) {
+      return 1;
+    }
+    return calcBezier(getTForX(x), mY1, mY2);
+  };
+};
+
+var BezierEasing$1 = index$2;
+
+// Predefined set of animations. Similar to CSS easing functions
+var animations = {
+  ease:  BezierEasing$1(0.25, 0.1, 0.25, 1),
+  easeIn: BezierEasing$1(0.42, 0, 1, 1),
+  easeOut: BezierEasing$1(0, 0, 0.58, 1),
+  easeInOut: BezierEasing$1(0.42, 0, 0.58, 1),
+  linear: BezierEasing$1(0, 0, 1, 1)
+};
+
+
+var index$1 = animate;
+
+function animate(source, target, options) {
+  var start= Object.create(null);
+  var diff = Object.create(null);
+  options = options || {};
+  // We let clients specify their own easing function
+  var easing = (typeof options.easing === 'function') ? options.easing : animations[options.easing];
+
+  // if nothing is specified, default to ease (similar to CSS animations)
+  if (!easing) {
+    if (options.easing) {
+      console.warn('Unknown easing function in amator: ' + options.easing);
+    }
+    easing = animations.ease;
+  }
+
+  var step = typeof options.step === 'function' ? options.step : noop;
+  var done = typeof options.done === 'function' ? options.done : noop;
+
+  var scheduler = getScheduler(options.scheduler);
+
+  var keys = Object.keys(target);
+  keys.forEach(function(key) {
+    start[key] = source[key];
+    diff[key] = target[key] - source[key];
+  });
+
+  var durationInMs = options.duration || 400;
+  var durationInFrames = Math.max(1, durationInMs * 0.06); // 0.06 because 60 frames pers 1,000 ms
+  var previousAnimationId;
+  var frame = 0;
+
+  previousAnimationId = scheduler.next(loop);
+
+  return {
+    cancel: cancel
+  }
+
+  function cancel() {
+    scheduler.cancel(previousAnimationId);
+    previousAnimationId = 0;
+  }
+
+  function loop() {
+    var t = easing(frame/durationInFrames);
+    frame += 1;
+    setValues(t);
+    if (frame <= durationInFrames) {
+      previousAnimationId = scheduler.next(loop);
+      step(source);
+    } else {
+      previousAnimationId = 0;
+      setTimeout(function() { done(source); }, 0);
+    }
+  }
+
+  function setValues(t) {
+    keys.forEach(function(key) {
+      source[key] = diff[key] * t + start[key];
+    });
+  }
+}
+
+function noop() { }
+
+function getScheduler(scheduler) {
+  if (!scheduler) {
+    var canRaf = typeof window !== 'undefined' && window.requestAnimationFrame;
+    return canRaf ? rafScheduler() : timeoutScheduler()
+  }
+  if (typeof scheduler.next !== 'function') throw new Error('Scheduler is supposed to have next(cb) function')
+  if (typeof scheduler.cancel !== 'function') throw new Error('Scheduler is supposed to have cancel(handle) function')
+
+  return scheduler
+}
+
+function rafScheduler() {
+  return {
+    next: window.requestAnimationFrame.bind(window),
+    cancel: window.cancelAnimationFrame.bind(window)
+  }
+}
+
+function timeoutScheduler() {
+  return {
+    next: function(cb) {
+      return setTimeout(cb, 1000/60)
+    },
+    cancel: function (id) {
+      return clearTimeout(id)
+    }
+  }
+}
+
+var index = function (elem, centerIfNeeded, options) {
+  
+  if (!elem) throw new Error('Element is required in scrollIntoViewIfNeeded')
+  
+  function withinBounds(value, min, max, extent) {
+      if (false === centerIfNeeded || max <= value + extent && value <= min + extent) {
+          return Math.min(max, Math.max(min, value));
+      } else {
+          return (min + max) / 2;
+      }
+  }
+
+  function makeArea(left, top, width, height) {
+      return  { "left": left, "top": top, "width": width, "height": height
+              , "right": left + width, "bottom": top + height
+              , "translate":
+                  function (x, y) {
+                      return makeArea(x + left, y + top, width, height);
+                  }
+              , "relativeFromTo":
+                  function (lhs, rhs) {
+                      var newLeft = left, newTop = top;
+                      lhs = lhs.offsetParent;
+                      rhs = rhs.offsetParent;
+                      if (lhs === rhs) {
+                          return area;
+                      }
+                      for (; lhs; lhs = lhs.offsetParent) {
+                          newLeft += lhs.offsetLeft + lhs.clientLeft;
+                          newTop += lhs.offsetTop + lhs.clientTop;
+                      }
+                      for (; rhs; rhs = rhs.offsetParent) {
+                          newLeft -= rhs.offsetLeft + rhs.clientLeft;
+                          newTop -= rhs.offsetTop + rhs.clientTop;
+                      }
+                      return makeArea(newLeft, newTop, width, height);
+                  }
+              };
+  }
+
+  var parent, area = makeArea(
+      elem.offsetLeft, elem.offsetTop,
+      elem.offsetWidth, elem.offsetHeight);
+  while ((parent = elem.parentNode) instanceof HTMLElement) {
+      var clientLeft = parent.offsetLeft + parent.clientLeft;
+      var clientTop = parent.offsetTop + parent.clientTop;
+
+      // Make area relative to parent's client area.
+      area = area.
+          relativeFromTo(elem, parent).
+          translate(-clientLeft, -clientTop);
+
+      var scrollLeft = withinBounds(
+          parent.scrollLeft,
+          area.right - parent.clientWidth, area.left,
+          parent.clientWidth);
+      var scrollTop = withinBounds(
+          parent.scrollTop,
+          area.bottom - parent.clientHeight, area.top,
+          parent.clientHeight);
+      if(options) {
+        index$1(parent, {
+           scrollLeft: scrollLeft,
+          scrollTop: scrollTop
+        }, options);
+      } else {
+        parent.scrollLeft = scrollLeft;
+        parent.scrollTop = scrollTop;
+      }
+
+      // Determine actual scroll amount by reading back scroll properties.
+      area = area.translate(clientLeft - parent.scrollLeft,
+                            clientTop - parent.scrollTop);
+      elem = parent;
+  }
+};
+
+module.exports = index;
+
+},{}],174:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -32527,129 +32821,13 @@ module.exports = require('./lib/React');
   }
 }.call(this));
 
-},{}],174:[function(require,module,exports){
-var React = require('react'),
-    ReactDOM = require('react-dom'),
-    $ = require('jquery'),
-    _ = require('underscore');
-
-var Example = React.createClass({
-  displayName: 'Example',
-
-  render: function () {
-    var comp = this,
-        updateExample = this.props.updateExample,
-        time = this.props.time + '';
-    var updateString = function (e) {
-      updateExample({ time: time, string: e.target.value });
-    };
-    var updatePolarity = function (e) {
-      updateExample({ time: time, polarity: e.target.value });
-    };
-    var deleteExample = function (e) {
-      e.preventDefault();
-      console.log(e);
-      comp.props.deleteExample(comp);
-    };
-    var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
-    var string = this.props.string == null ? "" : this.props.string;
-    return React.createElement('form', null, React.createElement('span', { className: 'remove', onClick: deleteExample }, ' \u25CF'), ' The string ', React.createElement('input', { type: 'text', name: 'string', onChange: updateString, value: string }), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'positive', onChange: updatePolarity }), 'matches'), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'negative', onChange: updatePolarity }), doesnt, ' match '));
-  }
-});
-
-var removeExample = function () {
-  alert('To remove an example, click the red circle next to it');
-};
-
-var ExamplesList = React.createClass({
-  displayName: 'ExamplesList',
-
-  render: function () {
-    var comp = this;
-    var listObj = _.mapObject(this.props.examples, function (ex, key) {
-      return React.createElement(Example, { polarity: ex.polarity, string: ex.string, time: key, key: key, updateExample: comp.props.updateExample, deleteExample: comp.props.deleteExample });
-    }),
-        list = _.values(listObj);
-
-    return React.createElement('div', null, list);
-  }
-});
-
-var ExamplesEditor = React.createClass({
-  displayName: 'ExamplesEditor',
-
-  getBlankExample: function () {
-    var timeString = new Date().getTime() + '';
-    return _.object([[timeString, { polarity: null, string: null }]]);
-  },
-  finish: function () {
-    this.props.after(this.state);
-  },
-  addExample: function () {
-    this.setState(_.extend(this.getBlankExample(), this.state));
-  },
-  revealRule: function () {
-    this.setState({ revealRule: true });
-  },
-  revealInterface: function () {
-    this.setState({ revealInterface: true });
-  },
-  getInitialState: function () {
-    return {
-      revealRule: false,
-      revealInterface: false
-    };
-  },
-  updateExample: function (ex) {
-    var old = this.state[ex.time];
-
-    var newEntry = _.extend({}, old, ex);
-
-    this.setState(_.object([[ex.time, newEntry]]));
-  },
-  deleteExample: function (ex) {
-    this.replaceState(_.omit(this.state, ex.props.time));
-  },
-  render: function () {
-    var examples = _.omit(this.state, 'revealRule', 'revealInterface'),
-        numExamples = _.size(examples);
-
-    var ruleContents = { __html: this.props.rule.description };
-
-    var communicationFraming = 'Imagine that you want to tell a friend of yours about a rule for making strings:';
-
-    var revealRule = this.state.revealRule,
-        revealInterface = this.state.revealInterface;
-
-    var revealRuleButtonClass = 'reveal-rule' + (revealRule ? ' hide' : '');
-    var ruleWrapperClass = 'rule-wrapper' + (revealRule ? '' : ' hide');
-
-    var revealInterfaceButtonClass = 'reveal-interface' + (revealRule ? revealInterface ? ' hide' : '' : ' hide');
-    var interfaceClass = 'interface' + (revealInterface ? '' : ' hide');
-
-    var examplesComplete = _.every(examples, function (ex) {
-      return ex.string && ex.polarity;
-    });
-    var canFinish = numExamples > 0 && examplesComplete;
-    var finishTitle = canFinish ? '' : numExamples == 0 ? 'Add at least one example to continue' : 'Complete all your examples to continue';
-
-    var addButtonLabel = numExamples == 0 ? 'Add first example' : 'Add another example';
-    var removeButtonClassName = 'add-example' + (numExamples == 0 ? ' hide' : '');
-
-    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('p', null, communicationFraming), React.createElement('button', { type: 'button', className: revealRuleButtonClass, onClick: this.revealRule }, 'Click here to show the rule'), React.createElement('p', { className: ruleWrapperClass }, ' Rule: ', React.createElement('span', { className: 'rule', dangerouslySetInnerHTML: ruleContents })), React.createElement('button', { type: 'button', className: revealInterfaceButtonClass, onClick: this.revealInterface }, 'Continue'), React.createElement('div', { className: interfaceClass }, React.createElement('p', null, 'How would you communicate this rule by giving examples of strings that either match or don\'t match the rule? You can give any number of examples but try to give enough and make them helpful  so that your friend would guess the correct rule.'), React.createElement(ExamplesList, { examples: examples, updateExample: this.updateExample, deleteExample: this.deleteExample }), React.createElement('button', { className: 'add-example', onClick: this.addExample }, React.createElement('span', { className: 'icon plus' }, '+'), ' ', addButtonLabel), React.createElement('button', { className: removeButtonClassName, onClick: removeExample }, React.createElement('span', { className: 'icon minus' }, '-'), ' Remove an example'), React.createElement('div', { className: 'clear' }), React.createElement('button', { className: 'done-adding', onClick: this.finish, disabled: !canFinish, title: finishTitle }, 'Next rule >>')));
-  }
-
-});
-
-module.exports = ExamplesEditor;
-
-},{"jquery":26,"react":172,"react-dom":29,"underscore":173}],175:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 (function (global){
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
-    _ = require('underscore'),
-    ExamplesEditor = require('./examples-editor');
+    ReceiveInterface = require('./receive-interface'),
+    _ = require('underscore');
 
 global.jQuery = $; // for form validation library
 
@@ -32674,19 +32852,81 @@ function showSlide(id) {
   $(current).addClass('show');
 }
 
-var sendingRules = [
-//{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
-{ 'id': '3a', description: "The string is three or more lowercase <code>a</code>'s" }, { 'id': 'zip-code', description: "The string is 5 digits in a row" }, { 'id': 'consonants-only', description: "The string contains only consonants" }, { 'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>' }];
+var ruleData = {
+  '3a': {
+    generalizationQuestions: ['beravj', 'aaaa', '@#$23g', 'bbb', 'eee', 'a', 'b93kgw;_mfo', 'alpaca', 'AAA', 'aaab', 'DASASA', 'aaaaaaaaaaaaaa', '9aaaaaa', 'AAAAA'],
+    exampleSequences: {
+      '85357a3': [{ polarity: 'negative', string: 'a' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaa' }, { polarity: 'positive', string: 'aaaa' }, { polarity: 'positive', string: 'aaaaa' }, { polarity: 'positive', string: 'aaaaaa' }, { polarity: 'positive', string: 'aaaaaaa' }, { polarity: 'positive', string: 'aaaaaaaaaa' }],
 
-var send = bound({
-  inputs: sendingRules,
+      '13d1cf2': [{ polarity: 'positive', string: 'aaa' }, { polarity: 'positive', string: 'aaaa' }, { polarity: 'positive', string: 'aaaaa' }, { polarity: 'negative', string: 'aab' }, { polarity: 'negative', string: 'aaba' }, { polarity: 'negative', string: 'bcdef' }],
+
+      'e91432b': [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aca' }, { polarity: 'negative', string: 'a33' }, { polarity: 'negative', string: 'fds' }, { polarity: 'positive', string: 'aaaaaaaaaaaa' }] }
+  },
+  'zip-code': {
+    generalizationQuestions: ['11111', '13708', '236778', 'hg4567s', '-12541', '9076.2', 'nfas10583vns', '238', 'erqew', '122555', 'dskfjlmxF', '==DFG$!'],
+    exampleSequences: {
+      '07e8a36': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234' }, { polarity: 'negative', string: '123' }, { polarity: 'negative', string: '12' }, { polarity: 'negative', string: '123456' }],
+
+      '6113a67': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234' }, { polarity: 'negative', string: '123456' }],
+
+      '08af176': [{ polarity: 'positive', string: '12344' }, { polarity: 'negative', string: '4k3kk' }, { polarity: 'negative', string: 'kkkkk' }],
+
+      '51aa397': [{ polarity: 'positive', string: '13685' }, { polarity: 'positive', string: '99999' }, { polarity: 'negative', string: 'AB67D' }, { polarity: 'positive', string: '68392' }, { polarity: 'negative', string: 'AGDUL' }],
+
+      '37bd336': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234a' }]
+    }
+  },
+  'consonants-only': {
+    generalizationQuestions: ['xvmp', 'qqqqqw', 'dgrel', 'SDFBWv', '6fdsb', 'ZPtngf', 'ktl938', 'agcht', 'uz', 'qfqfqfqf', 'poeuuae'],
+    exampleSequences: {
+      '08af176': [{ polarity: 'negative', string: 'aeiou' }, { polarity: 'positive', string: 'ccccs' }, { polarity: 'positive', string: 'bkjnn' }],
+
+      '112df88': [{ polarity: 'positive', string: 'qwrty' }, { polarity: 'negative', string: 'aeiou' }, { polarity: 'negative', string: "12345=?*'" }],
+
+      'f0cc52f': [{ polarity: 'positive', string: 'tzg' }, { polarity: 'negative', string: 'teg' }, { polarity: 'negative', string: 'tag' }, { polarity: 'positive', string: 'jkl' }, { polarity: 'positive', string: 'plt' }, { polarity: 'negative', string: 'ukl' }, { polarity: 'negative', string: 'fet' }, { polarity: 'negative', string: 'abc' }, { polarity: 'positive', string: 'fgh' }, { polarity: 'negative', string: 'iou' }]
+    }
+  },
+  'delimiters': {
+    generalizationQuestions: ['xyzsf', '[mna_8%234]', '(fdfm3t)', '{0thg1!@}', 'gnro[34r3]', '[4939k4k3', 'xccg3]', '[fbndofb]]', 'fjdjdjjttt6', '[[qoo_w3]', '!@T!3gas', '[[[223768]]]'],
+    exampleSequences: {
+      '295bd50': [{ polarity: 'positive', string: '[jh23]' }, { polarity: 'negative', string: 'jh23' }, { polarity: 'positive', string: '[4784]' }, { polarity: 'negative', string: '4784' }],
+
+      '4bf1c95': [{ polarity: 'positive', string: '[625458]' }, { polarity: 'negative', string: '{78779}' }, { polarity: 'negative', string: '[564564]' }, { polarity: 'negative', string: 'tfytry]' }, { polarity: 'negative', string: 'rtyrty5646' }],
+      'a4dd5fc': [{ polarity: 'positive', string: '[56TGH]' }, { polarity: 'positive', string: '[DFRU76]' }, { polarity: 'positive', string: '[ASDF321]' }, { polarity: 'positive', string: '[NM734D]' }]
+    }
+  }
+};
+
+// TODO: randomization
+var receivingExamples = _.map(ruleData, function (entry, k) {
+
+  var seqs = entry.exampleSequences,
+      seqId = _.sample(_.keys(seqs)),
+      examples = seqs[seqId];
+
+  return { id: k,
+    seqId: seqId,
+    examples: examples,
+    questions: entry.generalizationQuestions
+  };
+});
+
+var receive = bound({
+  inputs: receivingExamples,
   outputs: [],
   trial: function (input) {
-    var comp = React.createElement(ExamplesEditor, { rule: input,
+    var comp = React.createElement(ReceiveInterface, { examples: input.examples,
+      questions: input.questions,
       after: function (output) {
-        send.outputs.push(output);
+        receive.outputs.push(output);
         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-        send.next();
+
+        if (receive.outputs.length == receive.inputs.length) {
+          $('#interstitial p').text('Now, just fill out a brief questionnaire and the task will be finished.');
+        }
+
+        $('#interstitial button').one('click', receive.next);
+        showSlide('interstitial');
       } });
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function () {
@@ -32697,11 +32937,11 @@ var send = bound({
     var i = this.outputs.length;
     var n = this.inputs.length;
 
-    if (i == send.inputs.length) {
+    if (i == receive.inputs.length) {
       this.after(this);
     } else {
       // advance progress indicator
-      $('#give-examples .progress span').text('Completed: ' + i + '/' + n);
+      $('#give-examples .progress span').text('Rules completed: ' + i + '/' + n);
 
       $('#give-examples .progress .completed').css({
         width: Math.round(100 * i / n) + '%'
@@ -32752,14 +32992,7 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up send results
-  results.send = _.map(send.outputs, function (x, i) {
-    return _.extend({},
-    // add rule info
-    send.inputs[i],
-    // ditch reveal info, munge into data frame
-    { examples: _.values(_.omit(x, 'revealRule', 'revealInterface')) });
-  });
+  results.receive = receive.outputs;
 
   global.results = results;
 
@@ -32770,16 +33003,16 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', send.next);
+$('#intro button.next').one('click', receive.next);
 
-send.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
 // debugging (example URL: index.html?debug#questionnaire)
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
-  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'send', 'questionnaire', 'finishExperiment']);
+  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receive', 'questionnaire', 'finishExperiment']);
 
   function handleHash(e) {
     var key = global.location.hash.replace("#", "");
@@ -32803,7 +33036,7 @@ window.fingerprint = {};
 
 // conservatively, just get the IP (should always work, as long as web.stanford.edu doesn't go down)
 function setIp(ip) {
-  console.log('set ip');
+  //console.log('set ip');
   window.fingerprint.ip = ip;
 
   // now, try to get more detailed geolocation info (will work if freegeoip is up and we haven't hit their limit)
@@ -32821,7 +33054,7 @@ window.setIp = setIp;
 
 // try to get geo-located data
 function setGeo(data) {
-  console.log('set geo');
+  //console.log('set geo');
   window.fingerprint.ip = data.ip;
   window.fingerprint.geo = data;
 }
@@ -32860,4 +33093,203 @@ window.setGeo = setGeo;
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./examples-editor":174,"jquery":26,"react":172,"react-dom":29,"underscore":173}]},{},[175]);
+},{"./receive-interface":176,"jquery":26,"react":172,"react-dom":29,"underscore":174}],176:[function(require,module,exports){
+var React = require('react'),
+    ReactDOM = require('react-dom'),
+    $ = require('jquery'),
+    _ = require('underscore'),
+    scrollIntoViewIfNeeded = require('scroll-into-view-if-needed');
+
+var ReceivedExample = React.createClass({
+  displayName: 'ReceivedExample',
+
+  render: function () {
+    var matchString = this.props.polarity == 'positive' ? 'fits' : 'doesn\'t fit';
+    var matchIconText = this.props.polarity == 'positive' ? '✔' : '✘';
+    var matchIconClass = 'matchIcon ' + this.props.polarity;
+
+    var revealed = this.props.revealed;
+
+    if (!revealed || revealed == 'on-deck') {
+      var isDisabled = !revealed;
+      return React.createElement('button', { disabled: isDisabled, onClick: this.props.revealNext }, 'Click to show example');
+    } else {
+      return React.createElement('div', null, 'The string ', React.createElement('code', null, this.props.string), ' ', matchString, ' ', React.createElement('span', { className: matchIconClass }, matchIconText));
+    }
+  }
+});
+
+// props: examples, after (a callback)
+// state: numRevealed, nextButtonClicked
+var ReceivingList = React.createClass({
+  displayName: 'ReceivingList',
+
+  getInitialState: function () {
+    return { numRevealed: 0, nextButtonClicked: false };
+  },
+  after: function () {
+    this.setState({ nextButtonClicked: true }, this.props.after);
+  },
+  revealExample: function () {
+    this.setState({ numRevealed: this.state.numRevealed + 1 });
+  },
+  render: function () {
+    var comp = this,
+        state = comp.state,
+        props = comp.props;
+    var listObj = _.map(props.examples, function (ex, i) {
+      // revealed can be true, false, or "on-deck"
+      var revealed = i < state.numRevealed;
+      if (i == state.numRevealed) {
+        revealed = 'on-deck';
+      }
+      return React.createElement('li', { key: i }, React.createElement(ReceivedExample, { polarity: ex.polarity, string: ex.string, revealed: revealed, revealNext: comp.revealExample }));
+    }),
+        list = _.values(listObj);
+
+    var nextButton = state.numRevealed == props.examples.length && !state.nextButtonClicked ? React.createElement('button', { onClick: comp.after }, 'Next') : React.createElement('span', null);
+
+    return React.createElement('div', null, React.createElement('ol', { className: 'received-examples-list' }, list), nextButton);
+  }
+});
+
+// props: questions (an array of strings), after (callback)
+// state: show (true, false), nextButtonClicked
+var GeneralizationQuestions = React.createClass({
+  displayName: 'GeneralizationQuestions',
+
+  getInitialState: function () {
+    return { show: false, actions: [], nextButtonClicked: false };
+  },
+  show: function () {
+    this.setState({ show: true });
+  },
+  // get the current set of responses
+  getResponses: function () {
+    var comp = this,
+        actions = comp.state.actions;
+    return this.props.questions.map(function (q) {
+      return _.findWhere(actions, { string: q }) || false;
+    });
+  },
+  finish: function () {
+    this.setState({ nextButtonClicked: true }, function () {
+      var history = this.getResponses();
+      this.props.after();
+    });
+  },
+  scroll: function () {
+    scrollIntoViewIfNeeded(ReactDOM.findDOMNode(this), false, { duration: 240 });
+  },
+  render: function () {
+    var comp = this,
+        state = comp.state,
+        show = state.show;
+
+    if (!show) {
+      return React.createElement('div', { className: 'generalization-questions' });
+    } else {
+
+      var doesnt = "doesn't";
+      var questions = comp.props.questions.map(function (question, i) {
+        var inputName = "polarity_" + question;
+
+        var updatePolarity = function (e) {
+          var polarity = e.target.value;
+          comp.setState({ actions: [{ time: _.now(), string: question, polarity: polarity }].concat(comp.state.actions)
+          });
+        };
+
+        return React.createElement('tr', { key: question }, React.createElement('td', null, React.createElement('code', null, question)), React.createElement('td', null, React.createElement('center', null, React.createElement('input', { type: 'radio', name: inputName, value: 'positive', onChange: updatePolarity }))), React.createElement('td', null, React.createElement('center', null, React.createElement('input', { type: 'radio', name: inputName, value: 'negative', onChange: updatePolarity }))));
+      });
+
+      var Doesnt = "Doesn't";
+
+      var allQuestionsAnswered = _.filter(comp.getResponses()).length == questions.length,
+          nextButton = allQuestionsAnswered && !state.nextButtonClicked ? React.createElement('button', { onClick: comp.finish }, 'Next') : React.createElement('span', null);
+
+      setTimeout(comp.scroll, 0);
+
+      return React.createElement('div', { className: 'generalization-questions' }, React.createElement('p', null, 'Now, based on your best guess about what the rule is, judge whether these other strings match the rule:'), React.createElement('table', null, React.createElement('thead', null, React.createElement('tr', null, React.createElement('th', null, 'String'), React.createElement('th', null, 'Matches'), React.createElement('th', null, Doesnt, ' match'))), React.createElement('tbody', null, questions)), nextButton);
+    }
+  }
+});
+
+// props: after (a callback)
+// state: show (boolean), value
+var GlossQuestion = React.createClass({
+  displayName: 'GlossQuestion',
+
+  getInitialState: function () {
+    return { show: false, value: '' };
+  },
+  handleChange(event) {
+    this.setState({ value: event.target.value });
+  },
+  finish: function () {
+    this.props.after(this.state.value);
+  },
+  scroll: function () {
+    scrollIntoViewIfNeeded(ReactDOM.findDOMNode(this));
+  },
+  componentDidMount: function () {
+    this.scroll();
+  },
+  componentDidUpdate: function () {
+    this.scroll();
+  },
+  render: function () {
+    if (!this.state.show) {
+      return React.createElement('div', null);
+    } else {
+      var emptyText = this.state.value.length == 0,
+          buttonDisabled = emptyText,
+          buttonText = 'Next';
+
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is?'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText));
+    }
+  }
+});
+
+// props:
+// - examples (an array of examples, i.e., objects with string and polarity properties)
+// - questions (a list of generalization strings for the user to classify)
+// - after (a callback)
+var ReceiveInterface = React.createClass({
+  displayName: 'ReceiveInterface',
+
+  getInitialState: function () {
+    return { showGeneralization: false };
+  },
+  afterReceive: function () {
+    // show generalization
+    this.refs.generalization.setState({ show: true });
+  },
+  afterGeneralization: function () {
+    // show gloss
+    this.refs.gloss.setState({ show: true });
+  },
+  afterGloss: function () {
+    // invoke this.props.after callback
+
+    var gen = this.refs.generalization;
+
+    this.props.after({
+      gloss: this.refs.gloss.state.value,
+      generalization: gen.getResponses(),
+      generalizationHistory: gen.state.actions
+    });
+  },
+  render: function () {
+    var comp = this;
+
+    var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:');
+
+    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
+  }
+
+});
+
+module.exports = ReceiveInterface;
+
+},{"jquery":26,"react":172,"react-dom":29,"scroll-into-view-if-needed":173,"underscore":174}]},{},[175]);

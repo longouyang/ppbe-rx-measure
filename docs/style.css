@@ -31,12 +31,14 @@ code {
 }
 
 .slide {
-    width: 100%;
-    height: 100%;
+    width: 96%;
     padding: 2% 2%;
+    margin: 0;
     position: absolute;
     background-color: white;
     display: none;
+    top: 0;
+    left: 0;
 }
 
 .show {
@@ -153,6 +155,10 @@ input[name='string'] {
     display: none;
 }
 
+.invisible {
+    visibility: hidden;
+}
+
 .interface-instructions {
     font-style: italic
 }
@@ -161,6 +167,63 @@ input[name='string'] {
     width: 500px;
     margin: 0 auto;
 }
+
+.cover-story {
+    margin-top: 1em
+}
+
+.received-examples-list {
+    font-size: 24px;
+    margin-bottom: 0.5em;
+}
+
+.received-examples-list li {
+    height: 50px;
+}
+
+.received-examples-list li button {
+    vertical-align: middle
+}
+
+.matchIcon.positive {
+    color: green
+}
+
+.matchIcon.negative {
+    color: red
+}
+
+.generalization-questions table {
+    border-collapse: collapse;
+    margin: 1em;
+}
+
+.generalization-questions td, .generalization-questions th {
+    font-size: 24px;
+    padding: 5px
+}
+
+.generalization-questions th, .generalization-questions th {
+    font-weight: normal;
+    font-size: 20px;
+}
+
+
+.generalization-questions tr {
+    border: 1px solid gray;
+
+}
+
+.generalization-questions input[type="radio"] {
+    height: 24px;
+    width: 24px;
+}
+
+.gloss-question textarea {
+    display: block;
+    margin: 0.5em;
+}
+
 
 .progress {
     border: 1px solid gray;
@@ -205,4 +268,13 @@ textarea {
 
 #q ul li {
     padding-top: 0.5em;
+}
+
+#interstitial {
+    padding-top: 30%;
+    text-align: center;
+}
+
+#q textarea {
+    display: block;
 }

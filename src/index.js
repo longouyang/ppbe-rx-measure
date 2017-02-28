@@ -1,8 +1,8 @@
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
-    _ = require('underscore'),
-    ExamplesEditor = require('./examples-editor');
+    ReceiveInterface = require('./receive-interface'),
+    _ = require('underscore');
 
 global.jQuery = $; // for form validation library
 
@@ -29,25 +29,191 @@ function showSlide(id) {
 }
 
 
-var sendingRules = [
-  //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
-  {'id': '3a', description: "The string is three or more lowercase <code>a</code>'s"},
-  {'id': 'zip-code', description: "The string is 5 digits in a row"},
-  {'id': 'consonants-only', description: "The string contains only consonants"},
-  {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
-];
 
-var send = bound({
-  inputs: sendingRules,
+
+var ruleData = {
+  '3a': {
+    generalizationQuestions: ['beravj',
+                              'aaaa',
+                              '@#$23g',
+                              'bbb',
+                              'eee',
+                              'a',
+                              'b93kgw;_mfo',
+                              'alpaca',
+                              'AAA',
+                              'aaab',
+                              'DASASA',
+                              'aaaaaaaaaaaaaa',
+                              '9aaaaaa',
+                              'AAAAA'],
+    exampleSequences: {
+      '85357a3':[{polarity: 'negative', string: 'a'},
+                 {polarity: 'negative', string: 'aa'},
+                 {polarity: 'positive', string: 'aaa'},
+                 {polarity: 'positive', string: 'aaaa'},
+                 {polarity: 'positive', string: 'aaaaa'},
+                 {polarity: 'positive', string: 'aaaaaa'},
+                 {polarity: 'positive', string: 'aaaaaaa'},
+                 {polarity: 'positive', string: 'aaaaaaaaaa'}],
+
+      '13d1cf2':[{polarity: 'positive', string: 'aaa'},
+                 {polarity: 'positive', string: 'aaaa'},
+                 {polarity: 'positive', string: 'aaaaa'},
+                 {polarity: 'negative', string: 'aab'},
+                 {polarity: 'negative', string: 'aaba'},
+                 {polarity: 'negative', string: 'bcdef'}],
+
+      'e91432b':[{polarity: 'positive', string: 'aaa'},
+                 {polarity: 'negative', string: 'aca'},
+                 {polarity: 'negative', string: 'a33'},
+                 {polarity: 'negative', string: 'fds'},
+                 {polarity: 'positive', string: 'aaaaaaaaaaaa'}]}
+  },
+  'zip-code': {
+    generalizationQuestions: ['11111',
+                              '13708',
+                              '236778',
+                              'hg4567s',
+                              '-12541',
+                              '9076.2',
+                              'nfas10583vns',
+                              '238',
+                              'erqew',
+                              '122555',
+                              'dskfjlmxF',
+                              '==DFG$!'
+                             ],
+    exampleSequences: {
+      '07e8a36':[{polarity: 'positive', string: '12345'},
+                 {polarity: 'negative', string: '1234'},
+                 {polarity: 'negative', string: '123'},
+                 {polarity: 'negative', string: '12'},
+                 {polarity: 'negative', string: '123456'}],
+
+      '6113a67':[{polarity: 'positive', string: '12345'},
+                 {polarity: 'negative', string: '1234'},
+                 {polarity: 'negative', string: '123456'}],
+
+      '08af176':[{polarity: 'positive', string: '12344'},
+                 {polarity: 'negative', string: '4k3kk'},
+                 {polarity: 'negative', string: 'kkkkk'}],
+
+      '51aa397':[{polarity: 'positive', string: '13685'},
+                 {polarity: 'positive', string: '99999'},
+                 {polarity: 'negative', string: 'AB67D'},
+                 {polarity: 'positive', string: '68392'},
+                 {polarity: 'negative', string: 'AGDUL'}],
+
+      '37bd336':[{polarity: 'positive', string: '12345'},
+                 {polarity: 'negative', string: '1234a'}]
+    }
+  },
+  'consonants-only': {
+    generalizationQuestions: ['xvmp',
+                              'qqqqqw',
+                              'dgrel',
+                              'SDFBWv',
+                              '6fdsb',
+                              'ZPtngf',
+                              'ktl938',
+                              'agcht',
+                              'uz',
+                              'qfqfqfqf',
+                              'poeuuae'
+                             ],
+    exampleSequences: {
+      '08af176':[{polarity: 'negative', string: 'aeiou'},
+                 {polarity: 'positive', string: 'ccccs'},
+                 {polarity: 'positive', string: 'bkjnn'}],
+
+      '112df88':[{polarity: 'positive', string: 'qwrty'},
+                 {polarity: 'negative', string: 'aeiou'},
+                 {polarity: 'negative', string: "12345=?*'"}],
+
+      'f0cc52f':[{polarity: 'positive', string: 'tzg'},
+                 {polarity: 'negative', string: 'teg'},
+                 {polarity: 'negative', string: 'tag'},
+                 {polarity: 'positive', string: 'jkl'},
+                 {polarity: 'positive', string: 'plt'},
+                 {polarity: 'negative', string: 'ukl'},
+                 {polarity: 'negative', string: 'fet'},
+                 {polarity: 'negative', string: 'abc'},
+                 {polarity: 'positive', string: 'fgh'},
+                 {polarity: 'negative', string: 'iou'}]
+    }
+  },
+  'delimiters': {
+    generalizationQuestions: ['xyzsf',
+                              '[mna_8%234]',
+                              '(fdfm3t)',
+                              '{0thg1!@}',
+                              'gnro[34r3]',
+                              '[4939k4k3',
+                              'xccg3]',
+                              '[fbndofb]]',
+                              'fjdjdjjttt6',
+                              '[[qoo_w3]',
+                              '!@T!3gas',
+                              '[[[223768]]]'
+                             ],
+    exampleSequences: {
+      '295bd50':[{polarity: 'positive', string: '[jh23]'},
+                 {polarity: 'negative', string: 'jh23'},
+                 {polarity: 'positive', string: '[4784]'},
+                 {polarity: 'negative', string: '4784'}],
+
+      '4bf1c95':[{polarity: 'positive', string: '[625458]'},
+                 {polarity: 'negative', string: '{78779}'},
+                 {polarity: 'negative', string: '[564564]'},
+                 {polarity: 'negative', string: 'tfytry]'},
+                 {polarity: 'negative', string: 'rtyrty5646'}
+                ],
+      'a4dd5fc':[{polarity: 'positive', string: '[56TGH]'},
+                 {polarity: 'positive', string: '[DFRU76]'},
+                 {polarity: 'positive', string: '[ASDF321]'},
+                 {polarity: 'positive', string: '[NM734D]'}]
+    }
+  }
+};
+
+
+// TODO: randomization
+var receivingExamples = _.map(ruleData,
+                              function(entry,k) {
+
+                                var seqs = entry.exampleSequences,
+                                    seqId = _.sample(_.keys(seqs)),
+                                    examples = seqs[seqId];
+
+                                return {id: k,
+                                        seqId: seqId,
+                                        examples: examples,
+                                        questions: entry.generalizationQuestions
+                                       }
+                              }
+                             );
+
+
+var receive = bound({
+  inputs: receivingExamples,
   outputs: [],
   trial: function(input) {
     var comp = React.createElement(
-      ExamplesEditor,
-      {rule: input,
+      ReceiveInterface,
+      {examples: input.examples,
+       questions: input.questions,
        after: function(output) {
-         send.outputs.push(output);
+         receive.outputs.push(output);
          ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
-         send.next();
+
+         if (receive.outputs.length == receive.inputs.length) {
+           $('#interstitial p').text('Now, just fill out a brief questionnaire and the task will be finished.')
+         }
+
+         $('#interstitial button').one('click', receive.next)
+         showSlide('interstitial');
+
        }});
 
     ReactDOM.render(comp, $('.examples-editor-container')[0], function() {
@@ -59,11 +225,11 @@ var send = bound({
     var i = this.outputs.length;
     var n = this.inputs.length;
 
-    if (i == send.inputs.length) {
+    if (i == receive.inputs.length) {
       this.after(this)
     } else {
       // advance progress indicator
-      $('#give-examples .progress span').text('Completed: ' + i + '/' + n)
+      $('#give-examples .progress span').text('Rules completed: ' + i + '/' + n)
 
       $('#give-examples .progress .completed').css({
         width: Math.round(100 * i / n) + '%'
@@ -116,15 +282,7 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up send results
-  results.send = _.map(
-    send.outputs,
-    function(x,i) {
-      return _.extend({},
-                      // add rule info
-                      send.inputs[i],
-                      // ditch reveal info, munge into data frame
-                      {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) })
+  results.receive = receive.outputs;
 
   global.results = results;
 
@@ -133,9 +291,9 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', send.next)
+$('#intro button.next').one('click', receive.next)
 
-send.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
@@ -143,7 +301,7 @@ questionnaire.after = finishExperiment;
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
   pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
-           'send','questionnaire',
+           'receive','questionnaire',
            'finishExperiment'])
 
   function handleHash(e) {
@@ -168,7 +326,7 @@ window.fingerprint = {};
 
 // conservatively, just get the IP (should always work, as long as web.stanford.edu doesn't go down)
 function setIp(ip) {
-  console.log('set ip');
+  //console.log('set ip');
   window.fingerprint.ip = ip;
 
   // now, try to get more detailed geolocation info (will work if freegeoip is up and we haven't hit their limit)
@@ -186,7 +344,7 @@ window.setIp = setIp;
 
 // try to get geo-located data
 function setGeo(data) {
-  console.log('set geo');
+  //console.log('set geo');
   window.fingerprint.ip = data.ip;
   window.fingerprint.geo = data;
 }
