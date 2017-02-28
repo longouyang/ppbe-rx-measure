@@ -32854,7 +32854,7 @@ function showSlide(id) {
 
 var ruleData = {
   '3a': {
-    generalizationQuestions: ['aaaa', 'a', 'AAA', 'aaab'],
+    generalizationQuestions: ['beravj', 'aaaa', '@#$23g', 'bbb', 'eee', 'a', 'b93kgw;_mfo', 'alpaca', 'AAA', 'aaab', 'DASASA', 'aaaaaaaaaaaaaa', '9aaaaaa', 'AAAAA'],
     exampleSequences: {
       '85357a3': [{ polarity: 'negative', string: 'a' }, { polarity: 'negative', string: 'aa' }, { polarity: 'positive', string: 'aaa' }, { polarity: 'positive', string: 'aaaa' }, { polarity: 'positive', string: 'aaaaa' }, { polarity: 'positive', string: 'aaaaaa' }, { polarity: 'positive', string: 'aaaaaaa' }, { polarity: 'positive', string: 'aaaaaaaaaa' }],
 
@@ -32863,7 +32863,7 @@ var ruleData = {
       'e91432b': [{ polarity: 'positive', string: 'aaa' }, { polarity: 'negative', string: 'aca' }, { polarity: 'negative', string: 'a33' }, { polarity: 'negative', string: 'fds' }, { polarity: 'positive', string: 'aaaaaaaaaaaa' }] }
   },
   'zip-code': {
-    generalizationQuestions: ['TODOTODO'],
+    generalizationQuestions: ['11111', '13708', '236778', 'hg4567s', '-12541', '9076.2', 'nfas10583vns', '238', 'erqew', '122555', 'dskfjlmxF', '==DFG$!'],
     exampleSequences: {
       '07e8a36': [{ polarity: 'positive', string: '12345' }, { polarity: 'negative', string: '1234' }, { polarity: 'negative', string: '123' }, { polarity: 'negative', string: '12' }, { polarity: 'negative', string: '123456' }],
 
@@ -32877,7 +32877,7 @@ var ruleData = {
     }
   },
   'consonants-only': {
-    generalizationQuestions: ['TODOTODO'],
+    generalizationQuestions: ['xvmp', 'qqqqqw', 'dgrel', 'SDFBWv', '6fdsb', 'ZPtngf', 'ktl938', 'agcht', 'uz', 'qfqfqfqf', 'poeuuae'],
     exampleSequences: {
       '08af176': [{ polarity: 'negative', string: 'aeiou' }, { polarity: 'positive', string: 'ccccs' }, { polarity: 'positive', string: 'bkjnn' }],
 
@@ -32887,7 +32887,7 @@ var ruleData = {
     }
   },
   'delimiters': {
-    generalizationQuestions: ['[xyzsf]', '(xyzsf)', '[091235]', '[gsg31', '[[ve#!N2]]', 'sd21p03'],
+    generalizationQuestions: ['xyzsf', '[mna_8%234]', '(fdfm3t)', '{0thg1!@}', 'gnro[34r3]', '[4939k4k3', 'xccg3]', '[fbndofb]]', 'fjdjdjjttt6', '[[qoo_w3]', '!@T!3gas', '[[[223768]]]'],
     exampleSequences: {
       '295bd50': [{ polarity: 'positive', string: '[jh23]' }, { polarity: 'negative', string: 'jh23' }, { polarity: 'positive', string: '[4784]' }, { polarity: 'negative', string: '4784' }],
 
