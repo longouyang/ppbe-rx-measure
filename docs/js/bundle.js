@@ -32918,7 +32918,8 @@ var receive = bound({
     var comp = React.createElement(ReceiveInterface, { examples: input.examples,
       questions: input.questions,
       after: function (output) {
-        receive.outputs.push(output);
+        var trialNum = receive.outputs.length;
+        receive.outputs.push(_.extend({}, receive.inputs[trialNum], output));
         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
 
         if (receive.outputs.length == receive.inputs.length) {

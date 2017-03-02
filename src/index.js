@@ -194,7 +194,6 @@ var receivingExamples = _.map(ruleData,
                               }
                              );
 
-
 var receive = bound({
   inputs: receivingExamples,
   outputs: [],
@@ -204,7 +203,11 @@ var receive = bound({
       {examples: input.examples,
        questions: input.questions,
        after: function(output) {
-         receive.outputs.push(output);
+         var trialNum = receive.outputs.length;
+         receive.outputs.push(_.extend({},
+                                       receive.inputs[trialNum],
+                                       output
+                                      ));
          ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
 
          if (receive.outputs.length == receive.inputs.length) {
