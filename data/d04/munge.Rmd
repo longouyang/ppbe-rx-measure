@@ -120,6 +120,9 @@ glosses = do.call(
 
 
 
+```{r}
+write.csv(glosses, file = paste0(results.dir, "gloss.csv"), row.names = FALSE)
+```
 
 
 ```{r}
