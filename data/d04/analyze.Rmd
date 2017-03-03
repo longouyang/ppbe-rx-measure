@@ -1,0 +1,204 @@
+---
+title: "d04b analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(MASS)
+library(plyr)
+library(tidyverse)
+library(lubridate)
+library(memoise)
+```
+
+```{r utilities}
+generic.ci_ <- function(x, n = 5000, seed = 1) {
+  set.seed(seed)
+  lenx = length(x)
+  
+  structure(
+    quantile(
+      replicate(n, mean(x[sample.int(lenx, replace = TRUE)])),
+      c(0.025, 0.975)),
+    names=c("ci.l","ci.u"))
+}
+
+generic.ci <- memoise(generic.ci_)
+```
+
+# read in data
+
+```{r}
+results.dir = "production-results/"
+assignments = read_csv(paste0(results.dir, "assignments.csv")) %>%
+  mutate(accept.time = ymd_hms(accept.time),
+         submit.time = ymd_hms(submit.time),
+         duration = difftime(submit.time, accept.time, units = "mins"))
+gloss = read_csv(paste0(results.dir,"gloss.csv"))
+gen = read_csv(paste0(results.dir, "generalization.csv"),
+                     col_types = cols(string = col_character()))
+
+## arrange assignments in order of time
+assignments = assignments %>% arrange(accept.time)
+```
+
+
+```{r compute-example-correctness}
+regexes = c('3a' = 'aaa+',
+            'zip-code' = '[0123456789]{5}',
+            'consonants-only' = '[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]*',
+            'delimiters' = "\\[.*\\]")
+
+example.matches = function(example, rx) {
+  res = regexpr(pattern = rx, text = example)
+  # make sure we match and that the *entire* string is what matches, not a substring
+  res > 0 & attr(res, "match.length") == nchar(example)
+}
+# example.correct(example = 'aaa', rx = 'aaa+')
+# example.correct(example = 'baaa', rx = 'aaa+')
+# example.correct(example = 'aaaa', rx = 'aaa+')
+
+
+# # testing
+# View(responses %>% select(rule.id, polarity, string, correct, match) %>% arrange(rule.id, polarity))
+```
+
+
+# auxiliary
+
+## how long does the task take?
+
+```{r}
+qplot(data = assignments,
+      x = as.numeric(duration),
+      binwidth = 1,
+      color = I('white')) + 
+  xlab("duration (minutes)")
+```
+
+
+## what did people think was a fair payment?
+
+```{r}
+fair.pay = assignments$fair_pay %>% as.numeric %>% na.omit
+fair.pay = fair.pay[fair.pay < 5]
+qplot(x = fair.pay,
+      binwidth = 0.1,
+      color = I('white')
+      )
+```
+
+## how old are people?
+
+```{r}
+qplot(data = assignments,
+      x = age,
+      binwidth = 5)
+```
+
+they all tend to be older
+
+## what gender are they?
+
+```{r}
+table(tolower(substr(assignments$gender, start = 1, stop = 1)))
+```
+
+## what is their programming / regex experience?
+
+```{r}
+assignments %>% select(programming.experience, regex.experience, worker.id, age, gender) %>% arrange(desc(nchar(programming.experience)))
+```
+there's maybe 10 people with some sort of experience.
+
+
+
+## any bugs?
+
+```{r}
+assignments %>% select(bugs, worker.id) %>% arrange(desc(nchar(bugs)))
+```
+
+not quite sure i understand the feedback from 6487c8d. they appear to have done everything correctly except for the delimiters example.
+
+## how much did they enjoy the task?
+
+```{r}
+assignments %>% select(enjoy) %>% arrange(desc(nchar(enjoy)))
+```
+
+It wasn't terrible
+
+# research
+
+
+## how does correctness vary by rule.id and sequence?
+
+```{r, fig.width = 10, fig.height = 3}
+e = gen %>%
+  group_by(rule.id, seq.id, worker.id) %>%
+  summarise(score = mean(correct)) %>%
+  group_by(rule.id, seq.id) %>%
+  summarise(mean.score = mean(score),
+            ci.l.score = generic.ci(score)['ci.l'],
+            ci.u.score = generic.ci(score)['ci.u'],
+            n = length(score)
+            )
+            
+
+qplot(data = e,
+      x = seq.id,
+      y = mean.score,
+      ymin = ci.l.score,
+      ymax = ci.u.score,
+      geom = 'pointrange'
+      ) +
+  geom_text(mapping = aes(label = paste0('n = ',n), y = 0.05), size = 3) +
+  facet_grid(. ~ rule.id, scales = 'free') + ylim(0, 1) +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1))
+```
+
+## do different example sequences yield different generalization patterns?
+
+
+```{r}
+score.by.stim = gen %>%
+  group_by(rule.id, seq.id, string) %>%
+  summarise(mean.score = mean(correct),
+            ci.l.score = generic.ci(correct)['ci.l'],
+            ci.u.score = generic.ci(correct)['ci.u'],
+            n = length(correct)
+            )
+```
+
+3a:
+
+```{r}
+ggplot(data = score.by.stim %>% filter(rule.id == '3a')) +
+  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+```
+
+zip-code:
+```{r}
+ggplot(data = score.by.stim %>% filter(rule.id == 'zip-code')) +
+  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+```
+
+
+consonants-only:
+
+```{r}
+ggplot(data = score.by.stim %>% filter(rule.id == 'consonants-only')) +
+  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+```
+
+delimiters:
+
+```{r}
+ggplot(data = score.by.stim %>% filter(rule.id == 'delimiters')) +
+  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+```
