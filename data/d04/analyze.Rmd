@@ -178,27 +178,145 @@ score.by.stim = gen %>%
 3a:
 
 ```{r}
-ggplot(data = score.by.stim %>% filter(rule.id == '3a')) +
-  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+x.order = score.by.stim %>%
+  filter(rule.id == '3a') %>%
+  group_by(string) %>%
+  summarise(mean.score = mean(mean.score)) %>%
+  arrange(mean.score) %>%
+  {.$string}
+
+e = score.by.stim %>% filter(rule.id == '3a')
+e$order = match(e$string, x.order)
+
+ggplot(data = e) +
+  geom_point(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  geom_line(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  scale_x_continuous(breaks = 1:length(x.order), labels = x.order) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0))
 ```
+
+85357a3: a -, aa -, aaa +, aaaa +, ...
+13d1cf2: aaa +, aaaa +, aaaaa +, aab -, aaba -, bcdef -
+e91432b: aaa +, aca -, a33 -, fds -, aaaaaaaaaaaa +
+
 
 zip-code:
 ```{r}
-ggplot(data = score.by.stim %>% filter(rule.id == 'zip-code')) +
-  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+x.order = score.by.stim %>%
+  filter(rule.id == 'zip-code') %>%
+  group_by(string) %>%
+  summarise(mean.score = mean(mean.score)) %>%
+  arrange(mean.score) %>%
+  {.$string}
+
+e = score.by.stim %>% filter(rule.id == 'zip-code')
+e$order = match(e$string, x.order)
+
+ggplot(data = e) +
+  geom_point(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  geom_line(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  scale_x_continuous(breaks = 1:length(x.order), labels = x.order) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0))
 ```
+
+'07e8a36':[{+, string: '12345'},
+           {-, string: '1234'},
+           {-, string: '123'},
+           {-, string: '12'},
+           {-, string: '123456'}],
+
+'6113a67':[{+, string: '12345'},
+           {-, string: '1234'},
+           {-, string: '123456'}],
+
+'08af176':[{+, string: '12344'},
+           {-, string: '4k3kk'},
+           {-, string: 'kkkkk'}],
+
+'51aa397':[{+, string: '13685'},
+           {+, string: '99999'},
+           {-, string: 'AB67D'},
+           {+, string: '68392'},
+           {-, string: 'AGDUL'}],
+
+'37bd336':[{+, string: '12345'},
+           {-, string: '1234a'}]
+
 
 
 consonants-only:
 
 ```{r}
-ggplot(data = score.by.stim %>% filter(rule.id == 'consonants-only')) +
-  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+x.order = score.by.stim %>%
+  filter(rule.id == 'consonants-only') %>%
+  group_by(string) %>%
+  summarise(mean.score = mean(mean.score)) %>%
+  arrange(mean.score) %>%
+  {.$string}
+
+e = score.by.stim %>% filter(rule.id == 'consonants-only')
+e$order = match(e$string, x.order)
+
+ggplot(data = e) +
+  geom_point(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  geom_line(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  scale_x_continuous(breaks = 1:length(x.order), labels = x.order) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0))
 ```
+
+'08af176':[{-, aeiou},
+           {+, ccccs},
+           {+, bkjnn}],
+
+'112df88':[{+, qwrty},
+           {-, aeiou},
+           {-, 12345=?*'}],
+
+'f0cc52f':[{+, tzg},
+           {-, teg},
+           {-, tag},
+           {+, jkl},
+           {+, plt},
+           {-, ukl},
+           {-, fet},
+           {-, abc},
+           {+, fgh},
+           {-, iou}]
+
 
 delimiters:
 
 ```{r}
-ggplot(data = score.by.stim %>% filter(rule.id == 'delimiters')) +
-  geom_line(mapping = aes(x = string, y = mean.score, group = seq.id, color = seq.id))
+x.order = score.by.stim %>%
+  filter(rule.id == 'delimiters') %>%
+  group_by(string) %>%
+  summarise(mean.score = mean(mean.score)) %>%
+  arrange(mean.score) %>%
+  {.$string}
+
+e = score.by.stim %>% filter(rule.id == 'delimiters')
+e$order = match(e$string, x.order)
+
+ggplot(data = e) +
+  geom_point(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  geom_line(mapping = aes(x = order, y = mean.score, group = seq.id, color = seq.id)) +
+  scale_x_continuous(breaks = 1:length(x.order), labels = x.order) +
+  theme(axis.text.x = element_text(angle = -45, hjust = 0))
 ```
+
+295bd50:  [{+, [jh23]},
+           {-, jh23},
+           {+, [4784]},
+           {-, 4784}]
+
+4bf1c95:  [{+, [625458]},
+           {-, {78779}},
+           {-, [564564]},
+           {-, tfytry]},
+           {-, rtyrty5646}
+          ]
+          
+a4dd5fc:  [{+, [56TGH]},
+           {+, [DFRU76]},
+           {+, [ASDF321]},
+           {+, [NM734D]}]
