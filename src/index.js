@@ -2,6 +2,7 @@ var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
     ReceiveInterface = require('./receive-interface'),
+    ExamplesEditor = require('./examples-editor'),
     _ = require('underscore');
 
 global.jQuery = $; // for form validation library
@@ -194,6 +195,54 @@ var receivingExamples = _.map(ruleData,
                               }
                              );
 
+var sendingRules = _.shuffle([
+  //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
+  {'id': '3a', description: "The string contains <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) and there must be at least 3 <code>a</code>'s in the string"},
+  {'id': 'suffix-s', description: "The string must end in <code>s</code>"},
+  {'id': 'zip-code', description: "The string is exactly 5 characters long and contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)"},
+  {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
+]);
+
+var send = bound({
+  inputs: sendingRules,
+  outputs: [],
+  trial: function(input) {
+    var comp = React.createElement(
+      ExamplesEditor,
+      {rule: input,
+       after: function(output) {
+         send.outputs.push(output);
+         ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
+         send.next();
+       }});
+
+    ReactDOM.render(comp, $('.examples-editor-container')[0], function() {
+      showSlide('give-examples')
+    })
+
+  },
+  next: function() {
+    var i = this.outputs.length;
+    var n = this.inputs.length;
+
+    if (i == send.inputs.length) {
+      this.after(this)
+    } else {
+      // advance progress indicator
+      $('#give-examples .progress span').text('Completed: ' + i + '/' + n)
+
+      $('#give-examples .progress .completed').css({
+        width: Math.round(100 * i / n) + '%'
+      })
+
+      this.trial(this.inputs[i]);
+    }
+  },
+  start: function() {
+    this.next()
+  }
+});
+
 var receive = bound({
   inputs: receivingExamples,
   outputs: [],
@@ -285,7 +334,15 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  results.receive = receive.outputs;
+  // clean up send results
+  results.send = _.map(
+    send.outputs,
+    function(x,i) {
+      return _.extend({},
+                      // add rule info
+                      send.inputs[i],
+                      // ditch reveal info, munge into data frame
+                      {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) });
 
   global.results = results;
 
@@ -294,9 +351,9 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', receive.next)
+$('#intro button.next').one('click', send.next)
 
-receive.after = questionnaire.start;
+send.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
@@ -304,7 +361,7 @@ questionnaire.after = finishExperiment;
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
   pollute(['React', 'ReactDOM', '$', '_', 'showSlide',
-           'receive','questionnaire',
+           'receive','questionnaire','send',
            'finishExperiment'])
 
   function handleHash(e) {

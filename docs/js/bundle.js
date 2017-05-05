@@ -32822,11 +32822,128 @@ module.exports = index;
 }.call(this));
 
 },{}],175:[function(require,module,exports){
+var React = require('react'),
+    ReactDOM = require('react-dom'),
+    $ = require('jquery'),
+    _ = require('underscore');
+
+var Example = React.createClass({
+  displayName: 'Example',
+
+  render: function () {
+    var comp = this,
+        updateExample = this.props.updateExample,
+        time = this.props.time + '';
+    var updateString = function (e) {
+      updateExample({ time: time, string: e.target.value });
+    };
+    var updatePolarity = function (e) {
+      updateExample({ time: time, polarity: e.target.value });
+    };
+    var deleteExample = function (e) {
+      e.preventDefault();
+      console.log(e);
+      comp.props.deleteExample(comp);
+    };
+    var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
+    var string = this.props.string == null ? "" : this.props.string;
+    return React.createElement('form', null, React.createElement('span', { className: 'remove', onClick: deleteExample }, ' \u25CF'), ' The string ', React.createElement('input', { type: 'text', name: 'string', onChange: updateString, value: string }), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'positive', onChange: updatePolarity }), 'matches'), React.createElement('label', null, React.createElement('input', { type: 'radio', name: 'type', value: 'negative', onChange: updatePolarity }), doesnt, ' match '));
+  }
+});
+
+var removeExample = function () {
+  alert('To remove an example, click the red circle next to it');
+};
+
+var ExamplesList = React.createClass({
+  displayName: 'ExamplesList',
+
+  render: function () {
+    var comp = this;
+    var listObj = _.mapObject(this.props.examples, function (ex, key) {
+      return React.createElement(Example, { polarity: ex.polarity, string: ex.string, time: key, key: key, updateExample: comp.props.updateExample, deleteExample: comp.props.deleteExample });
+    }),
+        list = _.values(listObj);
+
+    return React.createElement('div', null, list);
+  }
+});
+
+var ExamplesEditor = React.createClass({
+  displayName: 'ExamplesEditor',
+
+  getBlankExample: function () {
+    var timeString = new Date().getTime() + '';
+    return _.object([[timeString, { polarity: null, string: null }]]);
+  },
+  finish: function () {
+    this.props.after(this.state);
+  },
+  addExample: function () {
+    this.setState(_.extend(this.getBlankExample(), this.state));
+  },
+  revealRule: function () {
+    this.setState({ revealRule: true });
+  },
+  revealInterface: function () {
+    this.setState({ revealInterface: true });
+  },
+  getInitialState: function () {
+    return {
+      revealRule: false,
+      revealInterface: false
+    };
+  },
+  updateExample: function (ex) {
+    var old = this.state[ex.time];
+
+    var newEntry = _.extend({}, old, ex);
+
+    this.setState(_.object([[ex.time, newEntry]]));
+  },
+  deleteExample: function (ex) {
+    this.replaceState(_.omit(this.state, ex.props.time));
+  },
+  render: function () {
+    var examples = _.omit(this.state, 'revealRule', 'revealInterface'),
+        numExamples = _.size(examples);
+
+    var ruleContents = { __html: this.props.rule.description };
+
+    var communicationFraming = 'Imagine that you want to tell a friend of yours about a rule for making strings:';
+
+    var revealRule = this.state.revealRule,
+        revealInterface = this.state.revealInterface;
+
+    var revealRuleButtonClass = 'reveal-rule' + (revealRule ? ' hide' : '');
+    var ruleWrapperClass = 'rule-wrapper' + (revealRule ? '' : ' hide');
+
+    var revealInterfaceButtonClass = 'reveal-interface' + (revealRule ? revealInterface ? ' hide' : '' : ' hide');
+    var interfaceClass = 'interface' + (revealInterface ? '' : ' hide');
+
+    var examplesComplete = _.every(examples, function (ex) {
+      return ex.string && ex.polarity;
+    });
+    var canFinish = numExamples > 0 && examplesComplete;
+    var finishTitle = canFinish ? '' : numExamples == 0 ? 'Add at least one example to continue' : 'Complete all your examples to continue';
+
+    var addButtonLabel = numExamples == 0 ? 'Add first example' : 'Add another example';
+    var removeButtonClassName = 'add-example' + (numExamples == 0 ? ' hide' : '');
+
+    return React.createElement('div', { className: 'examplesEditor' }, React.createElement('p', null, communicationFraming), React.createElement('button', { type: 'button', className: revealRuleButtonClass, onClick: this.revealRule }, 'Click here to show the rule'), React.createElement('p', { className: ruleWrapperClass }, ' Rule: ', React.createElement('span', { className: 'rule', dangerouslySetInnerHTML: ruleContents })), React.createElement('button', { type: 'button', className: revealInterfaceButtonClass, onClick: this.revealInterface }, 'Continue'), React.createElement('div', { className: interfaceClass }, React.createElement('p', null, 'How would you communicate this rule by giving examples of strings that either match or don\'t match the rule? You can give any number of examples but try to give enough and make them helpful  so that your friend would guess the correct rule.'), React.createElement(ExamplesList, { examples: examples, updateExample: this.updateExample, deleteExample: this.deleteExample }), React.createElement('button', { className: 'add-example', onClick: this.addExample }, React.createElement('span', { className: 'icon plus' }, '+'), ' ', addButtonLabel), React.createElement('button', { className: removeButtonClassName, onClick: removeExample }, React.createElement('span', { className: 'icon minus' }, '-'), ' Remove an example'), React.createElement('div', { className: 'clear' }), React.createElement('button', { className: 'done-adding', onClick: this.finish, disabled: !canFinish, title: finishTitle }, 'Next rule >>')));
+  }
+
+});
+
+module.exports = ExamplesEditor;
+
+},{"jquery":26,"react":172,"react-dom":29,"underscore":174}],176:[function(require,module,exports){
 (function (global){
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
     ReceiveInterface = require('./receive-interface'),
+    ExamplesEditor = require('./examples-editor'),
     _ = require('underscore');
 
 global.jQuery = $; // for form validation library
@@ -32911,6 +33028,47 @@ var receivingExamples = _.map(ruleData, function (entry, k) {
   };
 });
 
+var sendingRules = _.shuffle([
+//{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
+{ 'id': '3a', description: "The string contains <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) and there must be at least 3 <code>a</code>'s in the string" }, { 'id': 'suffix-s', description: "The string must end in <code>s</code>" }, { 'id': 'zip-code', description: "The string is exactly 5 characters long and contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)" }, { 'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>' }]);
+
+var send = bound({
+  inputs: sendingRules,
+  outputs: [],
+  trial: function (input) {
+    var comp = React.createElement(ExamplesEditor, { rule: input,
+      after: function (output) {
+        send.outputs.push(output);
+        ReactDOM.unmountComponentAtNode($('.examples-editor-container')[0]);
+        send.next();
+      } });
+
+    ReactDOM.render(comp, $('.examples-editor-container')[0], function () {
+      showSlide('give-examples');
+    });
+  },
+  next: function () {
+    var i = this.outputs.length;
+    var n = this.inputs.length;
+
+    if (i == send.inputs.length) {
+      this.after(this);
+    } else {
+      // advance progress indicator
+      $('#give-examples .progress span').text('Completed: ' + i + '/' + n);
+
+      $('#give-examples .progress .completed').css({
+        width: Math.round(100 * i / n) + '%'
+      });
+
+      this.trial(this.inputs[i]);
+    }
+  },
+  start: function () {
+    this.next();
+  }
+});
+
 var receive = bound({
   inputs: receivingExamples,
   outputs: [],
@@ -32993,7 +33151,14 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  results.receive = receive.outputs;
+  // clean up send results
+  results.send = _.map(send.outputs, function (x, i) {
+    return _.extend({},
+    // add rule info
+    send.inputs[i],
+    // ditch reveal info, munge into data frame
+    { examples: _.values(_.omit(x, 'revealRule', 'revealInterface')) });
+  });
 
   global.results = results;
 
@@ -33004,16 +33169,16 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', receive.next);
+$('#intro button.next').one('click', send.next);
 
-receive.after = questionnaire.start;
+send.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
 // debugging (example URL: index.html?debug#questionnaire)
 
 if (/localhost/.test(global.location.host) || /\?debug/.test(global.location.href)) {
-  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receive', 'questionnaire', 'finishExperiment']);
+  pollute(['React', 'ReactDOM', '$', '_', 'showSlide', 'receive', 'questionnaire', 'send', 'finishExperiment']);
 
   function handleHash(e) {
     var key = global.location.hash.replace("#", "");
@@ -33094,7 +33259,7 @@ window.setGeo = setGeo;
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./receive-interface":176,"jquery":26,"react":172,"react-dom":29,"underscore":174}],176:[function(require,module,exports){
+},{"./examples-editor":175,"./receive-interface":177,"jquery":26,"react":172,"react-dom":29,"underscore":174}],177:[function(require,module,exports){
 var React = require('react'),
     ReactDOM = require('react-dom'),
     $ = require('jquery'),
@@ -33293,4 +33458,4 @@ var ReceiveInterface = React.createClass({
 
 module.exports = ReceiveInterface;
 
-},{"jquery":26,"react":172,"react-dom":29,"scroll-into-view-if-needed":173,"underscore":174}]},{},[175]);
+},{"jquery":26,"react":172,"react-dom":29,"scroll-into-view-if-needed":173,"underscore":174}]},{},[176]);
