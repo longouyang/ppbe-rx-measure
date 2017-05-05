@@ -49,7 +49,7 @@ assignments = assignments %>% arrange(accept.time)
 ```{r compute-example-correctness}
 regexes = c('3a' = 'aaa+',
             'zip-code' = '[0123456789]{5}',
-            'consonants-only' = '[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]*',
+            'suffix-s' = '.*s\\>',
             'delimiters' = "\\[.*\\]")
 
 example.matches = function(example, rx) {
@@ -68,9 +68,9 @@ responses_match = apply(responses[,c('string','rx')],
       1,
       function(e) { example.matches(example = e['string'], rx = e['rx']) })
 
-responses = mutate(responses,
-                   match = responses_match,
-                   correct = !xor(polarity == 'positive', match)) %>%
+responses = responses %>%
+  mutate(match = responses_match,
+         correct = !xor(polarity == 'positive', match)) %>%
   select(-rx, -rule.desc) # hide these cause they're verbose
 
 # # testing
@@ -94,8 +94,9 @@ qplot(data = assignments,
 ## what did people think was a fair payment?
 
 ```{r}
-fair.pay = assignments$fair_pay %>% as.numeric %>% na.omit
-fair.pay = fair.pay[fair.pay < 5]
+fair.pay = gsub("\\$","",assignments$fair_pay) %>% 
+  as.numeric %>% na.omit
+fair.pay = fair.pay[fair.pay < 6]
 qplot(x = fair.pay,
       binwidth = 0.1,
       color = I('white')
@@ -121,24 +122,24 @@ table(tolower(substr(assignments$gender, start = 1, stop = 1)))
 ## what is their programming / regex experience?
 
 ```{r}
-assignments %>% select(programming.experience, regex.experience, worker.id, age, gender) %>% arrange(desc(nchar(programming.experience)))
+assignments %>% select(worker.id, programming.experience) %>% arrange(desc(nchar(programming.experience)))
 ```
-there's maybe 10 people with some sort of experience.
+there's maybe 16 people with some sort of programming experience.
+
+```{r}
+assignments %>% select(worker.id, regex.experience) %>% arrange(desc(nchar(regex.experience)))
+```
 
 ### do the people with regex experience give interesting examples?
 
 ```{r}
-regex.knowers = c("7af1a7e", "85357a3", "f0cc52f", "6b3b421", "e91432b", "295bd50")
+regex.knowers = c("ebda6ed", "d2f7661", "c8cecf0", "a33a11b", "9eabb06", "1dc006e", "ec8b199", "e12e476")
 responses %>% filter(worker.id %in% regex.knowers) %>% select(worker.id, rule.id, example.num, polarity, string)
 ```
 
-- 7af1a7e, delimiters: nested them in `[[valid]]`, also used semantics in `[anythingcouldgohere]`
-- 85357a3, delimiters: listed a bunch of negative examples and then transformed them into positive ones
-- 295bd50, delimiters: listed a bunch of negative examples and then transformed them into positive ones
-- 295bd50, consonants-only: listed individual vowels as negative examples
-- 85357a3, 3a: listed all lengths from 1 to 8 a's
 
-note that there is more interesting behavior here compared to d02. that could be because i changed the instructions to emphasize helpfulness. or it could be because i got more people with programming / regex experience in this sample (and had a larger sample).
+
+TODO: analyze
 
 ## any bugs?
 
@@ -146,7 +147,7 @@ note that there is more interesting behavior here compared to d02. that could be
 assignments %>% select(bugs, worker.id) %>% arrange(desc(nchar(bugs)))
 ```
 
-not quite sure i understand the feedback from 6487c8d. they appear to have done everything correctly except for the delimiters example.
+largely smooth
 
 ## how much did they enjoy the task?
 
@@ -154,7 +155,7 @@ not quite sure i understand the feedback from 6487c8d. they appear to have done 
 assignments %>% select(enjoy) %>% arrange(desc(nchar(enjoy)))
 ```
 
-It wasn't terrible
+It was decent
 
 # research
 
@@ -177,8 +178,6 @@ ggplot(data = e.agg) +
   scale_x_discrete(breaks = as.character(xmin:xmax), drop = FALSE, name = 'number of examples')
 ```
 
-stil between 1 and 11 but now 2 examples is no longer the mode.
-
 ## q: do 2-examples tend to be *balanced*? i.e., one positive and one negative?
 
 ```{r}
@@ -196,7 +195,7 @@ print(table(e.agg$num.pos, e.agg$num.neg))
 prop.test(x = sum(e.agg$num.pos == 1), nrow(e.agg))
 ```
 
-overwhelmingly, yes (nb: would need to collect more data for the proportion test, which i believe operates better if the minimum cell count is 5)
+yes, though not significantly (though i don't have a whole lot of data)
 
 ### for balanced 2-examples, what is the mean edit distance?
 
@@ -216,7 +215,7 @@ qplot(data = e.agg,
   geom_vline(xintercept = mean.balanced.pair.edit.distance, color = I('red'))
 ```
 
-mean is red line -- 3.
+mean is red line -- 4.41.
 
 are these examples are closer than you'd expect by chance? (permutation test)
 
@@ -262,21 +261,6 @@ sum(bootstrap.samples < mean.balanced.pair.edit.distance) / length(bootstrap.sam
 
 yes, this fewer than you'd expect by chance.
 
-#### the second most likely edit distance for balanced 2-examples is 5: is there a pattern there? or is that just the zip code rule?
-
-```{r}
-responses %>%
-  group_by(worker.id, rule.id) %>%
-  mutate(num.examples = length(string)) %>%
-  filter(num.examples == 2, sum(polarity == 'positive') == 1) %>%
-  summarise(edit.distance = adist(string)[1,2]) %>%
-  filter(edit.distance == 5) %>%
-  select(-edit.distance) %>%
-  merge(responses)
-```
-
-in d02, it was mostly zip code. but here it's not.
-
 ## how many positive examples versus negative examples?
 
 ```{r, fig.width = 11, fig.height = 3}
@@ -311,29 +295,8 @@ e.agg = responses %>% group_by(worker.id, rule.id) %>%
 with(e.agg, t.test(num.pos, num.neg, paired = TRUE))
 ```
 
-there is a small preference to give positive examples:
-on average, people give 0.45 more positive examples than negative. people give 4.325 examples on average.
-and there is plenty of variation:
+no, doesn't look like it.
 
-```{r}
-e = data.frame(diff = e.agg$num.pos - e.agg$num.neg) %>% group_by(diff) %>% summarise(freq = n())
-ggplot(data = e) +
-  geom_bar(mapping = aes(x = diff, y = freq), stat = 'identity')
-```
-
-if you don't count the very first example people give for a particular rule, do people give more positive or negative examples?
-
-```{r}
-e.agg = responses %>% 
-  filter(example.num > 1) %>%
-  group_by(worker.id, rule.id) %>%
-  summarise(num.pos = sum(polarity == "positive"),
-            num.neg = sum(polarity == "negative"))
-
-with(e.agg, t.test(num.pos, num.neg, paired = TRUE))
-```
-
-hmm -- after the first example, people actually tend to give more negative examples
 
 ## how related are the examples in edit distance?
 
@@ -467,7 +430,7 @@ clusters.bootstrap = function() {
   mean(num.clusters)
 }
 
-time = system.time(bootstrap.samples <- replicate(500, clusters.bootstrap()))
+time = system.time(bootstrap.samples <- replicate(10, clusters.bootstrap()))
 
 writeLines(paste0("elapsed seconds: ", round(unname(time['elapsed']), 1)))
 
@@ -499,9 +462,7 @@ inspecting errors:
 responses %>% filter(!correct) %>% select(rule.id, worker.id, string, polarity, match, correct) %>% arrange(rule.id)
 ```
 
-issues
-- 3a: people largely interpreted this to be partial matching, not full. also, the issues with lower versus uppercase a's persists.
-- zip-code: people largely interpreted this to be partial matching, not full. 
+TODO
 
 
 by person:
@@ -516,23 +477,21 @@ qplot(data = e,
       geom = 'histogram')
 ```
 
-there's quite a heavy tail of people that make errors. one person seemed to have given entirely wrong examples though...
-
-what did that person do?
+there's quite a heavy tail of people that make errors. what's up with the outliers?
 
 ```{r}
-e %>% filter(error.rate == 1) %>% merge(responses) %>%
-  select(rule.id, example.num, polarity, string)
+e %>% filter(error.rate > 0.4) %>% merge(responses) %>%
+  select(worker.id, rule.id, example.num, polarity, string)
 ```
 
-ah, a lazy worker.
+one lazy worker and some people that didn't understand the instructions.
 
 ## how long are the examples that people give?
 
 by stimulus:
 
 ```{r, fig.width = 11, fig.height = 3}
-qplot(data = responses,
+qplot(data = responses %>% filter(nchar(string) < 25),
       facets = . ~ rule.id,
       x = nchar(string),
       binwidth = 1,
@@ -625,13 +584,8 @@ qplot(data = e,
       geom = c('pointrange','line'))
 ```
 
-doesn't appear to be any sequencing over all the participants, though there are certainly cases where this happens:
+doesn't appear to be any sequencing over all the participants; are there particular cases where this happens? (TODO)
 
-```{r}
-responses %>% filter(worker.id == 'f0cc52f', rule.id == 'zip-code') %>% select(example.num, polarity, string)
-```
-
-in first 4 examples, we have two minimal pairs.
 
 break out previous plot by rule.id:
 
@@ -768,21 +722,11 @@ did 90210 show up as a zip code much?
 responses %>% filter(rule.id == 'zip-code', string == '90210')
 ```
 
-
+no
 
 ## looking at raw examples
 
 ## 3a
-
-## consonants-only
-
-11 people gave "aeiou":
-```{r}
-filter(responses, rule.id == 'consonants-only') %>% filter(string == 'aeiou') %>% nrow
-```
-
-i wonder -- if i changed the rule to exclude some arbitrary collection of five characters, would people submit /that/ concatenation as a negative example?
-
 
 ## delimiters
 
@@ -809,29 +753,4 @@ prop.test(x = sum(e == TRUE), n = length(e))
 
 in d02, i framed this rule in terms of actual zip codes and the negative examples that people gave were, for the most part, entirely numeric.
 here, they tend to give more examples that are not entirely numeric.
-
-# comparing afternoon versus morning workers
-
-age difference?
-
-```{r}                      
-t.test(assignments[1:20,]$age, assignments[21:40,]$age)
-```
-
-not really
-
-gender difference?
-
-```{r}
-tbl.gender.time = rbind(table(substr(tolower(assignments[1:20,]$gender), 1, 1)),
-          table(substr(tolower(assignments[21:40,]$gender), 1, 1)))
-
-print(tbl.gender.time)
-
-chisq.test(tbl.gender.time)
-```
-
-not a significant one
-
-TODO: run the actually interesting analyses on afternoon people versus morning
 
