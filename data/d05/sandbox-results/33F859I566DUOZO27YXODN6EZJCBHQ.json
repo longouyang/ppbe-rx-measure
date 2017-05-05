@@ -1,0 +1,131 @@
+{
+    "AutoApprovalTime": "2017-05-05T18:17:04Z",
+    "AssignmentId": "33F859I566DUOZO27YXODN6EZJCBHQ",
+    "WorkerId": "A11MX7O9QOX4MB",
+    "answers": {
+        "questionnaire": {
+            "outputs": {
+                "enjoy": "sdfjksdfjls",
+                "fair_pay": "$60",
+                "gender": "male",
+                "age": "29",
+                "programming": "sdfsdfsdf",
+                "bugs": "sdfsdfsdfsdfds",
+                "regex": "sdf",
+                "education": "masters"
+            }
+        },
+        "send": [
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "asd",
+                        "time": "1494007884426"
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "asdasd",
+                        "time": "1494007887054"
+                    }
+                ],
+                "id": "delimiters",
+                "description": "The string must begin with <code>[</code> and end with <code>]</code>"
+            },
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "aa",
+                        "time": "1494007892213"
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aaa",
+                        "time": "1494007893686"
+                    }
+                ],
+                "id": "3a",
+                "description": "The string contains <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) and there must be at least 3 <code>a</code>'s in the string"
+            },
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "12324",
+                        "time": "1494007898653"
+                    }
+                ],
+                "id": "zip-code",
+                "description": "The string is exactly 5 characters long and contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)"
+            },
+            {
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "asdass",
+                        "time": "1494007903281"
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "sdfasds",
+                        "time": "1494007905702"
+                    }
+                ],
+                "id": "suffix-s",
+                "description": "The string must end in <code>s</code>"
+            }
+        ],
+        "fingerprint": {
+            "ip": "2601:643:8201:374c:20b2:bca0:854e:41b9",
+            "screenHeight": 1440,
+            "plugins": [
+                {
+                    "description": "Enables Widevine licenses for playback of HTML audio/video content. (version: 1.4.8.970)",
+                    "filename": "widevinecdmadapter.plugin"
+                },
+                {
+                    "description": "",
+                    "filename": "mhjfbmdgcfjbbpaeojofohoefgiehjai"
+                },
+                {
+                    "description": "",
+                    "filename": "internal-nacl-plugin"
+                },
+                {
+                    "description": "Portable Document Format",
+                    "filename": "internal-pdf-viewer"
+                }
+            ],
+            "timezone": 420,
+            "colorDepth": 24,
+            "screenWidth": 2560,
+            "geo": {
+                "city": "Oakland",
+                "region_code": "CA",
+                "region_name": "California",
+                "ip": "2601:643:8201:374c:20b2:bca0:854e:41b9",
+                "time_zone": "America/Los_Angeles",
+                "longitude": -122.242,
+                "metro_code": 807,
+                "latitude": 37.8116,
+                "country_code": "US",
+                "country_name": "United States",
+                "zip_code": "94610"
+            },
+            "browser": {
+                "a": true,
+                "name": "Chrome",
+                "chrome": true,
+                "blink": true,
+                "mac": true,
+                "version": "57.0"
+            }
+        }
+    },
+    "AcceptTime": "2017-05-05T18:11:14Z",
+    "HITId": "3MIVREZQVHY57CT56ZSAXKMO0GGQK4",
+    "Assignment": "",
+    "AssignmentStatus": "Submitted",
+    "SubmitTime": "2017-05-05T18:12:04Z"
+}
