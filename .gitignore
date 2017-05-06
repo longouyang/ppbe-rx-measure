@@ -2,3 +2,4 @@ node_modules/
 .projectile
 env/
 auth.json
+.Rproj.user
