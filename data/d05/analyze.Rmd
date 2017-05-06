@@ -1,5 +1,5 @@
 ---
-title: "analyze"
+title: "d05a analysis"
 output: html_document
 ---
 
@@ -715,31 +715,64 @@ prop.test(x = e['positive'], n = sum(e))
 
 no. looks like it's just the very first example that tends to be positive
 
-## misc
-
-did 90210 show up as a zip code much?
-```{r}
-responses %>% filter(rule.id == 'zip-code', string == '90210')
-```
-
-no
 
 ## looking at raw examples
 
 ## 3a
 
-## delimiters
-
-### only one person nested the brackets (either positively or negatively)
-
 ```{r}
-responses %>% filter(grepl("\\[\\[", string)) %>% select(worker.id, trial.num, example.num, polarity, string)
+responses %>% filter(rule.id == '3a') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
+  transform(string.and.pol = paste0('"', string, '" ', c(positive = '+', negative = '-')[polarity], 
+                                    ifelse(correct, "", "!")
+                                    )) %>%
+  group_by(worker.id) %>%
+  summarise(exs = paste0(string.and.pol, collapse = ' | '))
 ```
 
 
+## delimiters
+
+
+```{r}
+responses %>% filter(rule.id == 'delimiters') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
+  transform(string.and.pol = paste0('"', string, '" ', c(positive = '+', negative = '-')[polarity], 
+                                    ifelse(correct, "", "!")
+                                    )) %>%
+  group_by(worker.id) %>%
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
+```
+
+
+### did anyone nest the brackets? or show a special case?
+
+```{r}
+responses %>% filter(grepl("\\[\\[", string)) %>% select(worker.id, trial.num, example.num, polarity, string) %>% print
+responses %>% filter(grepl("\\]\\]", string)) %>% select(worker.id, trial.num, example.num, polarity, string) %>% print
+```
+
+no one nested.
+
+```{r}
+responses %>% filter(grepl("\\[\\]", string)) %>% select(worker.id, trial.num, example.num, polarity, string) %>% print
+```
+
+several people showed the empty brackets special case.
+also, dff3ecd and 9eabb06 did a good job -- they showed that the brackets must come at the beginning and end, they can't just be balanced.
+
 ## zip-code
 
-### negative examples are somewhat purely numeric (less than d02 though)
+```{r}
+responses %>% filter(rule.id == 'zip-code') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
+  transform(string.and.pol = paste0('"', string, '" ', c(positive = '+', negative = '-')[polarity], 
+                                    ifelse(correct, "", "!")
+                                    )) %>%
+  group_by(worker.id) %>%
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
+```
+
+
+
+### negative examples are somewhat purely numeric
 
 ```{r}
 e = responses %>%
@@ -751,6 +784,23 @@ print(table(e))
 prop.test(x = sum(e == TRUE), n = length(e))
 ```
 
-in d02, i framed this rule in terms of actual zip codes and the negative examples that people gave were, for the most part, entirely numeric.
-here, they tend to give more examples that are not entirely numeric.
+fraction isn't significantly different from 0.5 but that's not the right baseline value.
+also, this special case is kind of subsumed by the more general distance-to-language measure, so i should use that.
+
+## suffix-s
+
+```{r}
+responses %>% filter(rule.id == 'suffix-s') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
+  transform(string.and.pol = paste0('"', string, '" ', c(positive = '+', negative = '-')[polarity], 
+                                    ifelse(correct, "", "!")
+                                    )) %>%
+  group_by(worker.id) %>%
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
+```
+
+
+interesting: d2f7661 gave lots of examples but the absence of related negative examples makes it seem less helpful to me:
+their examples are: "eagles" + ‖ "pizzas" + ‖ "friends" + ‖ "asdfssss" + ‖ "3r280us" + ‖ "333333s" + ‖ "(*&(*^%%SDs" + ‖ "fasdfasdf" - ‖ "3333333" - ‖ "s" + ‖ "d" - ‖ "gwegw" - ‖ "eeeeee" -
+
+by contrast, 032d129's examples are fewer but seem more helpful: "cats" + ‖ "dogs" + ‖ "dog" - ‖ "cat" -
 
