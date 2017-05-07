@@ -718,7 +718,7 @@ no. looks like it's just the very first example that tends to be positive
 
 ## looking at raw examples
 
-## 3a
+### 3a
 
 ```{r}
 responses %>% filter(rule.id == '3a') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
@@ -726,11 +726,11 @@ responses %>% filter(rule.id == '3a') %>% select(-time, -match, -assignment.id) 
                                     ifelse(correct, "", "!")
                                     )) %>%
   group_by(worker.id) %>%
-  summarise(exs = paste0(string.and.pol, collapse = ' | '))
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
 ```
 
 
-## delimiters
+### delimiters
 
 
 ```{r}
@@ -743,7 +743,7 @@ responses %>% filter(rule.id == 'delimiters') %>% select(-time, -match, -assignm
 ```
 
 
-### did anyone nest the brackets? or show a special case?
+#### did anyone nest the brackets? or show a special case?
 
 ```{r}
 responses %>% filter(grepl("\\[\\[", string)) %>% select(worker.id, trial.num, example.num, polarity, string) %>% print
@@ -753,13 +753,13 @@ responses %>% filter(grepl("\\]\\]", string)) %>% select(worker.id, trial.num, e
 no one nested.
 
 ```{r}
-responses %>% filter(grepl("\\[\\]", string)) %>% select(worker.id, trial.num, example.num, polarity, string) %>% print
+responses %>% filter(grepl("\\[\\]", string)) %>% select(worker.id, polarity, string)
 ```
 
 several people showed the empty brackets special case.
 also, dff3ecd and 9eabb06 did a good job -- they showed that the brackets must come at the beginning and end, they can't just be balanced.
 
-## zip-code
+### zip-code
 
 ```{r}
 responses %>% filter(rule.id == 'zip-code') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
@@ -767,7 +767,8 @@ responses %>% filter(rule.id == 'zip-code') %>% select(-time, -match, -assignmen
                                     ifelse(correct, "", "!")
                                     )) %>%
   group_by(worker.id) %>%
-  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ ')) %>%
+  select(exs, worker.id)
 ```
 
 
@@ -787,7 +788,7 @@ prop.test(x = sum(e == TRUE), n = length(e))
 fraction isn't significantly different from 0.5 but that's not the right baseline value.
 also, this special case is kind of subsumed by the more general distance-to-language measure, so i should use that.
 
-## suffix-s
+### suffix-s
 
 ```{r}
 responses %>% filter(rule.id == 'suffix-s') %>% select(-time, -match, -assignment.id) %>% arrange(correct) %>%
@@ -795,7 +796,8 @@ responses %>% filter(rule.id == 'suffix-s') %>% select(-time, -match, -assignmen
                                     ifelse(correct, "", "!")
                                     )) %>%
   group_by(worker.id) %>%
-  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ ')) %>%
+  select(exs, worker.id)
 ```
 
 
@@ -804,3 +806,12 @@ their examples are: "eagles" + ‖ "pizzas" + ‖ "friends" + ‖ "asdfssss" + �
 
 by contrast, 032d129's examples are fewer but seem more helpful: "cats" + ‖ "dogs" + ‖ "dog" - ‖ "cat" -
 
+# exporting example sequences for learners
+
+how many usable example sequences do i have for each rule?
+
+```{r}
+responses %>% group_by(worker.id, rule.id) %>% summarise(all.correct = all(correct)) %>% group_by(rule.id) %>% summarise(num.usable.sequences = sum(all.correct))
+```
+
+around 30; plenty
