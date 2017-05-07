@@ -716,6 +716,9 @@ prop.test(x = e['positive'], n = sum(e))
 no. looks like it's just the very first example that tends to be positive
 
 
+
+## are positive strings further apart than you'd predict by chance?
+
 ## looking at raw examples
 
 ### 3a
