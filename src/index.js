@@ -86,11 +86,17 @@ var generalizationQuestions = {
                  '!@T!3gas',
                  '[[[223768]]]'
                 ],
-  'suffix-s': [
+  'suffix-s': ['ring',
+               'breaks',
+               'store',
+               'past',
+               '12berba32',
+               'yr321a',
+               'psss7',
+               '35r6u'
+              ]
+};
 
-  ]
-
-}
 global.generalizationQuestions = generalizationQuestions;
 
 // get randomization information from server

@@ -32989,9 +32989,9 @@ var generalizationQuestions = {
   '3a': ['beravj', 'aaaa', '@#$23g', 'bbb', 'eee', 'a', 'b93kgw;_mfo', 'alpaca', 'AAA', 'aaab', 'DASASA', 'aaaaaaaaaaaaaa', '9aaaaaa', 'AAAAA'],
   'zip-code': ['11111', '13708', '236778', 'hg4567s', '-12541', '9076.2', 'nfas10583vns', '238', 'erqew', '122555', 'dskfjlmxF', '==DFG$!'],
   'delimiters': ['xyzsf', '[mna_8%234]', '(fdfm3t)', '{0thg1!@}', 'gnro[34r3]', '[4939k4k3', 'xccg3]', '[fbndofb]]', 'fjdjdjjttt6', '[[qoo_w3]', '!@T!3gas', '[[[223768]]]'],
-  'suffix-s': []
-
+  'suffix-s': ['ring', 'breaks', 'store', 'past', '12berba32', 'yr321a', 'psss7', '35r6u']
 };
+
 global.generalizationQuestions = generalizationQuestions;
 
 // get randomization information from server
