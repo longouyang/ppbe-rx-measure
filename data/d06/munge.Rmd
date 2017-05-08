@@ -1,0 +1,178 @@
+---
+title: "munge d06"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(lubridate)
+library(stringr)
+library(digest)
+```
+
+```{r}
+# results.dir = "sandbox-results/"
+results.dir = "production-results/"
+```
+
+```{r}
+parsed.json = Map(fromJSON, paste0(results.dir, list.files(results.dir, pattern = "*.json")))
+# strip results dir from names in parsed.json
+names(parsed.json) = gsub(names(parsed.json),pattern = results.dir, replacement = "")
+
+# also strip ".json"
+names(parsed.json) = gsub(names(parsed.json),pattern = ".json", replacement = "")
+```
+
+```{r}
+from.turk.time <- function(x) {
+  parse_date_time(x, "%Y-%m-%d%H:%M%:%S%z")
+}
+```
+
+
+```{r}
+all.assignments = do.call(
+  rbind,
+  Map(unname(parsed.json),
+      f = function(x) {
+        
+        # extract ip, if we have it
+        ip = NA
+        
+        if (is.list(x$answers$fingerprint)) {
+          if (is.list(x$answers$fingerprint$geo)) {
+            ip = x$answers$fingerprint$geo$ip
+          }
+        }
+        
+        d = with(x,
+                 data.frame(id = AssignmentId,
+                            worker.id = substring(sha1(paste0(WorkerId, "dummy")), 0, 7),
+                            accept.time = from.turk.time(AcceptTime),
+                            submit.time = from.turk.time(SubmitTime),
+                            ip = ip
+                 ))
+        
+        d.questionnaire = as.data.frame(x$answers$questionnaire$outputs) %>%
+          rename(regex.experience = regex,
+                 programming.experience = programming)
+        
+        cbind(d, d.questionnaire)
+      }
+  ))
+```
+
+# exclude data
+
+```{r}
+exclude = list()
+```
+
+## exclude duplicate IPs
+
+```{r}
+exclude$duplicate.ip <- filter(all.assignments, !is.na(ip), duplicated(ip))$id
+```
+
+## apply exclusions
+
+```{r}
+excluded.assignment.ids = unlist(exclude$duplicate.ip)
+assignments = all.assignments %>% filter(!(id %in% excluded.assignment.ids))
+```
+
+# write out assignments
+
+```{r}
+write.csv(assignments, file = paste0(results.dir, "assignments.csv"), row.names = FALSE)
+```
+
+# write out responses for assignments
+
+```{r}
+raw.responses = parsed.json[assignments$id]
+```
+
+
+```{r}
+rule.ids = c('3a','zip-code','suffix-s','delimiters')
+```
+
+```{r}
+glosses = do.call(
+  rbind,
+  Map(unname(raw.responses),
+      f = function(x) {
+        
+        d = with(x,
+                 data.frame(assignment.id = AssignmentId,
+                            worker.id = substring(sha1(paste0(WorkerId, "dummy")), 0, 7)))
+        
+        # join examples for each rule with the metadata about the rule (id, desc, trial num)
+        d.responses = data.frame(rule.id = rule.ids, gloss = x$answers$receive$gloss)
+        
+        merge(d, d.responses)
+        
+      }))
+```
+
+
+
+```{r}
+write.csv(glosses, file = paste0(results.dir, "gloss.csv"), row.names = FALSE)
+```
+
+
+```{r}
+regexes = c('3a' = 'aaa+',
+            'zip-code' = '[0123456789]{5}',
+            'suffix-s' = '.*s\\>',
+            'delimiters' = "\\[.*\\]")
+
+example.matches = function(example, rx) {
+  res = regexpr(pattern = rx, text = example)
+  # make sure we match and that the *entire* string is what matches, not a substring
+  res > 0 & attr(res, "match.length") == nchar(example)
+}
+
+generalization = do.call(
+  rbind,
+  Map(unname(raw.responses),
+      f = function(x) {
+        
+        d = with(x,
+                 data.frame(assignment.id = AssignmentId,
+                            worker.id = substring(sha1(paste0(WorkerId, "dummy")), 0, 7)))
+        
+        # join examples for each rule with the metadata about the rule (id, desc, trial num)
+        d.responses = do.call(rbind,
+                              with(x$answers$receive,
+                                   Map(1:length(id),
+                                       as.list(id),
+                                       as.list(seqId),
+                                       generalization,
+                                       f = function(trial.num, rule.id, seq.id, gen.responses) {
+                                         
+                                         user.matches = (gen.responses$polarity == 'positive')
+                                         gold.matches = example.matches(gen.responses$string, regexes[rule.id])
+                                         response.correct = (user.matches == gold.matches)
+                                         
+                                         merge(x = data.frame(trial.num = trial.num, rule.id = rule.id),
+                                               y = gen.responses %>%
+                                                 transform(correct = response.correct, seq.id = seq.id)
+                                         )
+                                         
+                                       }
+                                   )))
+        
+        merge(d, d.responses)
+      }
+  ))
+```
+
+
+```{r}
+write.csv(generalization, file = paste0(results.dir, "generalization.csv"), row.names = FALSE)
+```
