@@ -39,7 +39,7 @@ var ruleIds = _.chain(curriculaDf).map('rule.id').uniq().value();
 var curricula = _.chain(ruleIds)
     .map(function(ruleId) {
       var responses = _.filter(curriculaDf, {'rule.id': ruleId});
-      return [ruleId, _.groupBy(responses, 'worker.id')]
+      return [ruleId, _.groupBy(responses, 'teacher.id')]
     })
     .object()
     .value();
