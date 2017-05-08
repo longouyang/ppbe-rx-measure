@@ -885,6 +885,28 @@ valid.responses %>% group_by(rule.id) %>% summarise(num.usable.sequences = lengt
 ```
 
 ```{r}
-write(x = paste0("module.exports = ", toJSON(valid.responses, pretty = FALSE)), file = "curricula.js")
+valid.responses.shuffled = valid.responses %>% select(worker.id, rule.id) %>% distinct() %>% sample_frac() %>%
+  transform(order = 1:length(worker.id)) %>%
+  merge(valid.responses) %>%
+  arrange(order, example.num) %>%
+  rename(teacher.id = worker.id)
+
+write(x = paste0("module.exports = ", toJSON(valid.responses.shuffled, pretty = FALSE)), file = "curricula.js")
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
