@@ -102,7 +102,7 @@ function setRandomize(ruleId, seqNumber) {
   //console.log('setRandomize', ruleId, seqNumber);
 
   if (_.filter(receivingExamples, {id: ruleId}).length > 0) {
-    console.log('ignored second attempt to set randomization for ' + ruleId );
+    // console.log('ignored second attempt to set randomization for ' + ruleId );
     return;
   }
 
