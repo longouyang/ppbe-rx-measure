@@ -32984,8 +32984,8 @@ var curricula = _.chain(ruleIds).map(function (ruleId) {
   return [ruleId, _.groupBy(responses, 'teacher.id')];
 }).object().value();
 global.curricula = curricula;
-// d06a only: as a sanity check, for zip-code, restrict attention to two sequences
-curricula['zip-code'] = _.pick(curricula['zip-code'], 'ecba21d', '51be3ed');
+// d06b only: as a sanity check, for zip-code, restrict attention to three sequences
+curricula['zip-code'] = _.pick(curricula['zip-code'], 'ecba21d', '51be3ed', '49bb605');
 
 var generalizationQuestions = {
   '3a': ['aaaa', 'bbb', 'a', 'b93kgw;_mfo', 'alpaca', 'AAA', 'aaabc', 'DASASA', 'aaaaaaaaaaaaaa', 'AAAAA'],
