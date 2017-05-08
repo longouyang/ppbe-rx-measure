@@ -334,15 +334,17 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up send results
-  results.send = _.map(
-    send.outputs,
-    function(x,i) {
-      return _.extend({},
-                      // add rule info
-                      send.inputs[i],
-                      // ditch reveal info, munge into data frame
-                      {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) });
+  // // clean up send results
+  // results.send = _.map(
+  //   send.outputs,
+  //   function(x,i) {
+  //     return _.extend({},
+  //                     // add rule info
+  //                     send.inputs[i],
+  //                     // ditch reveal info, munge into data frame
+  //                     {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) });
+
+  results.receive = receive.outputs;
 
   global.results = results;
 
@@ -351,9 +353,11 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', send.next)
+//$('#intro button.next').one('click', send.next)
+$('#intro button.next').one('click', receive.next)
 
-send.after = questionnaire.start;
+//send.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 

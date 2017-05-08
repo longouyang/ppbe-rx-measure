@@ -171,7 +171,7 @@ var GlossQuestion = React.createClass({
       buttonText = 'Next';
 
       return (<div className='gloss-question'>
-              <p>Can you describe in words what you think the rule is?</p>
+              <p>Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.</p>
               <textarea value={this.state.value} onChange={this.handleChange} rows="4" cols="60"></textarea>
               <button disabled={buttonDisabled} onClick={this.finish}>{buttonText}</button>
               </div>)
@@ -188,12 +188,12 @@ var ReceiveInterface = React.createClass({
     return {showGeneralization: false}
   },
   afterReceive: function() { // show generalization
-    this.refs.generalization.setState({show: true});
-  },
-  afterGeneralization: function() { // show gloss
+    // this.refs.generalization.setState({show: true});
     this.refs.gloss.setState({show: true})
   },
-  afterGloss: function() { // invoke this.props.after callback
+  afterGeneralization: function() { // show gloss
+    // this.refs.gloss.setState({show: true})
+    // this.refs.generalization.setState({show: true});
 
     var gen = this.refs.generalization;
 
@@ -203,6 +203,11 @@ var ReceiveInterface = React.createClass({
       generalizationHistory: gen.state.actions
     })
   },
+  afterGloss: function() { // invoke this.props.after callback
+    this.refs.generalization.setState({show: true});
+
+    var gen = this.refs.generalization;
+  },
   render: function() {
     var comp = this;
 
@@ -211,8 +216,8 @@ var ReceiveInterface = React.createClass({
     return (<div className='examplesEditor'>
             {coverStory}
             <ReceivingList examples={this.props.examples} after={this.afterReceive} />
-            <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={this.afterGeneralization} />
             <GlossQuestion ref='gloss' after={this.afterGloss} />
+            <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={this.afterGeneralization} />
             </div>)
     }
 

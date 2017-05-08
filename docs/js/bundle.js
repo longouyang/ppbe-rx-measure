@@ -33151,14 +33151,17 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // clean up send results
-  results.send = _.map(send.outputs, function (x, i) {
-    return _.extend({},
-    // add rule info
-    send.inputs[i],
-    // ditch reveal info, munge into data frame
-    { examples: _.values(_.omit(x, 'revealRule', 'revealInterface')) });
-  });
+  // // clean up send results
+  // results.send = _.map(
+  //   send.outputs,
+  //   function(x,i) {
+  //     return _.extend({},
+  //                     // add rule info
+  //                     send.inputs[i],
+  //                     // ditch reveal info, munge into data frame
+  //                     {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) });
+
+  results.receive = receive.outputs;
 
   global.results = results;
 
@@ -33169,9 +33172,11 @@ function finishExperiment() {
 
 // flow of experiment
 
-$('#intro button.next').one('click', send.next);
+//$('#intro button.next').one('click', send.next)
+$('#intro button.next').one('click', receive.next);
 
-send.after = questionnaire.start;
+//send.after = questionnaire.start;
+receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 
@@ -33412,7 +33417,7 @@ var GlossQuestion = React.createClass({
           buttonDisabled = emptyText,
           buttonText = 'Next';
 
-      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is?'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText));
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText));
     }
   }
 });
@@ -33429,14 +33434,13 @@ var ReceiveInterface = React.createClass({
   },
   afterReceive: function () {
     // show generalization
-    this.refs.generalization.setState({ show: true });
+    // this.refs.generalization.setState({show: true});
+    this.refs.gloss.setState({ show: true });
   },
   afterGeneralization: function () {
     // show gloss
-    this.refs.gloss.setState({ show: true });
-  },
-  afterGloss: function () {
-    // invoke this.props.after callback
+    // this.refs.gloss.setState({show: true})
+    // this.refs.generalization.setState({show: true});
 
     var gen = this.refs.generalization;
 
@@ -33446,12 +33450,18 @@ var ReceiveInterface = React.createClass({
       generalizationHistory: gen.state.actions
     });
   },
+  afterGloss: function () {
+    // invoke this.props.after callback
+    this.refs.generalization.setState({ show: true });
+
+    var gen = this.refs.generalization;
+  },
   render: function () {
     var comp = this;
 
     var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:');
 
-    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }));
+    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }));
   }
 
 });
