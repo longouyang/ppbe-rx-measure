@@ -176,7 +176,7 @@ var GlossQuestion = React.createClass({
           : (<button disabled={buttonDisabled} onClick={this.finish}>{buttonText}</button>);
 
       return (<div className='gloss-question'>
-              <p>Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.</p>
+              <p>Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand. If you aren't sure what the rule is, write "I don't know".</p>
               <textarea value={this.state.value} onChange={this.handleChange} rows="4" cols="60"></textarea>
               {nextButton}
               </div>)

@@ -75,12 +75,11 @@ var generalizationQuestions = {
                  '{0thg1!@}',
                  'gnro[34r3]',
                  '[4939k4k3',
+                 '[]',
                  'xccg3]',
                  '[fbndofb]]',
-                 'fjdjdjjttt6',
                  '[[qoo_w3]',
-                 '!@T!3gas',
-                 '[[[223768]]]'
+                 '[[223768]]'
                 ],
   'suffix-s': ['ring',
                'breaks',
@@ -120,7 +119,7 @@ function setRandomize(ruleId, seqNumber) {
   var sampledRule = {id: ruleId,
                      seqId: seqId,
                      examples: examples,
-                     questions: generalizationQuestions,
+                     questions: _.shuffle(generalizationQuestions),
                      randomization: randomization
                  };
 

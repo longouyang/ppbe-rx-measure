@@ -32990,7 +32990,7 @@ curricula['zip-code'] = _.pick(curricula['zip-code'], 'ecba21d', '51be3ed');
 var generalizationQuestions = {
   '3a': ['aaaa', 'bbb', 'a', 'b93kgw;_mfo', 'alpaca', 'AAA', 'aaabc', 'DASASA', 'aaaaaaaaaaaaaa', 'AAAAA'],
   'zip-code': ['31708', '56789', '236778', '-12541', '9076.2', 'nfas10583vns', '238', 'erqew', 'abcde', 'dskfjlmxF'],
-  'delimiters': ['xyzsf', '[mna_8%234]', '(fdfm3t)', '{0thg1!@}', 'gnro[34r3]', '[4939k4k3', 'xccg3]', '[fbndofb]]', 'fjdjdjjttt6', '[[qoo_w3]', '!@T!3gas', '[[[223768]]]'],
+  'delimiters': ['xyzsf', '[mna_8%234]', '(fdfm3t)', '{0thg1!@}', 'gnro[34r3]', '[4939k4k3', '[]', 'xccg3]', '[fbndofb]]', '[[qoo_w3]', '[[223768]]'],
   'suffix-s': ['ring', 'breaks', 'store', 'past', '12berba32', 'yr321a', 'psss7', '35r6u']
 };
 
@@ -33023,7 +33023,7 @@ function setRandomize(ruleId, seqNumber) {
   var sampledRule = { id: ruleId,
     seqId: seqId,
     examples: examples,
-    questions: generalizationQuestions,
+    questions: _.shuffle(generalizationQuestions),
     randomization: randomization
   };
 
@@ -33433,7 +33433,7 @@ var GlossQuestion = React.createClass({
 
       var nextButton = this.state.finished ? React.createElement('span', null) : React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText);
 
-      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), nextButton);
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand. If you aren\'t sure what the rule is, write "I don\'t know".'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), nextButton);
     }
   }
 });
