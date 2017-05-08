@@ -29,174 +29,122 @@ function showSlide(id) {
   $(current).addClass('show');
 }
 
+// example sequences for receiving
+var curriculaDf = require('./curricula');
+// curricula is an array of response rows (fields are: example.num, polarity, rule.id, string, trial.num, worker.id)
+// munge into a dictionary form:
+// keys are ruleIds, values are arrays
+var ruleIds = _.chain(curriculaDf).map('rule.id').uniq().value();
 
+var curricula = _.chain(ruleIds)
+    .map(function(ruleId) {
+      var responses = _.filter(curriculaDf, {'rule.id': ruleId});
+      return [ruleId, _.groupBy(responses, 'worker.id')]
+    })
+    .object()
+    .value();
+global.curricula = curricula;
 
-
-var ruleData = {
-  '3a': {
-    generalizationQuestions: ['beravj',
-                              'aaaa',
-                              '@#$23g',
-                              'bbb',
-                              'eee',
-                              'a',
-                              'b93kgw;_mfo',
-                              'alpaca',
-                              'AAA',
-                              'aaab',
-                              'DASASA',
-                              'aaaaaaaaaaaaaa',
-                              '9aaaaaa',
-                              'AAAAA'],
-    exampleSequences: {
-      '85357a3':[{polarity: 'negative', string: 'a'},
-                 {polarity: 'negative', string: 'aa'},
-                 {polarity: 'positive', string: 'aaa'},
-                 {polarity: 'positive', string: 'aaaa'},
-                 {polarity: 'positive', string: 'aaaaa'},
-                 {polarity: 'positive', string: 'aaaaaa'},
-                 {polarity: 'positive', string: 'aaaaaaa'},
-                 {polarity: 'positive', string: 'aaaaaaaaaa'}],
-
-      '13d1cf2':[{polarity: 'positive', string: 'aaa'},
-                 {polarity: 'positive', string: 'aaaa'},
-                 {polarity: 'positive', string: 'aaaaa'},
-                 {polarity: 'negative', string: 'aab'},
-                 {polarity: 'negative', string: 'aaba'},
-                 {polarity: 'negative', string: 'bcdef'}],
-
-      'e91432b':[{polarity: 'positive', string: 'aaa'},
-                 {polarity: 'negative', string: 'aca'},
-                 {polarity: 'negative', string: 'a33'},
-                 {polarity: 'negative', string: 'fds'},
-                 {polarity: 'positive', string: 'aaaaaaaaaaaa'}]}
-  },
-  'zip-code': {
-    generalizationQuestions: ['11111',
-                              '13708',
-                              '236778',
-                              'hg4567s',
-                              '-12541',
-                              '9076.2',
-                              'nfas10583vns',
-                              '238',
-                              'erqew',
-                              '122555',
-                              'dskfjlmxF',
-                              '==DFG$!'
-                             ],
-    exampleSequences: {
-      '07e8a36':[{polarity: 'positive', string: '12345'},
-                 {polarity: 'negative', string: '1234'},
-                 {polarity: 'negative', string: '123'},
-                 {polarity: 'negative', string: '12'},
-                 {polarity: 'negative', string: '123456'}],
-
-      '6113a67':[{polarity: 'positive', string: '12345'},
-                 {polarity: 'negative', string: '1234'},
-                 {polarity: 'negative', string: '123456'}],
-
-      '08af176':[{polarity: 'positive', string: '12344'},
-                 {polarity: 'negative', string: '4k3kk'},
-                 {polarity: 'negative', string: 'kkkkk'}],
-
-      '51aa397':[{polarity: 'positive', string: '13685'},
-                 {polarity: 'positive', string: '99999'},
-                 {polarity: 'negative', string: 'AB67D'},
-                 {polarity: 'positive', string: '68392'},
-                 {polarity: 'negative', string: 'AGDUL'}],
-
-      '37bd336':[{polarity: 'positive', string: '12345'},
-                 {polarity: 'negative', string: '1234a'}]
-    }
-  },
-  'consonants-only': {
-    generalizationQuestions: ['xvmp',
-                              'qqqqqw',
-                              'dgrel',
-                              'SDFBWv',
-                              '6fdsb',
-                              'ZPtngf',
-                              'ktl938',
-                              'agcht',
-                              'uz',
-                              'qfqfqfqf',
-                              'poeuuae'
-                             ],
-    exampleSequences: {
-      '08af176':[{polarity: 'negative', string: 'aeiou'},
-                 {polarity: 'positive', string: 'ccccs'},
-                 {polarity: 'positive', string: 'bkjnn'}],
-
-      '112df88':[{polarity: 'positive', string: 'qwrty'},
-                 {polarity: 'negative', string: 'aeiou'},
-                 {polarity: 'negative', string: "12345=?*'"}],
-
-      'f0cc52f':[{polarity: 'positive', string: 'tzg'},
-                 {polarity: 'negative', string: 'teg'},
-                 {polarity: 'negative', string: 'tag'},
-                 {polarity: 'positive', string: 'jkl'},
-                 {polarity: 'positive', string: 'plt'},
-                 {polarity: 'negative', string: 'ukl'},
-                 {polarity: 'negative', string: 'fet'},
-                 {polarity: 'negative', string: 'abc'},
-                 {polarity: 'positive', string: 'fgh'},
-                 {polarity: 'negative', string: 'iou'}]
-    }
-  },
-  'delimiters': {
-    generalizationQuestions: ['xyzsf',
-                              '[mna_8%234]',
-                              '(fdfm3t)',
-                              '{0thg1!@}',
-                              'gnro[34r3]',
-                              '[4939k4k3',
-                              'xccg3]',
-                              '[fbndofb]]',
-                              'fjdjdjjttt6',
-                              '[[qoo_w3]',
-                              '!@T!3gas',
-                              '[[[223768]]]'
-                             ],
-    exampleSequences: {
-      '295bd50':[{polarity: 'positive', string: '[jh23]'},
-                 {polarity: 'negative', string: 'jh23'},
-                 {polarity: 'positive', string: '[4784]'},
-                 {polarity: 'negative', string: '4784'}],
-
-      '4bf1c95':[{polarity: 'positive', string: '[625458]'},
-                 {polarity: 'negative', string: '{78779}'},
-                 {polarity: 'negative', string: '[564564]'},
-                 {polarity: 'negative', string: 'tfytry]'},
-                 {polarity: 'negative', string: 'rtyrty5646'}
+var generalizationQuestions = {
+  '3a': ['beravj',
+         'aaaa',
+         '@#$23g',
+         'bbb',
+         'eee',
+         'a',
+         'b93kgw;_mfo',
+         'alpaca',
+         'AAA',
+         'aaab',
+         'DASASA',
+         'aaaaaaaaaaaaaa',
+         '9aaaaaa',
+         'AAAAA'],
+  'zip-code': ['11111',
+               '13708',
+               '236778',
+               'hg4567s',
+               '-12541',
+               '9076.2',
+               'nfas10583vns',
+               '238',
+               'erqew',
+               '122555',
+               'dskfjlmxF',
+               '==DFG$!'
+              ],
+  'delimiters': ['xyzsf',
+                 '[mna_8%234]',
+                 '(fdfm3t)',
+                 '{0thg1!@}',
+                 'gnro[34r3]',
+                 '[4939k4k3',
+                 'xccg3]',
+                 '[fbndofb]]',
+                 'fjdjdjjttt6',
+                 '[[qoo_w3]',
+                 '!@T!3gas',
+                 '[[[223768]]]'
                 ],
-      'a4dd5fc':[{polarity: 'positive', string: '[56TGH]'},
-                 {polarity: 'positive', string: '[DFRU76]'},
-                 {polarity: 'positive', string: '[ASDF321]'},
-                 {polarity: 'positive', string: '[NM734D]'}]
-    }
+  'suffix-s': [
+
+  ]
+
+}
+global.generalizationQuestions = generalizationQuestions;
+
+// get randomization information from server
+var numRules = _.size(curricula);
+var receivingExamples = [];
+global.receivingExamples = receivingExamples;
+function setRandomize(ruleId, seqNumber) {
+  console.log('setRandomize', ruleId, seqNumber);
+  var seqs = global.curricula[ruleId], // NB: global is necessary
+      generalizationQuestions = global.generalizationQuestions[ruleId],
+      seqIds = _.keys(seqs);
+
+  var randomization, seqId;
+
+  if (seqNumber > -1) {
+    randomization = 'server';
+    seqId = seqIds[seqNumber % seqIds.length];
+  } else {
+    randomization = 'client';
+    seqId = _.sample(seqIds);
   }
-};
 
+  var examples = seqs[seqId];
 
-// TODO: randomization
-var receivingExamples = _.map(ruleData,
-                              function(entry,k) {
+  var sampledRule = {id: ruleId,
+                     seqId: seqId,
+                     examples: examples,
+                     questions: generalizationQuestions,
+                     randomization: randomization
+                 };
 
-                                var seqs = entry.exampleSequences,
-                                    seqId = _.sample(_.keys(seqs)),
-                                    examples = seqs[seqId];
+  receivingExamples.push(sampledRule);
 
-                                return {id: k,
-                                        seqId: seqId,
-                                        examples: examples,
-                                        questions: entry.generalizationQuestions
-                                       }
-                              }
-                             );
+  if (receivingExamples.length == numRules) {
+    receivingExamples = _.shuffle(receivingExamples);
+
+    $('#intro button.next')
+      .text('Next')
+      .removeAttr('disabled')
+      .one('click', receive.next)
+  }
+}
+global.setRandomize = setRandomize;
+
+_.each(curricula,
+       function(entry, k) {
+         var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
+         console.log(jsonpUrl);
+         var $script = $("<script>").attr("src", jsonpUrl);
+           $(global.document.body).append($script)
+         }
+      )
 
 var sendingRules = _.shuffle([
-  //{'id': '1q', description: "The string contains only <code>q</code>'s and has at least one of them"},
   {'id': '3a', description: "The string contains <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) and there must be at least 3 <code>a</code>'s in the string"},
   {'id': 'suffix-s', description: "The string must end in <code>s</code>"},
   {'id': 'zip-code', description: "The string is exactly 5 characters long and contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)"},
@@ -354,7 +302,7 @@ function finishExperiment() {
 // flow of experiment
 
 //$('#intro button.next').one('click', send.next)
-$('#intro button.next').one('click', receive.next)
+//$('#intro button.next').one('click', receive.next)
 
 //send.after = questionnaire.start;
 receive.after = questionnaire.start;
