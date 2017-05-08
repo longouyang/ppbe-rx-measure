@@ -46,32 +46,26 @@ var curricula = _.chain(ruleIds)
 global.curricula = curricula;
 
 var generalizationQuestions = {
-  '3a': ['beravj',
-         'aaaa',
-         '@#$23g',
+  '3a': ['aaaa',
          'bbb',
-         'eee',
          'a',
          'b93kgw;_mfo',
          'alpaca',
          'AAA',
-         'aaab',
+         'aaabc',
          'DASASA',
          'aaaaaaaaaaaaaa',
-         '9aaaaaa',
          'AAAAA'],
-  'zip-code': ['11111',
-               '13708',
+  'zip-code': ['31708',
+               '56789',
                '236778',
-               'hg4567s',
                '-12541',
                '9076.2',
                'nfas10583vns',
                '238',
                'erqew',
-               '122555',
-               'dskfjlmxF',
-               '==DFG$!'
+               'abcde',
+               'dskfjlmxF'
               ],
   'delimiters': ['xyzsf',
                  '[mna_8%234]',
@@ -144,7 +138,6 @@ global.setRandomize = setRandomize;
 _.each(curricula,
        function(entry, k) {
          var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
-         console.log(jsonpUrl);
          var $script = $("<script>").attr("src", jsonpUrl);
            $(global.document.body).append($script)
          }
