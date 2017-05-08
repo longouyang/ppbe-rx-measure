@@ -145,12 +145,13 @@ var GeneralizationQuestions = React.createClass({
 // state: show (boolean), value
 var GlossQuestion = React.createClass({
   getInitialState: function() {
-    return {show: false, value: ''}
+    return {show: false, value: '', finished: false}
   },
   handleChange(event) {
     this.setState({value: event.target.value});
   },
   finish: function() {
+    this.setState({finished: true});
     this.props.after(this.state.value)
   },
   scroll: function() {
@@ -168,12 +169,16 @@ var GlossQuestion = React.createClass({
     } else {
       var emptyText = this.state.value.length == 0,
       buttonDisabled = emptyText,
-      buttonText = 'Next';
+          buttonText = 'Next';
+
+      var nextButton = this.state.finished
+          ? (<span></span>)
+          : (<button disabled={buttonDisabled} onClick={this.finish}>{buttonText}</button>);
 
       return (<div className='gloss-question'>
               <p>Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.</p>
               <textarea value={this.state.value} onChange={this.handleChange} rows="4" cols="60"></textarea>
-              <button disabled={buttonDisabled} onClick={this.finish}>{buttonText}</button>
+              {nextButton}
               </div>)
     }
   }

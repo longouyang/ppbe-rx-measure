@@ -278,3 +278,8 @@ textarea {
 #q textarea {
     display: block;
 }
+
+/* don't wrap long strings that occur in received examples list */
+.received-examples-list {
+    white-space:nowrap;
+}

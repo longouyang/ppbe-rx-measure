@@ -33405,12 +33405,13 @@ var GlossQuestion = React.createClass({
   displayName: 'GlossQuestion',
 
   getInitialState: function () {
-    return { show: false, value: '' };
+    return { show: false, value: '', finished: false };
   },
   handleChange(event) {
     this.setState({ value: event.target.value });
   },
   finish: function () {
+    this.setState({ finished: true });
     this.props.after(this.state.value);
   },
   scroll: function () {
@@ -33430,7 +33431,9 @@ var GlossQuestion = React.createClass({
           buttonDisabled = emptyText,
           buttonText = 'Next';
 
-      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText));
+      var nextButton = this.state.finished ? React.createElement('span', null) : React.createElement('button', { disabled: buttonDisabled, onClick: this.finish }, buttonText);
+
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'Can you describe in words what you think the rule is? Try to explain it clearly enough so that a child could understand.'), React.createElement('textarea', { value: this.state.value, onChange: this.handleChange, rows: '4', cols: '60' }), nextButton);
     }
   }
 });
