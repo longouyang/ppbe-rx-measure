@@ -99,14 +99,20 @@ var numRules = _.size(curricula);
 var receivingExamples = [];
 global.receivingExamples = receivingExamples;
 function setRandomize(ruleId, seqNumber) {
-  console.log('setRandomize', ruleId, seqNumber);
+  //console.log('setRandomize', ruleId, seqNumber);
+
+  if (_.filter(receivingExamples, {id: ruleId}).length > 0) {
+    console.log('ignored second attempt to set randomization for ' + ruleId );
+    return;
+  }
+
   var seqs = global.curricula[ruleId], // NB: global is necessary
       generalizationQuestions = global.generalizationQuestions[ruleId],
       seqIds = _.keys(seqs);
 
   var randomization, seqId;
 
-  if (seqNumber > -1) {
+  if (!_.isUndefined(seqNumber) && seqNumber > -1) {
     randomization = 'server';
     seqId = seqIds[seqNumber % seqIds.length];
   } else {
@@ -136,12 +142,21 @@ function setRandomize(ruleId, seqNumber) {
 }
 global.setRandomize = setRandomize;
 
+var afterDo = function(ms, f) {
+  return setTimeout(f, ms);
+}
+
 _.each(curricula,
        function(entry, k) {
-         var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
-         var $script = $("<script>").attr("src", jsonpUrl);
-           $(global.document.body).append($script)
-         }
+         // if we don't get a response from the server within 6 seconds, just randomize on client side
+         afterDo(6000, function() { setRandomize(k) });
+
+         afterDo(0, function() {
+           var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
+           var $script = $("<script>").attr("src", jsonpUrl);
+           $(global.document.body).append($script);
+         });
+       }
       )
 
 var sendingRules = _.shuffle([
