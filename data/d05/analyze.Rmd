@@ -811,10 +811,80 @@ by contrast, 032d129's examples are fewer but seem more helpful: "cats" + ‖ "d
 
 # exporting example sequences for learners
 
-how many usable example sequences do i have for each rule?
+for each rule, how many example sequences are correct?
 
 ```{r}
-responses %>% group_by(worker.id, rule.id) %>% summarise(all.correct = all(correct)) %>% group_by(rule.id) %>% summarise(num.usable.sequences = sum(all.correct))
+valid.responses = responses %>% group_by(worker.id, rule.id) %>% summarise(all.correct = all(correct)) %>% filter(all.correct) %>%
+   merge(responses) %>% select(-assignment.id, -time, -match, -correct, -all.correct) %>%
+  arrange(worker.id, rule.id, example.num)
 ```
 
+```{r}
+valid.responses %>% group_by(rule.id) %>% summarise(num.usable.sequences = length(unique(worker.id)))
+```
+
+
 around 30; plenty
+
+## look through examples to make sure they aren't weird
+
+```{r}
+pretty.print.examples = function(d) {
+  d %>%
+    group_by(worker.id) %>% 
+    mutate(num.examples = length(string),
+           string.and.pol = paste0('"', string, '" ', c(positive = '+', negative = '-')[polarity])) %>%
+    group_by(worker.id, num.examples) %>%
+    summarise(exs = paste0(string.and.pol, collapse = ' ‖ ')) %>%
+    # sort by number of examples
+    arrange(num.examples) %>% select(-num.examples) %>%
+    select(exs, worker.id)
+}
+```
+
+
+```{r}
+valid.responses %>%  filter(rule.id == '3a') %>% pretty.print.examples
+```
+
+```{r}
+valid.responses %>%  filter(rule.id == 'zip-code') %>% pretty.print.examples
+```
+
+
+```{r}
+valid.responses %>%  filter(rule.id == 'suffix-s') %>% pretty.print.examples
+```
+
+get rid of fe23a85 (thought they had to separate each character by commas)
+
+```{r}
+valid.responses = filter(valid.responses, !(rule.id == 'suffix-s' & worker.id == 'fe23a85'))
+```
+
+
+```{r}
+valid.responses %>%  filter(rule.id == 'delimiters') %>% pretty.print.examples
+```
+
+get rid of:
+- 3808bfe: embedded multiple examples within a single text entry box (a real shame, too)
+- ad928f0: embedded linguistic instruction in examples
+- fe23a85: again with the commas
+
+```{r}
+valid.responses = valid.responses %>% filter(!(rule.id == 'delimiters' & worker.id %in% c('3808bfe','ad928f0','fe23a85')))
+```
+
+
+
+now, after exclusions, how many sequences do we have for each rule?
+
+```{r}
+valid.responses %>% group_by(rule.id) %>% summarise(num.usable.sequences = length(unique(worker.id)))
+```
+
+```{r}
+write(x = paste0("module.exports = ", toJSON(valid.responses, pretty = FALSE)), file = "curricula.js")
+```
+
