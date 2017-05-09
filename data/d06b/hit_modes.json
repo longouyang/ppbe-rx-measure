@@ -1,0 +1,10 @@
+{
+    "sandbox": {
+        "id": "31ANT7FQN82PC09ZGM1AMHB5C8TH5S",
+        "type_id": "36FWM6US0JSGWHRY730F5J4KL1P4S0"
+    },
+    "production": {
+        "id": "32CAVSKPCEPVT4E0FY8Q7VW71HW1U8",
+        "type_id": "3FL4YKC6SQMCFK882CW5B3DZTNZMUU"
+    }
+}
