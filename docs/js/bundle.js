@@ -33000,8 +33000,10 @@ global.generalizationQuestions = generalizationQuestions;
 var numRules = _.size(curricula);
 var receivingExamples = [];
 global.receivingExamples = receivingExamples;
+global.gotRandom = false;
 function setRandomize(ruleId, seqNumber) {
   //console.log('setRandomize', ruleId, seqNumber);
+
 
   if (_.filter(receivingExamples, { id: ruleId }).length > 0) {
     // console.log('ignored second attempt to set randomization for ' + ruleId );
@@ -33036,6 +33038,8 @@ function setRandomize(ruleId, seqNumber) {
   receivingExamples.push(sampledRule);
 
   if (receivingExamples.length == numRules) {
+    global.gotRandom = true;
+    clearInterval(global.loadingTimer);
     receivingExamples = _.shuffle(receivingExamples);
 
     $('#intro button.next').text('Next').removeAttr('disabled').one('click', receive.next);
@@ -33048,10 +33052,23 @@ var afterDo = function (ms, f) {
 };
 
 _.each(curricula, function (entry, k) {
-  // if we don't get a response from the server within 6 seconds, just randomize on client side
-  afterDo(6000, function () {
-    setRandomize(k);
-  });
+  // if we don't get a response from the server within 15 seconds, just randomize on client side
+  var secondsLeft = 15;
+  global.loadingTimer = setInterval(function () {
+    if (global.gotRandom) {
+      clearInterval(global.loadingTimer);
+      return;
+    }
+    secondsLeft--;
+
+    if (secondsLeft == 0) {
+      setRandomize(k);
+      clearInterval(global.loadingTimer);
+      return;
+    }
+    $('#intro button.next').text("Please wait, loading data... (" + secondsLeft + "s remaining)");
+  }, 1000);
+  //afterDo(150000, function() { setRandomize(k) });
 
   afterDo(0, function () {
     var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
