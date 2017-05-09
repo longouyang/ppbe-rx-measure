@@ -45,7 +45,7 @@ var curricula = _.chain(ruleIds)
     .value();
 global.curricula = curricula;
 // d06b only: as a sanity check, for zip-code, restrict attention to three sequences
-curricula['zip-code'] = _.pick(curricula['zip-code'], 'ecba21d', '51be3ed', '49bb605')
+curricula['zip-code'] = _.pick(curricula['zip-code'], '76aae7a', 'b2614f0', '1dc006e', '66584c1', '7632bef', 'a33a11b');
 
 var generalizationQuestions = {
   '3a': ['aaaa',
