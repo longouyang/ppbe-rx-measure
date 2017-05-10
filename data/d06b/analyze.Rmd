@@ -257,3 +257,51 @@ ggplot(data = e) +
   theme(axis.text.x = element_text(angle = -45, hjust = 0))
 ```
 
+# analyze 10 zip-code seqs
+
+```{r}
+z10 = read.csv('gloss-zip-code-10.csv')
+```
+
+```{r}
+e = z10 %>% group_by(seq.id) %>% summarise(correct = mean(regex.correct))
+
+e.predicted = data.frame(
+  seq.id = c("a33a11b", "49bb605", "b2614f0", "66584c1", "51be3ed", "1dc006e", "76aae7a", "ecba21d", "7632bef"),
+  fL0_sharp = c(0.9999999999622489, 0.9999998874648376, 0.9522698261237779, 0.9999998874648376, 0.10650697891920076, 0.49999999999999994, 0.10196388929297737, 0.9999999999999876, 0.7052176369484497),
+  fL0_smooth = c(6.781214805391138e-8,2.3992492648972874e-7,2.3276964198472533e-7,2.3992492648972874e-7,0.00000999987691071478,0.00000999990000099996,0.000009382535597137926,2.467592444818631e-8,9.391009335036399e-9),
+  fL1_sharp = c(0.9999999997596767, 0.9999992836062245, 0.8459072229180626, 0.9999993498935654, 0.0034915493525717657, 0.07282304847596167, 0.003422839808667077, 0.9999999999999201, 0.24485084223232986),
+  fL1_smooth = c(0.9999999831892926,0.9999858365892572,0.1384452484170687,0.9999858365897563,0.06438531807940046,0.2487740845126035,0.06329953761982891,0.9999999999845031,0.000889478940048822)
+)
+
+e = merge(e, e.predicted)
+
+ggplot(data = e %>% merge(e.predicted),
+      mapping = aes(y = correct)) +
+  geom_point(mapping = aes(x = fL1_smooth)) +
+  geom_text(mapping = aes(x = fL1_smooth + 0.05, label = seq.id), size = 2.5)
+```
+
+```{r}
+ggplot(data = e %>% merge(e.predicted),
+      mapping = aes(y = correct)) +
+  geom_point(mapping = aes(x = fL1_sharp)) +
+  geom_text(mapping = aes(x = fL1_sharp + 0.05, label = seq.id), size = 2.5)
+```
+
+
+```{r}
+ggplot(data = e %>% merge(e.predicted),
+      mapping = aes(y = correct)) +
+  geom_point(mapping = aes(x = fL0_smooth)) +
+  geom_text(mapping = aes(x = fL0_smooth + 0.0000001, label = seq.id), size = 2.5)
+```
+
+
+```{r}
+ggplot(data = e %>% merge(e.predicted),
+      mapping = aes(y = correct)) +
+  geom_point(mapping = aes(x = fL0_sharp)) +
+  geom_text(mapping = aes(x = fL0_sharp + 0.05, label = seq.id), size = 2.5)
+```
+
