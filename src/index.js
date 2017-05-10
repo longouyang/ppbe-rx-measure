@@ -45,7 +45,7 @@ var curricula = _.chain(ruleIds)
     .value();
 global.curricula = curricula;
 // d06b only: as a sanity check, for zip-code, restrict attention to three sequences
-curricula['zip-code'] = _.pick(curricula['zip-code'], '76aae7a', 'b2614f0', '1dc006e', '66584c1', '7632bef', 'a33a11b');
+curricula['zip-code'] = _.omit(curricula['zip-code'], "ecba21d", "b2614f0", "a33a11b", "76aae7a", "7632bef", "66584c1", "51be3ed", "49bb605", "1dc006e");
 
 var generalizationQuestions = {
   '3a': ['aaaa',
@@ -155,28 +155,11 @@ _.each(curricula,
        function(entry, k) {
          // if we don't get a response from the server within 15 seconds, just randomize on client side
          var secondsLeft = 15;
-         global.loadingTimer = setInterval(function() {
-           if (global.gotRandom) {
-             clearInterval(global.loadingTimer);
-             return;
-           }
-           secondsLeft--;
+         afterDo(15000, function() { setRandomize(k) });
 
-           if (secondsLeft == 0) {
-             setRandomize(k);
-             clearInterval(global.loadingTimer);
-             return;
-           }
-           $('#intro button.next').text("Please wait, loading data... (" + secondsLeft + "s remaining)")
-         },
-                                 1000)
-         //afterDo(150000, function() { setRandomize(k) });
-
-         afterDo(0, function() {
-           var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
-           var $script = $("<script>").attr("src", jsonpUrl);
-           $(global.document.body).append($script);
-         });
+          var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
+         var $script = $("<script>").attr("src", jsonpUrl);
+         $(global.document.body).append($script);
        }
       )
 
