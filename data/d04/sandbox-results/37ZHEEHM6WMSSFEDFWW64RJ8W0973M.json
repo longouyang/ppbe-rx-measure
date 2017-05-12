@@ -1,0 +1,609 @@
+{
+    "AutoApprovalTime": "2017-02-28T21:57:44Z",
+    "AssignmentId": "37ZHEEHM6WMSSFEDFWW64RJ8W0973M",
+    "WorkerId": "A11MX7O9QOX4MB",
+    "answers": {
+        "receive": [
+            {
+                "gloss": "asdfasdfasdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "positive",
+                        "string": "AAAAA",
+                        "time": 1488318669916
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "9aaaaaa",
+                        "time": 1488318669356
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaaaaaaaaaaaa",
+                        "time": 1488318668859
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "DASASA",
+                        "time": 1488318668380
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaab",
+                        "time": 1488318667596
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "AAA",
+                        "time": 1488318667176
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "alpaca",
+                        "time": 1488318666712
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "b93kgw;_mfo",
+                        "time": 1488318666200
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "a",
+                        "time": 1488318665640
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "eee",
+                        "time": 1488318664712
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "bbb",
+                        "time": 1488318664244
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "@#$23g",
+                        "time": 1488318663492
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaa",
+                        "time": 1488318662964
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "beravj",
+                        "time": 1488318662085
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "beravj",
+                        "time": 1488318662085
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaa",
+                        "time": 1488318662964
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "@#$23g",
+                        "time": 1488318663492
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "bbb",
+                        "time": 1488318664244
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "eee",
+                        "time": 1488318664712
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "a",
+                        "time": 1488318665640
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "b93kgw;_mfo",
+                        "time": 1488318666200
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "alpaca",
+                        "time": 1488318666712
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "AAA",
+                        "time": 1488318667176
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaab",
+                        "time": 1488318667596
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "DASASA",
+                        "time": 1488318668380
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaaaaaaaaaaaa",
+                        "time": 1488318668859
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "9aaaaaa",
+                        "time": 1488318669356
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "AAAAA",
+                        "time": 1488318669916
+                    }
+                ]
+            },
+            {
+                "gloss": "kjflksjdfasdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "negative",
+                        "string": "==DFG$!",
+                        "time": 1488318693564
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "dskfjlmxF",
+                        "time": 1488318692769
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "122555",
+                        "time": 1488318691936
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "erqew",
+                        "time": 1488318691058
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "238",
+                        "time": 1488318690464
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "nfas10583vns",
+                        "time": 1488318689469
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "9076.2",
+                        "time": 1488318686704
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "-12541",
+                        "time": 1488318685346
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "11111",
+                        "time": 1488318683895
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "13708",
+                        "time": 1488318682536
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "236778",
+                        "time": 1488318681683
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "hg4567s",
+                        "time": 1488318680547
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "236778",
+                        "time": 1488318679876
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "13708",
+                        "time": 1488318679299
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "11111",
+                        "time": 1488318678608
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "negative",
+                        "string": "11111",
+                        "time": 1488318683895
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "13708",
+                        "time": 1488318682536
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "236778",
+                        "time": 1488318681683
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "hg4567s",
+                        "time": 1488318680547
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "-12541",
+                        "time": 1488318685346
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "9076.2",
+                        "time": 1488318686704
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "nfas10583vns",
+                        "time": 1488318689469
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "238",
+                        "time": 1488318690464
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "erqew",
+                        "time": 1488318691058
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "122555",
+                        "time": 1488318691936
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "dskfjlmxF",
+                        "time": 1488318692769
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "==DFG$!",
+                        "time": 1488318693564
+                    }
+                ]
+            },
+            {
+                "gloss": "asdfasdfasdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "positive",
+                        "string": "poeuuae",
+                        "time": 1488318710682
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "qfqfqfqf",
+                        "time": 1488318710202
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "uz",
+                        "time": 1488318709818
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "agcht",
+                        "time": 1488318709226
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "ktl938",
+                        "time": 1488318708502
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "ZPtngf",
+                        "time": 1488318707831
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "6fdsb",
+                        "time": 1488318707318
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "SDFBWv",
+                        "time": 1488318706790
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "dgrel",
+                        "time": 1488318705958
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "qqqqqw",
+                        "time": 1488318703810
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "xvmp",
+                        "time": 1488318703475
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "xvmp",
+                        "time": 1488318703475
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "qqqqqw",
+                        "time": 1488318703810
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "dgrel",
+                        "time": 1488318705958
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "SDFBWv",
+                        "time": 1488318706790
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "6fdsb",
+                        "time": 1488318707318
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "ZPtngf",
+                        "time": 1488318707831
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "ktl938",
+                        "time": 1488318708502
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "agcht",
+                        "time": 1488318709226
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "uz",
+                        "time": 1488318709818
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "qfqfqfqf",
+                        "time": 1488318710202
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "poeuuae",
+                        "time": 1488318710682
+                    }
+                ]
+            },
+            {
+                "gloss": "asdfasdfsadfsadf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "negative",
+                        "string": "[[[223768]]]",
+                        "time": 1488318728650
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "!@T!3gas",
+                        "time": 1488318727321
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[[qoo_w3]",
+                        "time": 1488318726857
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "fjdjdjjttt6",
+                        "time": 1488318726262
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[fbndofb]]",
+                        "time": 1488318725669
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "xccg3]",
+                        "time": 1488318724517
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[4939k4k3",
+                        "time": 1488318722978
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "gnro[34r3]",
+                        "time": 1488318722641
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "{0thg1!@}",
+                        "time": 1488318722018
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "(fdfm3t)",
+                        "time": 1488318720686
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[mna_8%234]",
+                        "time": 1488318719823
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "xyzsf",
+                        "time": 1488318719454
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "xyzsf",
+                        "time": 1488318719454
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[mna_8%234]",
+                        "time": 1488318719823
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "(fdfm3t)",
+                        "time": 1488318720686
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "{0thg1!@}",
+                        "time": 1488318722018
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "gnro[34r3]",
+                        "time": 1488318722641
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[4939k4k3",
+                        "time": 1488318722978
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "xccg3]",
+                        "time": 1488318724517
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[fbndofb]]",
+                        "time": 1488318725669
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "fjdjdjjttt6",
+                        "time": 1488318726262
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[[qoo_w3]",
+                        "time": 1488318726857
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "!@T!3gas",
+                        "time": 1488318727321
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "[[[223768]]]",
+                        "time": 1488318728650
+                    }
+                ]
+            }
+        ],
+        "questionnaire": {
+            "outputs": {
+                "enjoy": "sdfjsaldf",
+                "fair_pay": "28",
+                "gender": "sdkfjlasdf",
+                "age": "sdf",
+                "programming": "asdfasdfsadf",
+                "bugs": "asdfasdf",
+                "regex": "asdfsadfasdf",
+                "education": "masters"
+            }
+        },
+        "fingerprint": {
+            "ip": "2601:643:8201:374c:1da6:5cdd:edc9:fb16",
+            "screenHeight": 1440,
+            "plugins": [
+                {
+                    "description": "Enables Widevine licenses for playback of HTML audio/video content. (version: 1.4.8.962)",
+                    "filename": "widevinecdmadapter.plugin"
+                },
+                {
+                    "description": "Shockwave Flash 24.0 r0",
+                    "filename": "PepperFlashPlayer.plugin"
+                },
+                {
+                    "description": "",
+                    "filename": "mhjfbmdgcfjbbpaeojofohoefgiehjai"
+                },
+                {
+                    "description": "",
+                    "filename": "internal-nacl-plugin"
+                },
+                {
+                    "description": "Portable Document Format",
+                    "filename": "internal-pdf-viewer"
+                }
+            ],
+            "timezone": 480,
+            "colorDepth": 24,
+            "screenWidth": 2560,
+            "geo": {
+                "city": "Oakland",
+                "region_code": "CA",
+                "region_name": "California",
+                "ip": "2601:643:8201:374c:1da6:5cdd:edc9:fb16",
+                "time_zone": "America/Los_Angeles",
+                "longitude": -122.242,
+                "metro_code": 807,
+                "latitude": 37.8116,
+                "country_code": "US",
+                "country_name": "United States",
+                "zip_code": "94610"
+            },
+            "browser": {
+                "a": true,
+                "name": "Chrome",
+                "chrome": true,
+                "blink": true,
+                "mac": true,
+                "version": "56.0"
+            }
+        }
+    },
+    "AcceptTime": "2017-02-28T21:49:02Z",
+    "HITId": "3Z3R5YC0P3N7J6TJMSV8MC56BX3TFZ",
+    "Assignment": "",
+    "AssignmentStatus": "Submitted",
+    "SubmitTime": "2017-02-28T21:52:44Z"
+}
