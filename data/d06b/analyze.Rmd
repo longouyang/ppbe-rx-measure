@@ -126,14 +126,15 @@ assignments %>% select(bugs, worker.id) %>% arrange(desc(nchar(bugs)))
 assignments %>% select(enjoy) %>% arrange(desc(nchar(enjoy)))
 ```
 
-It wasn't terrible
+Better than average
+some people were frustrated by the inductive nature of the task and the lack of feedback
 
 # research
 
 
-## how does correctness vary by rule.id and sequence?
+## how does generalization accuracy vary by rule.id and sequence?
 
-```{r, fig.width = 10, fig.height = 3}
+```{r, fig.width = 8, fig.height = 10}
 e = gen %>%
   group_by(rule.id, seq.id, worker.id) %>%
   summarise(score = mean(correct)) %>%
@@ -155,12 +156,52 @@ qplot(data = e,
       ymax = ci.u.score,
       geom = 'pointrange'
       ) +
-  geom_text(mapping = aes(label = paste0('n = ',n), y = 0.05), size = 3) +
-  facet_grid(. ~ rule.id, scales = 'free') + ylim(0, 1) +
-  theme(axis.text.x = element_text(angle = 25, hjust = 1))
+  #geom_text(mapping = aes(label = paste0('n = ',n), y = 0.05), size = 3) +
+  facet_wrap(~ rule.id, scales = 'free', ncol = 1) + ylim(0, 1) +
+  theme(axis.text.x = element_text(angle = -25, hjust = 0, size = 8))
 ```
 
-(d06b) looks like the new zip-code sequence, 49bb605 (35164 +, 72755 +, 54f64 -, 256334 +, 84982 -) does pretty well, as i'd expected
+focusing on just zip-code:
+
+```{r}
+qplot(data = e %>% filter(rule.id == 'zip-code'),
+      x = seq.id,
+      y = mean.score,
+      ymin = ci.l.score,
+      ymax = ci.u.score,
+      geom = 'pointrange'
+      ) +
+  #geom_text(mapping = aes(label = paste0('n = ',n), y = 0.05), size = 3) +
+  facet_grid(. ~ rule.id, scales = 'free') + ylim(0, 1) +
+  theme(axis.text.x = element_text(angle = -25, hjust = 0, size = 5))
+```
+
+make cocolab talk plot for suffix-s:
+
+
+
+```{r}
+labels = c("cats [+] \n dogs [+] \n dog [-] \n cat [-]",
+"kdfknein;kdsf-s [+] \n 4389hfp34r89hdudududs [+] \n 834p9h3qhfdududdu___78934h [-] \n h9hwp89h32phfhf [-]",
+"lots [+] \n sneezes [+] \n breeze [-]",
+"43353477s [+] \n 3kcn;zkespw [-] \n kdj../4s [+]",
+"eagles [+]  pizzas [+] \n  friends [+] asdfssss [+] \n 3r280us [+]  333333s [+] \n (*&(*^%%SDs [+] \n fasdfasdf [-] 3333333 [-] \n s [+]  d [-] gwegw [-] \n eeeeee [-]")
+
+qplot(data = e %>% filter(rule.id == 'suffix-s', seq.id %in% c("032d129", "13ab615", "402a4e5", "b2614f0", "d2f7661")),
+      x = seq.id,
+      y = mean.score,
+      ymin = ci.l.score,
+      ymax = ci.u.score,
+      geom = 'pointrange'
+      ) +
+  #geom_text(mapping = aes(label = paste0('n = ',n), y = 0.05), size = 3) +
+  facet_grid(. ~ rule.id, scales = 'free') + ylim(0.3, 1) +
+  scale_x_discrete(labels = labels) +
+  theme(axis.text.x = element_text(size = 12))
+
+```
+
+
 
 ## do different example sequences yield different generalization patterns?
 
@@ -272,36 +313,63 @@ e.predicted = data.frame(
   fL0_smooth = c(6.781214805391138e-8,2.3992492648972874e-7,2.3276964198472533e-7,2.3992492648972874e-7,0.00000999987691071478,0.00000999990000099996,0.000009382535597137926,2.467592444818631e-8,9.391009335036399e-9),
   fL1_sharp = c(0.9999999997596767, 0.9999992836062245, 0.8459072229180626, 0.9999993498935654, 0.0034915493525717657, 0.07282304847596167, 0.003422839808667077, 0.9999999999999201, 0.24485084223232986),
   fL1_smooth = c(0.9999999831892926,0.9999858365892572,0.1384452484170687,0.9999858365897563,0.06438531807940046,0.2487740845126035,0.06329953761982891,0.9999999999845031,0.000889478940048822)
-)
+) %>%
+  gather("model", "prob", 2:5)
 
-e = merge(e, e.predicted)
+e = merge(e, e.predicted, by = 'seq.id')
 
-ggplot(data = e %>% merge(e.predicted),
+ggplot(data = e,
       mapping = aes(y = correct)) +
-  geom_point(mapping = aes(x = fL1_smooth)) +
-  geom_text(mapping = aes(x = fL1_smooth + 0.05, label = seq.id), size = 2.5)
-```
-
-```{r}
-ggplot(data = e %>% merge(e.predicted),
-      mapping = aes(y = correct)) +
-  geom_point(mapping = aes(x = fL1_sharp)) +
-  geom_text(mapping = aes(x = fL1_sharp + 0.05, label = seq.id), size = 2.5)
+  facet_wrap(~ model, nrow = 2) + 
+  geom_point(mapping = aes(x = prob)) +
+  geom_abline()
+  # +
+  #geom_text(mapping = aes(x = fL1_smooth + 0.05, label = seq.id), size = 2.5)
 ```
 
 
-```{r}
-ggplot(data = e %>% merge(e.predicted),
-      mapping = aes(y = correct)) +
-  geom_point(mapping = aes(x = fL0_smooth)) +
-  geom_text(mapping = aes(x = fL0_smooth + 0.0000001, label = seq.id), size = 2.5)
-```
+# analyze all 32 zip-code seqs
 
 
 ```{r}
-ggplot(data = e %>% merge(e.predicted),
-      mapping = aes(y = correct)) +
-  geom_point(mapping = aes(x = fL0_sharp)) +
-  geom_text(mapping = aes(x = fL0_sharp + 0.05, label = seq.id), size = 2.5)
+zall = read.csv('gloss-zip-all.csv')
 ```
+
+
+
+
+```{r, fig.width = 8, fig.height = 10}
+e = zall %>% group_by(seq.id) %>% summarise(correct = mean(regex.correct))
+
+model.results.raw = read.csv('model-results-zip-code.csv')
+model.results = model.results.raw %>%
+  transform(L0_smooth = log(L0_smooth)) %>%
+  gather("model", "prob", 2:length(model.results.raw))
+
+
+e = merge(e, model.results)# %>%
+  #transform(seq.id = substring(seq.id, 0, 3))
+
+cors = e %>% group_by(model) %>% summarise(r = cor(correct, prob))
+facet_labeller = function(model.names) {
+  model.names %>% merge(cors) %>%
+    transform(label = paste0(model, " (r =", round(r,2), ")")) %>%
+    select(label)
+  browser()
+}
+facet_labeller("L0_sharp")
+
+# add correlation to facet labels
+
+p = ggplot(data = e,
+      mapping = aes(y = correct)) +
+  facet_wrap(~ model, ncol = 2, scales = 'free', labeller = facet_labeller) + 
+  geom_point(mapping = aes(x = prob))
+  #geom_text(mapping = aes(x = prob, label = seq.id), size = 2, position = 'jitter')
+
+p
+```
+
+
+
 
