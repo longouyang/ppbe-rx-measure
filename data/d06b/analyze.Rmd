@@ -353,11 +353,9 @@ e = merge(e, model.results)# %>%
 cors = e %>% group_by(model) %>% summarise(r = cor(correct, prob))
 facet_labeller = function(model.names) {
   model.names %>% merge(cors) %>%
-    transform(label = paste0(model, " (r =", round(r,2), ")")) %>%
-    select(label)
-  browser()
+    transform(model = paste0(model, " (r =", round(r,2), ")")) %>%
+    select(model)
 }
-facet_labeller("L0_sharp")
 
 # add correlation to facet labels
 
