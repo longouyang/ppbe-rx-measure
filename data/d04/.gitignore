@@ -1,1 +1,4 @@
+production-results-0/*.json
 production-results/*.json
+payments/*
+.Rhistory
