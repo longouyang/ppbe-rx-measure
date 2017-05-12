@@ -729,7 +729,9 @@ responses %>% filter(rule.id == '3a') %>% select(-time, -match, -assignment.id) 
                                     ifelse(correct, "", "!")
                                     )) %>%
   group_by(worker.id) %>%
-  summarise(exs = paste0(string.and.pol, collapse = ' ‖ '))
+  summarise(exs = paste0(string.and.pol, collapse = ' ‖ ')) %>%
+  arrange(nchar(exs)) %>%
+  select(exs, worker.id)
 ```
 
 
@@ -771,6 +773,7 @@ responses %>% filter(rule.id == 'zip-code') %>% select(-time, -match, -assignmen
                                     )) %>%
   group_by(worker.id) %>%
   summarise(exs = paste0(string.and.pol, collapse = ' ‖ ')) %>%
+  arrange(nchar(exs)) %>%
   select(exs, worker.id)
 ```
 
@@ -906,6 +909,19 @@ write(x = paste0("module.exports = ", toJSON(valid.responses.shuffled, pretty = 
 
 
 
+```{r}
+pretty.print.examples2 = function(d) {
+  d %>%
+    group_by(worker.id, rule.id) %>% 
+    mutate(num.examples = length(string),
+           string.and.pol = paste0('"', string, '" ', c(positive = '+', negative = '-')[polarity])) %>%
+    group_by(worker.id, num.examples, rule.id) %>%
+    summarise(exs = paste0(string.and.pol, collapse = ' ‖ ')) %>%
+    # sort by number of examples
+    arrange(num.examples) %>% select(-num.examples) %>%
+    select(exs, worker.id, rule.id)
+}
+```
 
 
 
