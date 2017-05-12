@@ -1,0 +1,768 @@
+{
+    "AutoApprovalTime": "2017-05-08T18:23:25Z",
+    "AssignmentId": "3II4UPYCOJ70GPLP4KBOHRMFTRYDQ9",
+    "WorkerId": "A11MX7O9QOX4MB",
+    "answers": {
+        "receive": [
+            {
+                "gloss": "sdfsdfsdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "positive",
+                        "string": "{0thg1!@}",
+                        "time": 1494267448597
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "xyzsf",
+                        "time": 1494267447989
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[4939k4k3",
+                        "time": 1494267447462
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[[qoo_w3]",
+                        "time": 1494267447109
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "xccg3]",
+                        "time": 1494267446609
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "gnro[34r3]",
+                        "time": 1494267446065
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[fbndofb]]",
+                        "time": 1494267444753
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[[223768]]",
+                        "time": 1494267444354
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "(fdfm3t)",
+                        "time": 1494267443505
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[]",
+                        "time": 1494267443053
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[mna_8%234]",
+                        "time": 1494267442766
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "[mna_8%234]",
+                        "time": 1494267442766
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[]",
+                        "time": 1494267443053
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "(fdfm3t)",
+                        "time": 1494267443505
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[[223768]]",
+                        "time": 1494267444354
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[fbndofb]]",
+                        "time": 1494267444753
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "gnro[34r3]",
+                        "time": 1494267446065
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "xccg3]",
+                        "time": 1494267446609
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[[qoo_w3]",
+                        "time": 1494267447109
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[4939k4k3",
+                        "time": 1494267447462
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "xyzsf",
+                        "time": 1494267447989
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "{0thg1!@}",
+                        "time": 1494267448597
+                    }
+                ],
+                "randomization": "server",
+                "seqId": "66584c1",
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "[dogs]",
+                        "worker.id": "66584c1",
+                        "rule.id": "delimiters",
+                        "trial.num": 3,
+                        "example.num": 1
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[cat]",
+                        "worker.id": "66584c1",
+                        "rule.id": "delimiters",
+                        "trial.num": 3,
+                        "example.num": 2
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "[you]",
+                        "worker.id": "66584c1",
+                        "rule.id": "delimiters",
+                        "trial.num": 3,
+                        "example.num": 3
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "dogs",
+                        "worker.id": "66584c1",
+                        "rule.id": "delimiters",
+                        "trial.num": 3,
+                        "example.num": 4
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "cat",
+                        "worker.id": "66584c1",
+                        "rule.id": "delimiters",
+                        "trial.num": 3,
+                        "example.num": 5
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "you",
+                        "worker.id": "66584c1",
+                        "rule.id": "delimiters",
+                        "trial.num": 3,
+                        "example.num": 6
+                    }
+                ],
+                "questions": [
+                    "[mna_8%234]",
+                    "[]",
+                    "(fdfm3t)",
+                    "[[223768]]",
+                    "[fbndofb]]",
+                    "gnro[34r3]",
+                    "xccg3]",
+                    "[[qoo_w3]",
+                    "[4939k4k3",
+                    "xyzsf",
+                    "{0thg1!@}"
+                ],
+                "id": "delimiters"
+            },
+            {
+                "gloss": "sdfsadfsdfasdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "positive",
+                        "string": "abcde",
+                        "time": 1494267466446
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "erqew",
+                        "time": 1494267466109
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "dskfjlmxF",
+                        "time": 1494267465725
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "-12541",
+                        "time": 1494267464797
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "56789",
+                        "time": 1494267464456
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "238",
+                        "time": 1494267464137
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "31708",
+                        "time": 1494267462953
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "9076.2",
+                        "time": 1494267461961
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "nfas10583vns",
+                        "time": 1494267461430
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "236778",
+                        "time": 1494267461061
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "236778",
+                        "time": 1494267461061
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "nfas10583vns",
+                        "time": 1494267461430
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "9076.2",
+                        "time": 1494267461961
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "31708",
+                        "time": 1494267462953
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "238",
+                        "time": 1494267464137
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "56789",
+                        "time": 1494267464456
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "-12541",
+                        "time": 1494267464797
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "dskfjlmxF",
+                        "time": 1494267465725
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "erqew",
+                        "time": 1494267466109
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "abcde",
+                        "time": 1494267466446
+                    }
+                ],
+                "randomization": "server",
+                "seqId": "ecba21d",
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "48751",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 1
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "12523",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 2
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "95638",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 3
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "27849",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 4
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "39268",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 5
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "1411",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 6
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "2389",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 7
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "124789",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 8
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "12",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 9
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "1",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 10
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "127",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 11
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "4783961",
+                        "worker.id": "ecba21d",
+                        "rule.id": "zip-code",
+                        "trial.num": 3,
+                        "example.num": 12
+                    }
+                ],
+                "questions": [
+                    "236778",
+                    "nfas10583vns",
+                    "9076.2",
+                    "31708",
+                    "238",
+                    "56789",
+                    "-12541",
+                    "dskfjlmxF",
+                    "erqew",
+                    "abcde"
+                ],
+                "id": "zip-code"
+            },
+            {
+                "gloss": "asdfasdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "positive",
+                        "string": "store",
+                        "time": 1494267479753
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "breaks",
+                        "time": 1494267479145
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "past",
+                        "time": 1494267478776
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "yr321a",
+                        "time": 1494267477365
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "35r6u",
+                        "time": 1494267476964
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "ring",
+                        "time": 1494267475973
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "psss7",
+                        "time": 1494267475008
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "12berba32",
+                        "time": 1494267474640
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "12berba32",
+                        "time": 1494267474640
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "psss7",
+                        "time": 1494267475008
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "ring",
+                        "time": 1494267475973
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "35r6u",
+                        "time": 1494267476964
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "yr321a",
+                        "time": 1494267477365
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "past",
+                        "time": 1494267478776
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "breaks",
+                        "time": 1494267479145
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "store",
+                        "time": 1494267479753
+                    }
+                ],
+                "randomization": "server",
+                "seqId": "51be3ed",
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "tbjuss",
+                        "worker.id": "51be3ed",
+                        "rule.id": "suffix-s",
+                        "trial.num": 1,
+                        "example.num": 1
+                    }
+                ],
+                "questions": [
+                    "12berba32",
+                    "psss7",
+                    "ring",
+                    "35r6u",
+                    "yr321a",
+                    "past",
+                    "breaks",
+                    "store"
+                ],
+                "id": "suffix-s"
+            },
+            {
+                "gloss": "adsfasdf",
+                "generalizationHistory": [
+                    {
+                        "polarity": "positive",
+                        "string": "DASASA",
+                        "time": 1494267493868
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aaaa",
+                        "time": 1494267493336
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "bbb",
+                        "time": 1494267492744
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "b93kgw;_mfo",
+                        "time": 1494267492376
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "a",
+                        "time": 1494267491736
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "AAA",
+                        "time": 1494267491321
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "b93kgw;_mfo",
+                        "time": 1494267491000
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "AAA",
+                        "time": 1494267490196
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "a",
+                        "time": 1494267489669
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "AAAAA",
+                        "time": 1494267489333
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aaabc",
+                        "time": 1494267488565
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaaaaaaaaaaaa",
+                        "time": 1494267488036
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "alpaca",
+                        "time": 1494267487588
+                    }
+                ],
+                "generalization": [
+                    {
+                        "polarity": "positive",
+                        "string": "alpaca",
+                        "time": 1494267487588
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaaaaaaaaaaaa",
+                        "time": 1494267488036
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aaabc",
+                        "time": 1494267488565
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "AAAAA",
+                        "time": 1494267489333
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "a",
+                        "time": 1494267491736
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "AAA",
+                        "time": 1494267491321
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "b93kgw;_mfo",
+                        "time": 1494267492376
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "bbb",
+                        "time": 1494267492744
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aaaa",
+                        "time": 1494267493336
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "DASASA",
+                        "time": 1494267493868
+                    }
+                ],
+                "randomization": "server",
+                "seqId": "7632bef",
+                "examples": [
+                    {
+                        "polarity": "positive",
+                        "string": "aaa",
+                        "worker.id": "7632bef",
+                        "rule.id": "3a",
+                        "trial.num": 4,
+                        "example.num": 1
+                    },
+                    {
+                        "polarity": "positive",
+                        "string": "aaaaaa",
+                        "worker.id": "7632bef",
+                        "rule.id": "3a",
+                        "trial.num": 4,
+                        "example.num": 2
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aa",
+                        "worker.id": "7632bef",
+                        "rule.id": "3a",
+                        "trial.num": 4,
+                        "example.num": 3
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "aab",
+                        "worker.id": "7632bef",
+                        "rule.id": "3a",
+                        "trial.num": 4,
+                        "example.num": 4
+                    },
+                    {
+                        "polarity": "negative",
+                        "string": "bbbb",
+                        "worker.id": "7632bef",
+                        "rule.id": "3a",
+                        "trial.num": 4,
+                        "example.num": 5
+                    }
+                ],
+                "questions": [
+                    "alpaca",
+                    "aaaaaaaaaaaaaa",
+                    "aaabc",
+                    "AAAAA",
+                    "a",
+                    "AAA",
+                    "b93kgw;_mfo",
+                    "bbb",
+                    "aaaa",
+                    "DASASA"
+                ],
+                "id": "3a"
+            }
+        ],
+        "questionnaire": {
+            "outputs": {
+                "enjoy": "2323123",
+                "fair_pay": "23",
+                "gender": "123",
+                "age": "123",
+                "programming": "123123123",
+                "bugs": "sdfsdfsadf",
+                "regex": "123",
+                "education": "doctoral"
+            }
+        },
+        "fingerprint": {
+            "ip": "2601:643:8201:374c:f525:297a:c857:fced",
+            "screenHeight": 1440,
+            "plugins": [
+                {
+                    "description": "Enables Widevine licenses for playback of HTML audio/video content. (version: 1.4.8.970)",
+                    "filename": "widevinecdmadapter.plugin"
+                },
+                {
+                    "description": "Shockwave Flash 25.0 r0",
+                    "filename": "PepperFlashPlayer.plugin"
+                },
+                {
+                    "description": "",
+                    "filename": "mhjfbmdgcfjbbpaeojofohoefgiehjai"
+                },
+                {
+                    "description": "",
+                    "filename": "internal-nacl-plugin"
+                },
+                {
+                    "description": "Portable Document Format",
+                    "filename": "internal-pdf-viewer"
+                }
+            ],
+            "timezone": 420,
+            "colorDepth": 24,
+            "screenWidth": 2560,
+            "geo": {
+                "city": "Oakland",
+                "region_code": "CA",
+                "region_name": "California",
+                "ip": "2601:643:8201:374c:f525:297a:c857:fced",
+                "time_zone": "America/Los_Angeles",
+                "longitude": -122.242,
+                "metro_code": 807,
+                "latitude": 37.8116,
+                "country_code": "US",
+                "country_name": "United States",
+                "zip_code": "94610"
+            },
+            "browser": {
+                "a": true,
+                "name": "Chrome",
+                "chrome": true,
+                "blink": true,
+                "mac": true,
+                "version": "57.0"
+            }
+        }
+    },
+    "AcceptTime": "2017-05-08T18:17:03Z",
+    "HITId": "391FPZIE4CM6XFZEHN9IUT3LBPKHU8",
+    "Assignment": "",
+    "AssignmentStatus": "Submitted",
+    "SubmitTime": "2017-05-08T18:18:25Z"
+}
