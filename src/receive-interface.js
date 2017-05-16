@@ -25,16 +25,21 @@ var ReceivedExample = React.createClass({
 // state: numRevealed, nextButtonClicked
 var ReceivingList = React.createClass({
   getInitialState: function() {
-    return {numRevealed: 0, nextButtonClicked: false}
+    return {numRevealed: 0, nextButtonClicked: false, show: true}
   },
   after: function() {
-    this.setState({nextButtonClicked: true}, this.props.after)
+    this.setState({show: false, nextButtonClicked: true}, this.props.after)
   },
   revealExample: function() {
     this.setState({numRevealed: this.state.numRevealed + 1})
   },
   render: function() {
     var comp = this, state = comp.state, props = comp.props;
+
+    if (!state.show) {
+      return (<div></div>)
+    }
+
     var listObj = _.map(props.examples,
                         function(ex, i) {
                           // revealed can be true, false, or "on-deck"
@@ -50,7 +55,10 @@ var ReceivingList = React.createClass({
                       ? (<button onClick={comp.after}>Next</button>)
                       : (<span></span>));
 
+    var coverStory = (<div className='cover-story'>There is a certain rule for sequences. We told another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of sequences that either fit or don’t fit the rule. Try to learn the rule from studying the examples:</div>);
+
     return (<div>
+            {coverStory}
             <ol className='received-examples-list'>{list}</ol>
             {nextButton}
             </div>)
@@ -101,7 +109,7 @@ var AFCGlossQuestion = React.createClass({
 
 
       return (<div className='gloss-question'>
-              <p>The rule is one of these {numItems} options. Based on the examples above, what do you think the rule is?</p>
+              <p>The rule is one of these {numItems} options. Based on the examples you saw, what do you think the rule is?</p>
               <table>
               <tbody>
               {itemRows}
@@ -271,17 +279,12 @@ var ReceiveInterface = React.createClass({
   // },
   afterAFCGloss: function() {
 var gState = this.refs.gloss.state;
-    this.props.after({
-        gloss: gState.selection
-    })
+    this.props.after(gState)
   },
   render: function() {
     var comp = this;
 
-    var coverStory = (<div className='cover-story'>There is a certain rule for sequences. We told another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of sequences that either fit or don’t fit the rule. Here are the examples they made:</div>);
-
     return (<div className='examplesEditor'>
-            {coverStory}
             <ReceivingList examples={this.props.examples} after={this.afterReceive} />
             <AFCGlossQuestion ref='gloss' items={comp.props.AFCGlossItems} after={this.afterAFCGloss} />
             </div>)

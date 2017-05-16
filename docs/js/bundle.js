@@ -33339,10 +33339,10 @@ var ReceivingList = React.createClass({
   displayName: 'ReceivingList',
 
   getInitialState: function () {
-    return { numRevealed: 0, nextButtonClicked: false };
+    return { numRevealed: 0, nextButtonClicked: false, show: true };
   },
   after: function () {
-    this.setState({ nextButtonClicked: true }, this.props.after);
+    this.setState({ show: false, nextButtonClicked: true }, this.props.after);
   },
   revealExample: function () {
     this.setState({ numRevealed: this.state.numRevealed + 1 });
@@ -33351,6 +33351,11 @@ var ReceivingList = React.createClass({
     var comp = this,
         state = comp.state,
         props = comp.props;
+
+    if (!state.show) {
+      return React.createElement('div', null);
+    }
+
     var listObj = _.map(props.examples, function (ex, i) {
       // revealed can be true, false, or "on-deck"
       var revealed = i < state.numRevealed;
@@ -33363,7 +33368,9 @@ var ReceivingList = React.createClass({
 
     var nextButton = state.numRevealed == props.examples.length && !state.nextButtonClicked ? React.createElement('button', { onClick: comp.after }, 'Next') : React.createElement('span', null);
 
-    return React.createElement('div', null, React.createElement('ol', { className: 'received-examples-list' }, list), nextButton);
+    var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for sequences. We told another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of sequences that either fit or don\u2019t fit the rule. Try to learn the rule from studying the examples:');
+
+    return React.createElement('div', null, coverStory, React.createElement('ol', { className: 'received-examples-list' }, list), nextButton);
   }
 });
 
@@ -33400,7 +33407,7 @@ var AFCGlossQuestion = React.createClass({
 
       var nextButton = _.isNull(comp.state.glossId) ? React.createElement('span', null) : comp.state.nextButtonClicked ? React.createElement('span', null) : React.createElement('button', { onClick: comp.after }, 'Next');
 
-      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'The rule is one of these ', numItems, ' options. Based on the examples above, what do you think the rule is?'), React.createElement('table', null, React.createElement('tbody', null, itemRows)), React.createElement('br', null), nextButton);
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'The rule is one of these ', numItems, ' options. Based on the examples you saw, what do you think the rule is?'), React.createElement('table', null, React.createElement('tbody', null, itemRows)), React.createElement('br', null), nextButton);
     }
   }
 });
@@ -33540,16 +33547,12 @@ var ReceiveInterface = React.createClass({
   // },
   afterAFCGloss: function () {
     var gState = this.refs.gloss.state;
-    this.props.after({
-      gloss: gState.selection
-    });
+    this.props.after(gState);
   },
   render: function () {
     var comp = this;
 
-    var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for sequences. We told another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of sequences that either fit or don\u2019t fit the rule. Here are the examples they made:');
-
-    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(AFCGlossQuestion, { ref: 'gloss', items: comp.props.AFCGlossItems, after: this.afterAFCGloss }));
+    return React.createElement('div', { className: 'examplesEditor' }, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(AFCGlossQuestion, { ref: 'gloss', items: comp.props.AFCGlossItems, after: this.afterAFCGloss }));
   }
 
 });
