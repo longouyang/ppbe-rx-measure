@@ -1,0 +1,124 @@
+---
+title: "d08a analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(MASS)
+library(plyr)
+library(tidyverse)
+library(lubridate)
+library(memoise)
+```
+
+```{r utilities}
+generic.ci_ <- function(x, n = 5000, seed = 1) {
+  set.seed(seed)
+  lenx = length(x)
+  
+  structure(
+    quantile(
+      replicate(n, mean(x[sample.int(lenx, replace = TRUE)])),
+      c(0.025, 0.975)),
+    names=c("ci.l","ci.u"))
+}
+
+generic.ci <- memoise(generic.ci_)
+```
+
+# read in data
+
+```{r}
+results.dir = "sandbox-results/"
+assignments = read_csv(paste0(results.dir, "assignments.csv")) %>%
+  mutate(accept.time = ymd_hms(accept.time),
+         submit.time = ymd_hms(submit.time),
+         duration = difftime(submit.time, accept.time, units = "mins"))
+gloss = read_csv(paste0(results.dir,"gloss.csv"))
+
+## arrange assignments in order of time
+assignments = assignments %>% arrange(accept.time)
+```
+
+
+
+
+# auxiliary
+
+## how long does the task take?
+
+```{r}
+qplot(data = assignments,
+      x = as.numeric(duration),
+      binwidth = 1,
+      color = I('white')) + 
+  xlab("duration (minutes)")
+```
+
+
+## what did people think was a fair payment?
+
+```{r}
+fair.pay = assignments$fair_pay %>% as.numeric %>% na.omit
+fair.pay = fair.pay[fair.pay < 5]
+qplot(x = fair.pay,
+      binwidth = 0.1,
+      color = I('white')
+      )
+```
+
+## how old are people?
+
+```{r}
+qplot(data = assignments,
+      x = age,
+      binwidth = 5)
+```
+
+they all tend to be older
+
+## what gender are they?
+
+```{r}
+table(tolower(substr(assignments$gender, start = 1, stop = 1)))
+```
+
+## what is their programming / regex experience?
+
+```{r}
+assignments %>% select(programming.experience, regex.experience, worker.id, age, gender) %>% arrange(desc(nchar(programming.experience)))
+```
+
+## any bugs?
+
+```{r}
+assignments %>% select(bugs, worker.id) %>% arrange(desc(nchar(bugs)))
+```
+
+## how much did they enjoy the task?
+
+```{r}
+assignments %>% select(enjoy) %>% arrange(desc(nchar(enjoy)))
+```
+
+Better than average
+some people were frustrated by the inductive nature of the task and the lack of feedback
+
+# research
+
+
+## analyze gloss correctness
+
+
+```{r, fig.width = 11, fig.height = 3}
+e.agg = gloss %>% group_by(rule.id, seq.id) %>% summarise(correct = mean(gloss.correct))
+
+qplot(data = e.agg,
+      facets = . ~ rule.id,
+      x = seq.id,
+      y = correct) + xlab("fraction of correct glosses for a sequence")
+```
