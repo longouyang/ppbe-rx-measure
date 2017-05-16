@@ -32973,7 +32973,11 @@ function showSlide(id) {
 }
 
 // example sequences for receiving
-var curriculaDf = require('./curricula');
+var curriculaDf = _.filter(require('./curricula'),
+// d06c: don't do delimiters
+function (x) {
+  return x['rule.id'] != 'delimiters';
+});
 // curricula is an array of response rows (fields are: example.num, polarity, rule.id, string, trial.num, worker.id)
 // munge into a dictionary form:
 // keys are ruleIds, values are arrays
@@ -32986,6 +32990,12 @@ var curricula = _.chain(ruleIds).map(function (ruleId) {
 global.curricula = curricula;
 // d06b only: as a sanity check, for zip-code, restrict attention to three sequences
 curricula['zip-code'] = _.omit(curricula['zip-code'], "ecba21d", "b2614f0", "a33a11b", "76aae7a", "7632bef", "66584c1", "51be3ed", "49bb605", "1dc006e");
+
+var AFCGlossItems = {
+  '3a': [{ glossId: 'a{1,}', gloss: 'The sequence must be all <code>a</code>\'s and they must be lower case' }, { glossId: 'a{3,}', gloss: 'The sequence must be all <code>a</code>\'s, they must be lower case, and there need to be at least 3', correct: true }, { glossId: '(a|A){1,}', gloss: 'The sequence must be all <code>a</code>\'s and they can be either lower case or upper case' }, { glossId: '(a|A){3,}', gloss: 'The sequence must be all <code>a</code>\'s, they can be either lower case or upper case, and there at need to be at least 3' }],
+  'zip-code': [{ glossId: '\\d+', gloss: 'The sequence must be all numbers' }, { glossId: '.{5}', gloss: 'The sequence must be exactly 5 characters long' }, { glossId: '\\d{5}', gloss: 'The sequence must be all numbers and be exactly 5 characters long', correct: true }, { glossId: '\\d{1,5}', gloss: 'The sequence must be all numbers and must be between 1 and 5 characters long' }],
+  'suffix-s': [{ glossId: '.*[a-z].*', gloss: 'The sequence must contain at least one letter (<code>a</code>, <code>b</code>, <code>c</code>, ...)' }, { glossId: '.*[sS].*', gloss: 'The sequence must contain at least one <code>s</code>, either upper or lower case' }, { glossId: '.*s', gloss: 'The sequence must end in an <code>s</code> and it must be lower case', correct: true }, { glossId: '.*[s|S]', gloss: 'The sequence must end in an <code>s</code> and can be either upper or lower case' }]
+};
 
 var generalizationQuestions = {
   '3a': ['aaaa', 'bbb', 'a', 'b93kgw;_mfo', 'alpaca', 'AAA', 'aaabc', 'DASASA', 'aaaaaaaaaaaaaa', 'AAAAA'],
@@ -33107,7 +33117,7 @@ var receive = bound({
   outputs: [],
   trial: function (input) {
     var comp = React.createElement(ReceiveInterface, { examples: input.examples,
-      questions: input.questions,
+      AFCGlossItems: AFCGlossItems[input.id],
       after: function (output) {
         var trialNum = receive.outputs.length;
         receive.outputs.push(_.extend({}, receive.inputs[trialNum], output));
@@ -33318,7 +33328,7 @@ var ReceivedExample = React.createClass({
       var isDisabled = !revealed;
       return React.createElement('button', { disabled: isDisabled, onClick: this.props.revealNext }, 'Click to show example');
     } else {
-      return React.createElement('div', null, 'The string ', React.createElement('code', null, this.props.string), ' ', matchString, ' ', React.createElement('span', { className: matchIconClass }, matchIconText));
+      return React.createElement('div', null, 'The sequence ', React.createElement('code', null, this.props.string), ' ', matchString, ' ', React.createElement('span', { className: matchIconClass }, matchIconText));
     }
   }
 });
@@ -33354,6 +33364,44 @@ var ReceivingList = React.createClass({
     var nextButton = state.numRevealed == props.examples.length && !state.nextButtonClicked ? React.createElement('button', { onClick: comp.after }, 'Next') : React.createElement('span', null);
 
     return React.createElement('div', null, React.createElement('ol', { className: 'received-examples-list' }, list), nextButton);
+  }
+});
+
+var AFCGlossQuestion = React.createClass({
+  displayName: 'AFCGlossQuestion',
+
+  getInitialState: function () {
+    return { show: false, glossId: null, nextButtonClicked: false };
+  },
+  show: function () {
+    this.setState({ show: true });
+  },
+  after: function () {
+    this.setState({ nextButtonClicked: true }, this.props.after);
+  },
+  render: function () {
+    var comp = this;
+    var numItems = this.props.items.length;
+    if (!this.state.show) {
+      return React.createElement('div', { className: 'gloss-question' });
+    } else {
+
+      var updateSelection = function (e) {
+        var glossId = e.target.value;
+        var newStateInfo = _.chain(comp.props.items).filter({ glossId: glossId }).head().clone().value();
+        newStateInfo.correct = !!newStateInfo.correct;
+        comp.setState(newStateInfo);
+      };
+
+      var itemRows = this.props.items.map(function (item) {
+        var itemHtml = { __html: item.gloss };
+        return React.createElement('tr', { key: item.glossId }, React.createElement('td', null, React.createElement('center', null, React.createElement('input', { type: 'radio', name: 'which', value: item.glossId, onChange: updateSelection }))), React.createElement('td', { dangerouslySetInnerHTML: itemHtml }));
+      });
+
+      var nextButton = _.isNull(comp.state.glossId) ? React.createElement('span', null) : comp.state.nextButtonClicked ? React.createElement('span', null) : React.createElement('button', { onClick: comp.after }, 'Next');
+
+      return React.createElement('div', { className: 'gloss-question' }, React.createElement('p', null, 'The rule is one of these ', numItems, ' options. Based on the examples above, what do you think the rule is?'), React.createElement('table', null, React.createElement('tbody', null, itemRows)), React.createElement('br', null), nextButton);
+    }
   }
 });
 
@@ -33473,31 +33521,35 @@ var ReceiveInterface = React.createClass({
     // this.refs.generalization.setState({show: true});
     this.refs.gloss.setState({ show: true });
   },
-  afterGeneralization: function () {
-    // show gloss
-    // this.refs.gloss.setState({show: true})
-    // this.refs.generalization.setState({show: true});
+  // afterGeneralization: function() { // show gloss
+  //   // this.refs.gloss.setState({show: true})
+  //   // this.refs.generalization.setState({show: true});
 
-    var gen = this.refs.generalization;
+  //   var gen = this.refs.generalization;
 
+  //   this.props.after({
+  //     gloss: this.refs.gloss.state.value,
+  //     generalization: gen.getResponses(),
+  //     generalizationHistory: gen.state.actions
+  //   })
+  // },
+  // afterGloss: function() { // invoke this.props.after callback
+  //   this.refs.generalization.setState({show: true});
+
+  //   var gen = this.refs.generalization;
+  // },
+  afterAFCGloss: function () {
+    var gState = this.refs.gloss.state;
     this.props.after({
-      gloss: this.refs.gloss.state.value,
-      generalization: gen.getResponses(),
-      generalizationHistory: gen.state.actions
+      gloss: gState.selection
     });
-  },
-  afterGloss: function () {
-    // invoke this.props.after callback
-    this.refs.generalization.setState({ show: true });
-
-    var gen = this.refs.generalization;
   },
   render: function () {
     var comp = this;
 
-    var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don\u2019t fit the rule. Here are the examples they made:');
+    var coverStory = React.createElement('div', { className: 'cover-story' }, 'There is a certain rule for sequences. We told another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of sequences that either fit or don\u2019t fit the rule. Here are the examples they made:');
 
-    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(GlossQuestion, { ref: 'gloss', after: this.afterGloss }), React.createElement(GeneralizationQuestions, { ref: 'generalization', questions: this.props.questions, after: this.afterGeneralization }));
+    return React.createElement('div', { className: 'examplesEditor' }, coverStory, React.createElement(ReceivingList, { examples: this.props.examples, after: this.afterReceive }), React.createElement(AFCGlossQuestion, { ref: 'gloss', items: comp.props.AFCGlossItems, after: this.afterAFCGloss }));
   }
 
 });

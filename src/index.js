@@ -30,7 +30,9 @@ function showSlide(id) {
 }
 
 // example sequences for receiving
-var curriculaDf = require('./curricula');
+var curriculaDf = _.filter(require('./curricula'),
+                           // d06c: don't do delimiters
+                           function(x) { return x['rule.id'] != 'delimiters'});
 // curricula is an array of response rows (fields are: example.num, polarity, rule.id, string, trial.num, worker.id)
 // munge into a dictionary form:
 // keys are ruleIds, values are arrays
@@ -46,6 +48,24 @@ var curricula = _.chain(ruleIds)
 global.curricula = curricula;
 // d06b only: as a sanity check, for zip-code, restrict attention to three sequences
 curricula['zip-code'] = _.omit(curricula['zip-code'], "ecba21d", "b2614f0", "a33a11b", "76aae7a", "7632bef", "66584c1", "51be3ed", "49bb605", "1dc006e");
+
+var AFCGlossItems = {
+  '3a': [{glossId: 'a{1,}',     gloss: 'The sequence must be all <code>a</code>\'s and they must be lower case'},
+         {glossId: 'a{3,}',     gloss: 'The sequence must be all <code>a</code>\'s, they must be lower case, and there need to be at least 3', correct: true},
+         {glossId: '(a|A){1,}', gloss: 'The sequence must be all <code>a</code>\'s and they can be either lower case or upper case'},
+         {glossId: '(a|A){3,}', gloss: 'The sequence must be all <code>a</code>\'s, they can be either lower case or upper case, and there at need to be at least 3'}
+        ],
+  'zip-code': [{glossId: '\\d+',     gloss: 'The sequence must be all numbers'},
+               {glossId: '.{5}',     gloss: 'The sequence must be exactly 5 characters long'},
+               {glossId: '\\d{5}',   gloss: 'The sequence must be all numbers and be exactly 5 characters long', correct: true},
+               {glossId: '\\d{1,5}', gloss: 'The sequence must be all numbers and must be between 1 and 5 characters long'}
+              ],
+  'suffix-s': [{glossId: '.*[a-z].*', gloss: 'The sequence must contain at least one letter (<code>a</code>, <code>b</code>, <code>c</code>, ...)'},
+               {glossId: '.*[sS].*',  gloss: 'The sequence must contain at least one <code>s</code>, either upper or lower case'},
+               {glossId: '.*s',       gloss: 'The sequence must end in an <code>s</code> and it must be lower case', correct: true},
+               {glossId: '.*[s|S]',   gloss: 'The sequence must end in an <code>s</code> and can be either upper or lower case'}
+              ]
+};
 
 var generalizationQuestions = {
   '3a': ['aaaa',
@@ -217,7 +237,7 @@ var receive = bound({
     var comp = React.createElement(
       ReceiveInterface,
       {examples: input.examples,
-       questions: input.questions,
+       AFCGlossItems: AFCGlossItems[input.id],
        after: function(output) {
          var trialNum = receive.outputs.length;
          receive.outputs.push(_.extend({},

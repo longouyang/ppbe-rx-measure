@@ -16,7 +16,7 @@ var ReceivedExample = React.createClass({
       var isDisabled = !revealed;
       return (<button disabled={isDisabled} onClick={this.props.revealNext} >Click to show example</button>)
     } else {
-        return (<div>The string <code>{this.props.string}</code> {matchString} <span className={matchIconClass}>{matchIconText}</span></div>)
+        return (<div>The sequence <code>{this.props.string}</code> {matchString} <span className={matchIconClass}>{matchIconText}</span></div>)
     }
   }
 });
@@ -57,6 +57,62 @@ var ReceivingList = React.createClass({
   }
 });
 
+var AFCGlossQuestion = React.createClass({
+  getInitialState: function() {
+    return {show: false, glossId: null, nextButtonClicked: false}
+  },
+  show: function() {
+    this.setState({show: true})
+  },
+  after: function() {
+    this.setState({nextButtonClicked: true}, this.props.after)
+  },
+  render: function() {
+    var comp = this;
+    var numItems = this.props.items.length;
+    if (!this.state.show) {
+      return (<div className='gloss-question'></div>)
+    } else {
+
+      var updateSelection = function(e) {
+        var glossId = e.target.value;
+        var newStateInfo = _.chain(comp.props.items)
+            .filter({glossId: glossId})
+            .head()
+            .clone()
+            .value();
+        newStateInfo.correct = !!(newStateInfo.correct);
+        comp.setState(newStateInfo);
+      }
+
+      var itemRows = this.props.items.map(function(item) {
+        var itemHtml = {__html: item.gloss};
+        return (<tr key={item.glossId}>
+                <td><center><input type="radio" name='which' value={item.glossId} onChange={updateSelection} /></center></td>
+                <td dangerouslySetInnerHTML={itemHtml}></td>
+                </tr>)
+      })
+
+      var nextButton = (_.isNull(comp.state.glossId)
+                        ? (<span></span>)
+                        : (comp.state.nextButtonClicked
+                           ? (<span></span>)
+                           : (<button onClick={comp.after}>Next</button>)) );
+
+
+      return (<div className='gloss-question'>
+              <p>The rule is one of these {numItems} options. Based on the examples above, what do you think the rule is?</p>
+              <table>
+              <tbody>
+              {itemRows}
+              </tbody>
+              </table><br />
+              {nextButton}
+              </div>)
+
+    }
+  }
+});
 
 // props: questions (an array of strings), after (callback)
 // state: show (true, false), nextButtonClicked
@@ -182,7 +238,7 @@ var GlossQuestion = React.createClass({
               </div>)
     }
   }
-})
+});
 
 // props:
 // - examples (an array of examples, i.e., objects with string and polarity properties)
@@ -196,33 +252,38 @@ var ReceiveInterface = React.createClass({
     // this.refs.generalization.setState({show: true});
     this.refs.gloss.setState({show: true})
   },
-  afterGeneralization: function() { // show gloss
-    // this.refs.gloss.setState({show: true})
-    // this.refs.generalization.setState({show: true});
+  // afterGeneralization: function() { // show gloss
+  //   // this.refs.gloss.setState({show: true})
+  //   // this.refs.generalization.setState({show: true});
 
-    var gen = this.refs.generalization;
+  //   var gen = this.refs.generalization;
 
+  //   this.props.after({
+  //     gloss: this.refs.gloss.state.value,
+  //     generalization: gen.getResponses(),
+  //     generalizationHistory: gen.state.actions
+  //   })
+  // },
+  // afterGloss: function() { // invoke this.props.after callback
+  //   this.refs.generalization.setState({show: true});
+
+  //   var gen = this.refs.generalization;
+  // },
+  afterAFCGloss: function() {
+var gState = this.refs.gloss.state;
     this.props.after({
-      gloss: this.refs.gloss.state.value,
-      generalization: gen.getResponses(),
-      generalizationHistory: gen.state.actions
+        gloss: gState.selection
     })
-  },
-  afterGloss: function() { // invoke this.props.after callback
-    this.refs.generalization.setState({show: true});
-
-    var gen = this.refs.generalization;
   },
   render: function() {
     var comp = this;
 
-    var coverStory = (<div className='cover-story'>There is a certain rule for strings. We showed another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of strings that either fit or don’t fit the rule. Here are the examples they made:</div>);
+    var coverStory = (<div className='cover-story'>There is a certain rule for sequences. We told another Mechanical Turk worker the rule and asked them to help you learn the rule by making examples of sequences that either fit or don’t fit the rule. Here are the examples they made:</div>);
 
     return (<div className='examplesEditor'>
             {coverStory}
             <ReceivingList examples={this.props.examples} after={this.afterReceive} />
-            <GlossQuestion ref='gloss' after={this.afterGloss} />
-            <GeneralizationQuestions ref='generalization' questions={this.props.questions} after={this.afterGeneralization} />
+            <AFCGlossQuestion ref='gloss' items={comp.props.AFCGlossItems} after={this.afterAFCGloss} />
             </div>)
     }
 
