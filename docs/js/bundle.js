@@ -32988,8 +32988,10 @@ var curricula = _.chain(ruleIds).map(function (ruleId) {
   return [ruleId, _.groupBy(responses, 'teacher.id')];
 }).object().value();
 global.curricula = curricula;
-// d06b only: as a sanity check, for zip-code, restrict attention to three sequences
-curricula['zip-code'] = _.omit(curricula['zip-code'], "ecba21d", "b2614f0", "a33a11b", "76aae7a", "7632bef", "66584c1", "51be3ed", "49bb605", "1dc006e");
+// d08a pilot: as a sanity check, restrict attention to three sequences
+curricula['suffix-s'] = _.pick(curricula['suffix-s'], '51be3ed', '13ab615', '66584c1');
+curricula['zip-code'] = _.pick(curricula['zip-code'], 'ecba21d', '51be3ed', 'ec8b199');
+curricula['3a'] = _.pick(curricula['3a'], '6f2ca8f', 'f29e6ff', 'db12c41');
 
 var AFCGlossItems = {
   '3a': [{ glossId: 'a{1,}', gloss: 'The sequence must be all <code>a</code>\'s and they must be lower case' }, { glossId: 'a{3,}', gloss: 'The sequence must be all <code>a</code>\'s, they must be lower case, and there need to be at least 3', correct: true }, { glossId: '(a|A){1,}', gloss: 'The sequence must be all <code>a</code>\'s and they can be either lower case or upper case' }, { glossId: '(a|A){3,}', gloss: 'The sequence must be all <code>a</code>\'s, they can be either lower case or upper case, and there at need to be at least 3' }],
@@ -33064,13 +33066,13 @@ var afterDo = function (ms, f) {
 _.each(curricula, function (entry, k) {
   // if we don't get a response from the server within 15 seconds, just randomize on client side
   var secondsLeft = 15;
-  afterDo(15000, function () {
+  afterDo(0, function () {
     setRandomize(k);
   });
 
-  var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
-  var $script = $("<script>").attr("src", jsonpUrl);
-  $(global.document.body).append($script);
+  // var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
+  // var $script = $("<script>").attr("src", jsonpUrl);
+  // $(global.document.body).append($script);
 });
 
 var sendingRules = _.shuffle([{ 'id': '3a', description: "The string contains <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) and there must be at least 3 <code>a</code>'s in the string" }, { 'id': 'suffix-s', description: "The string must end in <code>s</code>" }, { 'id': 'zip-code', description: "The string is exactly 5 characters long and contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)" }, { 'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>' }]);
