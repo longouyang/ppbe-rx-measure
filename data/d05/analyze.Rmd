@@ -178,6 +178,34 @@ ggplot(data = e.agg) +
   scale_x_discrete(breaks = as.character(xmin:xmax), drop = FALSE, name = 'number of examples')
 ```
 
+pub figure:
+
+```{r corpora-sizes, fig.width = 11, fig.height = 3, dev="pdf"}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.examples = n()) %>%
+  group_by(rule.id, num.examples) %>%
+  summarise(freq = n())
+
+xmin = 1 #min(e.agg$num.examples)
+xmax = max(e.agg$num.examples)
+
+rename.delimiters.rule = function(d) {
+  d %>% transform(rule.id = ifelse(rule.id == 'delimiters', 'bracketed', rule.id))
+}
+
+e.agg$num.examples.fct = factor(e.agg$num.examples, levels = as.character(xmin:xmax))
+e.agg = e.agg %>%
+  rename.delimiters.rule %>%
+  transform(rule.id = paste0("Rule: ", rule.id))
+
+ggplot(data = e.agg) +
+  facet_grid(. ~ rule.id) +
+  geom_bar(mapping = aes(x = num.examples.fct, y = freq), stat = 'identity') +
+  scale_x_discrete(breaks = as.character(xmin:xmax), drop = FALSE, name = 'Number of examples') +
+  ylab("Frequency") +
+  theme_classic(14)
+```
+
 ## q: do 2-examples tend to be *balanced*? i.e., one positive and one negative?
 
 ```{r}
@@ -252,7 +280,7 @@ time = system.time(bootstrap.samples <- replicate(5000, balanced.example.pair.ed
 
 writeLines(paste0("elapsed seconds: ", round(unname(time['elapsed']), 1)))
 
-writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c(0.025, 0.0975)), collapse = " - ")))
+writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c(0.025, 0.975)), collapse = " - ")))
 
 # one-tailed test: how many bootstrap samples have a mean
 # number of clusters less than the observed sample?
@@ -263,7 +291,7 @@ yes, this fewer than you'd expect by chance.
 
 ## how many positive examples versus negative examples?
 
-```{r, fig.width = 11, fig.height = 3}
+```{r, fig.width = 11, fig.height = 3.8}
 e.agg = responses %>% group_by(worker.id, rule.id) %>%
   summarise(num.pos = sum(polarity == "positive"),
             num.neg = sum(polarity == "negative")) %>%
@@ -271,17 +299,34 @@ e.agg = responses %>% group_by(worker.id, rule.id) %>%
   group_by(num.pos, num.neg, rule.id) %>%
   summarise(freq = n())
 
-qplot(data = e.agg,
-      facets = . ~ rule.id,
-      x = num.pos,
-      y = num.neg,
-      size = freq) +
-  geom_abline() + 
-  scale_x_continuous(name = '# positive examples', breaks = c(0, 3, 6), limits = c(0, 7)) +
-  scale_y_continuous(name = '# negative examples', breaks = c(0, 3, 6), limits = c(0, 7))
+e.viz = e.agg %>% rename.delimiters.rule %>%
+  transform(rule.id = paste0("Rule: ", rule.id)) %>%
+  rename(Frequency = freq)
+  
+ggplot(data = e.viz) +
+  facet_grid(. ~ rule.id) +
+  geom_abline(color = I('gray')) + 
+  geom_point(mapping = aes(x = num.pos,
+                           y = num.neg,
+                           size = Frequency)) +
+  scale_x_continuous(name = '# positive examples', breaks = c(0, 4, 8), limits = c(0, 8)) +
+  scale_y_continuous(name = '# negative examples', breaks = c(0, 4, 8), limits = c(0, 8)) +
+  theme_classic(14) +
+  theme(legend.position="bottom")
 ```
 
 things are somewhat balanced -- people tend to give some negative examples.
+
+stats on suffix-s and zip-code:
+```{r}
+e.agg = responses %>% group_by(worker.id, rule.id) %>%
+  summarise(num.pos = sum(polarity == "positive"),
+            num.neg = sum(polarity == "negative"))
+
+with(e.agg %>% filter(rule.id == 'suffix-s'), t.test(x = num.pos, y = num.neg, paired = TRUE))
+with(e.agg %>% filter(rule.id == 'zip-code'), t.test(x = num.pos, y = num.neg, paired = TRUE))
+```
+
 
 ### q: do people give more positive examples than negative?
 
@@ -301,8 +346,21 @@ no, doesn't look like it.
 ## how related are the examples in edit distance?
 
 ```{r}
+unique.strings = responses$string %>% unique
+cached.distances = adist(unique.strings)
+rownames(cached.distances) = unique.strings
+colnames(cached.distances) = unique.strings
+memoised.adist = function(strings) {
+  cached.distances[strings,strings]
+}
+```
+
+
+```{r}
 # nb: cluster label numbers do not correspond to chronological order
-cluster.examples = function(strings, distance.threshold = 2) {
+cluster.examples = function(strings, distance.threshold = 2, dist.function = memoised.adist) {
+  original.order = strings
+    
   distance.matrix = adist(strings)
   
   # for each string, figure out which other strings it's similar to
@@ -350,16 +408,24 @@ cluster.examples = function(strings, distance.threshold = 2) {
 
   ### WIP ###
   # return a data frame with two columns: string and cluster number
-  x = do.call(rbind,
-          Map(clusters,
-              1:length(clusters),
-              f = function(indices, cluster.label) {
-                data.frame(string = strings[indices],
-                           cluster.label = cluster.label)
-              }
-          ))
-
-  x
+  # x = do.call(rbind,
+  #         Map(clusters,
+  #             1:length(clusters),
+  #             f = function(indices, cluster.label) {
+  #               data.frame(string = strings[indices],
+  #                          cluster.label = cluster.label)
+  #             }
+  #         ))
+  
+  cluster.labels = sapply(X = 1:length(strings),
+         FUN = function(i) {
+           Position(x = clusters, f = function(cluster) { i %in% cluster })[[1]]
+         })
+  
+  cluster.labels
+  # 
+  # data.frame(string = strings, cluster.label = cluster.labels)
+  
 }
 
 # # testing
@@ -370,15 +436,19 @@ strings = c("11394", "95834", "13094", "52349", "1234b", "j1344", "123b4") # sho
 #strings = c("01234", "012a4", "62804", "628041", "y6280", "0123", "280", "a280b")
 #strings = c('aaa','aa','aaab','baaaab','bbaaabb')
 #strings = c("94301", "40510", "33333", "r2349", "asdfa", "3621", "834920")
-cluster.examples(strings)
+cluster.examples(strings, dist.function = adist)
 ```
 
-mean number of clusters for an example sequence:
+TODO: adaptive clustering based on string lengths so that i can handle things like abracadabra vs abrAcAdAbra
+
+### mean number of clusters for an example sequence:
 
 ```{r}
 responses.clustered = responses %>%
   group_by(worker.id, rule.id) %>%
-  mutate(cluster.label = cluster.examples(string)$cluster.label)
+  mutate(cluster.label = cluster.examples(string)) %>%
+  select(-assignment.id, -rule.desc) %>%
+  ungroup()
 
 e.agg = responses.clustered %>%
   group_by(worker.id, rule.id) %>%
@@ -391,14 +461,149 @@ mean.num.clusters = mean(e.agg$mean_num.clusters)
 summary(e.agg$mean_num.clusters)
 ```
 
-TODO: do there tend to be more negative examples within a cluster? (i think people might come up with one example and then demonstrate various ways it can be perturbed to be a non-example)
+### do there tend to be more negative examples within a cluster? 
 
-TODO: do examples within a cluster tend to be nearby in the sequence of examples the user gave?
+i think people might come up with one example and then demonstrate various ways it can be perturbed to be a non-example
 
-comparison to permutation test: sample random participants by sampling from pool of all participants' responses (note that this is sampling *without* replacement, as people wouldn't give the same example twice)
-- runtime note: takes around 770 seconds for 5k bootstrap samples. it's a little slow because my clustering function is not vectorized
+```{r, fig.width = 10, fig.height = 3}
+e = responses.clustered %>%
+  group_by(rule.id, worker.id, cluster.label) %>%
+  summarise(num.pos = sum(polarity == 'positive'), size = length(polarity)) %>% 
+  transform(num.neg = size - num.pos, frac.pos = num.pos / size) %>% filter(size > 1)
 
+stats = ddply(e, .(rule.id), function(e) { c('p.value' = t.test(x = e$num.pos, y = e$num.neg, paired = TRUE)$p.value ) })
+
+e.agg = e %>%
+  group_by(rule.id, num.pos, num.neg) %>%
+  summarise(n = n())
+
+facet_labeller = function(d) {
+  res = d %>% merge(stats) %>% transform(label = paste0(rule.id, " (p = ", round(p.value, 2), ")")) %>%
+    select(label) %>% rename(rule.id = label)
+  res$rule.id = as.character(res$rule.id)
+  res
+}
+
+qplot(data = e.agg,
+      x = num.pos,
+      y = num.neg,
+      size = n
+      ) + geom_abline() +
+  facet_grid(. ~ rule.id, labeller = facet_labeller)
+```
+
+3a: no
+delimiters: no
+suffix-s: no (note also that cluster size is smaller)
+zip-code: yes
+
+interesting, there are clusters with 0 positive examples. what are those?
 ```{r}
+rc.agg = responses.clustered %>%
+  group_by(rule.id, worker.id, cluster.label) %>% 
+  summarise(num.pos = sum(polarity == 'positive'), num.neg = sum(polarity == 'negative'), size = length(polarity), 
+         corpus = paste(string, c("positive" = "+", "negative" = "-")[polarity], collapse = " | ")
+         ) %>%
+  ungroup()
+
+rc.agg %>%
+  filter(num.pos == 0, num.neg > 1)
+```
+
+not that interesting
+
+what about clusters with 0 negative examples?
+```{r}
+rc.agg %>%
+  filter(num.neg == 0, num.pos > 1) %>%
+  select(rule.id, worker.id, corpus)
+```
+
+not that interesting -- some of these cases would go away with adaptive clustering.
+
+### call an island a cluster of size 1. do islands tend to be positive or negative?
+```{r}
+rc.agg %>% filter(size == 1) %>% group_by(rule.id) %>% summarise(fraction.pos = mean(num.pos))
+```
+
+looks sort of even.
+
+
+### does the first example in a non-island cluster tend to be positive?
+```{r}
+responses.clustered %>% merge(rc.agg) %>%
+  filter(size > 1) %>%
+  group_by(rule.id, worker.id, cluster.label) %>%
+  summarise(first.polarity = polarity[1]) %>%
+  group_by(rule.id) %>%
+  summarise(mean.first.polarity.positive = mean(first.polarity == 'positive'))
+```
+
+overall:
+```{r}
+responses.clustered %>% merge(rc.agg) %>%
+  filter(size > 1) %>%
+  group_by(rule.id, worker.id, cluster.label) %>%
+  summarise(first.polarity = polarity[1]) %>%
+  ungroup() %>% {.$first.polarity == "positive"} %>%
+  table() %>%
+  chisq.test()
+```
+
+
+### do examples within a cluster tend to be chronologically close together?
+```{r}
+num.contiguous.spans <- function(xs) {
+  xs = sort(xs)
+  
+  last_x = xs[1] - 1
+  num_spans = 1
+  in_span = TRUE
+  for(x in xs) {
+    if (x == last_x + 1) {
+      in_span = TRUE
+    } else {
+      num_spans = num_spans + 1
+      in_span = FALSE
+    }
+    last_x = x
+  }
+  num_spans
+}
+# num.contiguous.spans(c(1))
+# num.contiguous.spans(c(1,3))
+# num.contiguous.spans(c(1,3,4,6))
+# num.contiguous.spans(c(1,2,3,4,5,6))
+# num.contiguous.spans(c(1, 100,101, 109,110,111, 200))
+# num.contiguous.spans(c(2,4,6,8,10))
+# num.contiguous.spans(c(1,2, 4, 6, 8, 10, 100,101, 109,110,111, 200))
+
+e.agg = responses.clustered %>% merge(rc.agg) %>%
+  filter(size > 1) %>%
+  group_by(rule.id, worker.id, cluster.label, size) %>%
+  summarise(num.spans = num.contiguous.spans(example.num))
+
+qplot(data =  e.agg %>% group_by(size, num.spans) %>% summarise(n = n()),
+      x = size,
+      y = num.spans,
+      size = n
+      )
+
+qplot(data = e.agg,
+      x = num.spans,
+      geom = 'histogram',
+      binwidth = 1,
+      color = I('white')
+      )
+```
+
+
+### comparison to permutation test
+
+sample random participants by sampling from pool of all participants' responses (note that this is sampling *without* replacement, as people wouldn't give the same example twice)
+- runtime note: takes around 1136 seconds for 1000 bootstrap samples. it's a little slow because my clustering function is not vectorized
+
+```{r eval=FALSE}
 sample.bootstrap.subject = function(worker.id, rule.id) {
   # get examples given by all participants for this rule
   ## written in non-dplyr syntax because i think it might be faster?
@@ -415,7 +620,7 @@ sample.bootstrap.subject = function(worker.id, rule.id) {
   syn.pos = sample(x = pool.pos, size = num.pos, replace = FALSE)
   syn.neg = sample(x = pool.neg, size = num.neg, replace = FALSE)
   
-  c(num.clusters = max(cluster.examples(c(syn.pos, syn.neg))$cluster.label))
+  c(num.clusters = max(cluster.examples(c(syn.pos, syn.neg))))
 }
 
 workers.and.rules = responses.clustered[,c('worker.id', 'rule.id')]
@@ -430,18 +635,18 @@ clusters.bootstrap = function() {
   mean(num.clusters)
 }
 
-time = system.time(bootstrap.samples <- replicate(10, clusters.bootstrap()))
+time = system.time(bootstrap.samples <- replicate(1000, clusters.bootstrap()))
 
 writeLines(paste0("elapsed seconds: ", round(unname(time['elapsed']), 1)))
 
-writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c(0.025, 0.0975)), collapse = " - ")))
+writeLines(paste0('95% ci for bootstrap: ', paste0(quantile(bootstrap.samples, c(0.025, 0.975)), collapse = " - ")))
 
 # one-tailed test: how many bootstrap samples have a mean
 # number of clusters less than the observed sample?
 sum(bootstrap.samples < mean.num.clusters) / length(bootstrap.samples)
 ```
 
-bootstrapping takes ~2 seconds per sample
+bootstrapping takes ~1.1 seconds per sample
 
 TODO: the ways i've done both permutation tests are, i think, reasonable, but there are also reasonable alternatives. talk through my choices with mike, then write down rationale.
 
@@ -642,6 +847,34 @@ qplot(data = e,
   scale_color_brewer(palette = "Set1")
 ```
 
+
+
+
+- 2-examples are balanced
+- we see few entirely positive sequences
+- possible pattern: all positive followed by all negative
+
+
+### polarity
+
+```{r}
+e = responses %>%
+        group_by(example.num) %>%
+        summarise(frac.pos = sum(polarity == 'positive') / n(),
+                  ci.l = generic.ci(polarity == 'positive')['ci.l'],
+                  ci.u = generic.ci(polarity == 'positive')['ci.u'])
+
+qplot(data = e,
+      x = example.num,
+      y = frac.pos,
+      ymin = ci.l,
+      ymax = ci.u,
+      geom = c('pointrange','line'))
+```
+
+interesting -- first example tends to be positive.
+also interesting: subsequent examples are roughly a coin flip between positive and negative. so maybe this is where the significant 0.45 more positive examples than negative comes from -- just the first one? (no, see above)
+
 very busy graph. just looking at polarity:
 ```{r}
 e = responses %>%
@@ -672,32 +905,6 @@ qplot(data = e,
 
 
 
-
-- 2-examples are balanced
-- we see few entirely positive sequences
-- possible pattern: all positive followed by all negative
-
-
-### polarity
-
-```{r}
-e = responses %>%
-        group_by(example.num) %>%
-        summarise(frac.pos = sum(polarity == 'positive') / n(),
-                  ci.l = generic.ci(polarity == 'positive')['ci.l'],
-                  ci.u = generic.ci(polarity == 'positive')['ci.u'])
-
-qplot(data = e,
-      x = example.num,
-      y = frac.pos,
-      ymin = ci.l,
-      ymax = ci.u,
-      geom = c('pointrange','line'))
-```
-
-interesting -- first example tends to be positive.
-also interesting: subsequent examples are roughly a coin flip between positive and negative. so maybe this is where the significant 0.45 more positive examples than negative comes from -- just the first one? (no, see above)
-
 #### within a cluster, does the first example tend to be positive?
 
 ```{r}
@@ -718,6 +925,45 @@ no. looks like it's just the very first example that tends to be positive
 
 
 ## are positive strings further apart than you'd predict by chance?
+
+it turns out that, by chance, you'd expect strings to be pretty far apart; for zip-code, random strings tend to be almost maximally far apart:
+```{r}
+path.length = function(distances, path) {
+  n = length(path)
+  sapply(X = 1:n, FUN = function(i) {
+    j = (i + 1)
+    if (j > n) {
+      j = 1
+    }
+    distances[path[i], path[j]]
+  })
+}
+
+# length of shortest closed walk
+scw.length = function(strings) {
+  n = length(strings)
+  strings.dist = adist(strings)
+  lengths = Map(combinat::permn(1:n),
+      f = function(path) {
+        sum(path.length(strings.dist, path))
+      })
+  min(unlist(lengths))
+}
+
+bootstrap.samples = replicate(10000, scw.length( stringi::stri_rand_strings(n = 3, length = 5, pattern = "[0-9]") ))
+
+print( paste0(quantile(bootstrap.samples, c(0.025, 0.975)), collapse = " - "))
+
+# one-tailed test: how many bootstrap samples have a mean
+# number of clusters less than the observed sample?
+sum(bootstrap.samples < 15) / length(bootstrap.samples)
+
+#scw.length(c("55034", "12052", "20212"))
+#scw.length(c("12345", "123456", "1234567"))
+
+```
+
+
 
 ## looking at raw examples
 
@@ -924,5 +1170,37 @@ pretty.print.examples2 = function(d) {
 ```
 
 
+experimenting with dimensionality reduction visualization
+
+```{r}
+e = responses %>% filter(worker.id == 'dff3ecd', rule.id == 'zip-code')  %>% select(string, polarity) %>%
+  transform(order = 1:length(string))
+
+dimred = cmdscale(dist.strings) %>% transform(string = strings) %>% merge(e) %>% arrange(order) %>%
+  transform(string = paste0("(", order, ") ", string)) %>%
+  rename(x = X1, y = X2)
+
+dimred$dx = c(0,   0.4, 0,   0,  -0.5, 0)
+dimred$dy = c(0.3, 0,   0.3, 0.3, 0,   0.3)
 
 
+# ggplot(data = dimred) +
+#   geom_point(mapping = aes(x = x, y = y, shape = polarity, color = polarity), size = 5) +
+#   geom_text(mapping = aes(x = x + dx, y = y + dy, label = string, color = polarity)) + 
+#   scale_shape_manual(values = c("positive" = 1, "negative" = 4)) + 
+#   scale_color_manual(values = c("negative" = "firebrick2", "positive" =  "darkseagreen")) +
+#   geom_path(mapping = aes(x = x, y = y), color = 'cornflowerblue') + theme_classic()
+
+
+p = ggplot(data = dimred) +
+  geom_point(mapping = aes(x = x, y = y, shape = polarity, color = string), size = 5) +
+  scale_shape_manual(values = c("positive" = 1, "negative" = 4)) +
+  #scale_color_manual(values = c("negative" = "firebrick2", "positive" =  "darkseagreen")) +
+  geom_path(mapping = aes(x = x, y = y), color = 'cornflowerblue') + theme_classic()
+
+#direct.label(p)
+```
+
+
+
+# how close are positive examples? are they further apart than you'd expect by chance?
