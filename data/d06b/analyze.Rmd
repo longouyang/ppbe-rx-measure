@@ -300,7 +300,7 @@ ggplot(data = e) +
 
 
 
-# analyze all 32 zip-code seqs
+## analyze all 32 zip-code seqs
 
 
 ```{r}
@@ -341,15 +341,29 @@ p
 ```
 
 
-# analyze gloss correctness
+## analyze gloss correctness
 
 ```{r}
 glosses.scored = read.csv('glosses-scored.csv') %>% rename(teacher.id = seq.id)
 ```
 
-```{r}
-glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct))
+```{r, fig.width = 11, fig.height = 3}
+e.agg = glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct))
+
+qplot(data = e.agg,
+      facets = . ~ rule.id,
+      x = correct,
+      geom = 'histogram') + xlab("fraction of correct glosses for a sequence")
 ```
+
+```{r}
+glosses.scored %>% group_by(rule.id) %>% 
+  summarise(correct = mean(regex.correct))
+```
+
+hmm, i was wrong in thinking that suffix-s and delimiters were the easiest (though delimiters does appear to be pretty easy)
+
+## modelling
 
 zip-code parameter sweep for L0:
 ```{r}
@@ -385,7 +399,17 @@ mod3a = mod3a %>%
 
 model.fits = mod3a %>% group_by(outlierLP, teacherAlpha) %>% summarise(LL = sum(LL))
 
+qplot(data = model.fits %>% filter(is.finite(LL)),
+      x = outlierLP,
+      y = teacherAlpha,
+      label = round(LL),
+      geom = 'text',
+      color = LL
+      ) + theme_classic()
+```
 
+detailed view:
+```{r}
 qplot(data = mod3a %>% spread(model, prob),
       x = L1,
       y = correct) +
