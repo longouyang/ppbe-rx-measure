@@ -298,34 +298,6 @@ ggplot(data = e) +
   theme(axis.text.x = element_text(angle = -45, hjust = 0))
 ```
 
-# analyze 10 zip-code seqs
-
-```{r}
-z10 = read.csv('gloss-zip-code-10.csv')
-```
-
-```{r}
-e = z10 %>% group_by(seq.id) %>% summarise(correct = mean(regex.correct))
-
-e.predicted = data.frame(
-  seq.id = c("a33a11b", "49bb605", "b2614f0", "66584c1", "51be3ed", "1dc006e", "76aae7a", "ecba21d", "7632bef"),
-  fL0_sharp = c(0.9999999999622489, 0.9999998874648376, 0.9522698261237779, 0.9999998874648376, 0.10650697891920076, 0.49999999999999994, 0.10196388929297737, 0.9999999999999876, 0.7052176369484497),
-  fL0_smooth = c(6.781214805391138e-8,2.3992492648972874e-7,2.3276964198472533e-7,2.3992492648972874e-7,0.00000999987691071478,0.00000999990000099996,0.000009382535597137926,2.467592444818631e-8,9.391009335036399e-9),
-  fL1_sharp = c(0.9999999997596767, 0.9999992836062245, 0.8459072229180626, 0.9999993498935654, 0.0034915493525717657, 0.07282304847596167, 0.003422839808667077, 0.9999999999999201, 0.24485084223232986),
-  fL1_smooth = c(0.9999999831892926,0.9999858365892572,0.1384452484170687,0.9999858365897563,0.06438531807940046,0.2487740845126035,0.06329953761982891,0.9999999999845031,0.000889478940048822)
-) %>%
-  gather("model", "prob", 2:5)
-
-e = merge(e, e.predicted, by = 'seq.id')
-
-ggplot(data = e,
-      mapping = aes(y = correct)) +
-  facet_wrap(~ model, nrow = 2) + 
-  geom_point(mapping = aes(x = prob)) +
-  geom_abline()
-  # +
-  #geom_text(mapping = aes(x = fL1_smooth + 0.05, label = seq.id), size = 2.5)
-```
 
 
 # analyze all 32 zip-code seqs
@@ -343,7 +315,7 @@ e = zall %>% group_by(seq.id) %>% summarise(correct = mean(regex.correct))
 
 model.results.raw = read.csv('model-results-zip-code.csv')
 model.results = model.results.raw %>%
-  transform(L0_smooth = log(L0_smooth)) %>%
+  transform(L0_smooth = L0_smooth) %>%
   gather("model", "prob", 2:length(model.results.raw))
 
 
@@ -369,5 +341,97 @@ p
 ```
 
 
+# analyze gloss correctness
+
+```{r}
+glosses.scored = read.csv('glosses-scored.csv') %>% rename(teacher.id = seq.id)
+```
+
+```{r}
+glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct))
+```
+
+zip-code parameter sweep for L0:
+```{r}
+hum3a = glosses.scored %>% filter(rule.id == 'zip-code') %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct), num.correct = sum(regex.correct), n = n())
+
+mod3a = fromJSON('zip-L0.json') %>% merge(hum3a) %>% transform(outlierLP = round(outlierLP, 3))
+
+mod3a = mod3a %>%
+  transform(LL = dbinom(num.correct, size = n, prob = prob, log = TRUE))
+
+model.fits = mod3a %>% group_by(outlierLP) %>% summarise(LL = sum(LL))
+cors = mod3a %>% group_by(outlierLP) %>% summarise(r = cor(correct, prob))
+facet_labeller = function(outlierLPs) {
+  outlierLPs %>% merge(model.fits) %>%
+    transform(outlierLP = paste0(outlierLP, " (r =", round(LL), ")")) %>%
+    select(outlierLP)
+}
+
+qplot(data = mod3a %>% spread(model, prob),
+      x = L0,
+      y = correct) +
+  facet_wrap( ~ outlierLP, labeller = facet_labeller) +
+  xlim(0,1) + ylim(0,1) + geom_abline()
+```
+
+zip-code parameter sweep for L1:
+```{r}
+mod3a = fromJSON('zip-L1.json') %>% merge(hum3a) %>% transform(outlierLP = round(outlierLP, 3),
+                                                              teacherAlpha = round(teacherAlpha, 3))
+
+mod3a = mod3a %>%
+  transform(LL = dbinom(num.correct, size = n, prob = prob, log = TRUE))
+
+model.fits = mod3a %>% group_by(outlierLP, teacherAlpha) %>% summarise(LL = sum(LL))
+
+
+qplot(data = mod3a %>% spread(model, prob),
+      x = L1,
+      y = correct) +
+  facet_grid(teacherAlpha ~ outlierLP) +
+  geom_text(data = model.fits, mapping = aes(x = 0.5, y = 0.95, label = round(LL)), color = 'deepskyblue') +
+  xlim(0,1) + ylim(0,1) + geom_abline()
+```
+
+
+
+3a parameter sweep for L0:
+
+```{r}
+hum3a = glosses.scored %>% filter(rule.id == '3a') %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct))
+
+mod3a = fromJSON('3a-L0.json') %>% merge(hum3a) %>% transform(outlierLP = round(outlierLP, 3))
+
+cors = mod3a %>% group_by(outlierLP) %>% summarise(r = cor(correct, prob))
+facet_labeller = function(outlierLPs) {
+  outlierLPs %>% merge(cors) %>%
+    transform(outlierLP = paste0(outlierLP, " (r =", round(r,3), ")")) %>%
+    select(outlierLP)
+}
+
+qplot(data = mod3a %>% spread(model, prob),
+      x = L0,
+      y = correct) +
+  facet_wrap( ~ outlierLP, labeller = facet_labeller, nrow = 10) +
+  xlim(0,1) + ylim(0,1) + geom_abline()
+```
+
+3a parameter sweep for L1:
+
+```{r}
+mod3a = fromJSON('3a-L1.json') %>% merge(hum3a) %>% transform(outlierLP = round(outlierLP, 3),
+                                                              teacherAlpha = round(teacherAlpha, 3)
+                                                              )
+
+cors = mod3a %>% group_by(outlierLP, teacherAlpha) %>% summarise(r = cor(correct, prob))
+
+qplot(data = mod3a %>% spread(model, prob),
+      x = L1,
+      y = correct) +
+  facet_grid(teacherAlpha ~ outlierLP) +
+  geom_text(data = cors, mapping = aes(x = 0.1, y = 0.95, label = round(r, 2))) +
+  xlim(0,1) + ylim(0,1) + geom_abline()
+```
 
 
