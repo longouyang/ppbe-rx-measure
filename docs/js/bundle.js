@@ -33352,9 +33352,9 @@ var ReceivingList = React.createClass({
         state = comp.state,
         props = comp.props;
 
-    if (!state.show) {
-      return React.createElement('div', null);
-    }
+    // if (!state.show) {
+    //   return (<div></div>)
+    // }
 
     var listObj = _.map(props.examples, function (ex, i) {
       // revealed can be true, false, or "on-deck"

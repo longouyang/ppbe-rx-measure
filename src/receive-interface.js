@@ -36,9 +36,9 @@ var ReceivingList = React.createClass({
   render: function() {
     var comp = this, state = comp.state, props = comp.props;
 
-    if (!state.show) {
-      return (<div></div>)
-    }
+    // if (!state.show) {
+    //   return (<div></div>)
+    // }
 
     var listObj = _.map(props.examples,
                         function(ex, i) {
