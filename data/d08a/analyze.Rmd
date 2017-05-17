@@ -13,6 +13,7 @@ library(plyr)
 library(tidyverse)
 library(lubridate)
 library(memoise)
+library(gridExtra)
 ```
 
 ```{r utilities}
@@ -33,17 +34,21 @@ generic.ci <- memoise(generic.ci_)
 # read in data
 
 ```{r}
-results.dir = "sandbox-results/"
+results.dir = "production-results/"
 assignments = read_csv(paste0(results.dir, "assignments.csv")) %>%
   mutate(accept.time = ymd_hms(accept.time),
          submit.time = ymd_hms(submit.time),
          duration = difftime(submit.time, accept.time, units = "mins"))
-gloss = read_csv(paste0(results.dir,"gloss.csv"))
+gloss = read_csv(paste0(results.dir,"gloss.csv")) %>%
+  transform(exs = gsub("‖","\n", exs))
 
 ## arrange assignments in order of time
 assignments = assignments %>% arrange(accept.time)
 ```
 
+```{r}
+corpora = 
+```
 
 
 
@@ -114,11 +119,135 @@ some people were frustrated by the inductive nature of the task and the lack of 
 ## analyze gloss correctness
 
 
-```{r, fig.width = 11, fig.height = 3}
-e.agg = gloss %>% group_by(rule.id, seq.id) %>% summarise(correct = mean(gloss.correct))
+```{r, fig.width = 11, fig.height = 5}
+e.agg = gloss %>% group_by(rule.id, seq.id, exs) %>% summarise(correct = mean(gloss.correct), n = n())
 
 qplot(data = e.agg,
-      facets = . ~ rule.id,
-      x = seq.id,
-      y = correct) + xlab("fraction of correct glosses for a sequence")
+      x = exs,
+      y = correct) + 
+  geom_text(mapping = aes(y = 0.1, label = n)) +
+  facet_grid(. ~ rule.id, scales = 'free') +
+  theme(axis.text.x = element_text(angle = 0)) +
+  xlab("fraction of correct glosses for a sequence")
 ```
+
+hmm, some surprises:
+- suffix-s: the beads cats sequence i thought would be good. but there's like no variation in performance here.
+- zip-code: the longest sequence (48751) doesn't do super well either.
+
+hmm, i wonder if these are predicted by the model?
+
+### what are the responses that people gave for various sequences?
+
+```{r, fig.width = 11, fig.height = 8}
+e.agg = gloss %>% group_by(rule.id, seq.id, exs, gloss.id, gloss) %>% summarise(n = n()) %>%
+  transform(exs = paste0(seq.id,"\n", gsub('"', "", gsub("\n"," | ", exs))))
+
+p1 = ggplot(data = e.agg %>% filter(rule.id == '3a')) +
+  facet_grid(. ~ exs) +
+  geom_bar(mapping = aes(x = gloss.id, y = n), stat = 'identity', position = 'dodge') +
+  theme(strip.text.x = element_text(size = 10))
+
+p2 = ggplot(data = e.agg %>% filter(rule.id == 'zip-code')) +
+  facet_grid(. ~ exs) +
+  geom_bar(mapping = aes(x = gloss.id, y = n), stat = 'identity', position = 'dodge') +
+  theme(strip.text.x = element_text(size = 10))
+
+
+p3 =  ggplot(data = e.agg %>% filter(rule.id == 'suffix-s')) +
+  facet_grid(. ~ exs) +
+  geom_bar(mapping = aes(x = gloss.id, y = n), stat = 'identity', position = 'dodge') + 
+  theme(strip.text.x = element_text(size = 10))
+
+grid.arrange(p1,p2,p3)
+```
+
+i can fit the zip-code results using L0 with a sharp likelihood.
+
+
+examine model fits for L1 smooth:
+
+```{r}
+fits = fromJSON("../../../induction/L1-smooth-grid.json")
+```
+
+```{r, fig.width = 11, fig.height = 3}
+qplot(data = fits,
+      facets = . ~ outlierLP,
+      x = listenerAlpha,
+      y = teacherAlpha,
+      label = round(LL),
+      fill = LL,
+      geom = 'tile',
+      color = I('white')
+      )  + geom_text(mapping = aes(label = round(LL,0)), color = 'white') + theme_classic()
+```
+
+outlierLP doesn't matter much and there best fits hug the x and y axes:
+
+```{r, fig.width = 11, fig.height = 3}
+qplot(data = fits %>% filter(LL > -400),
+      facets = . ~ outlierLP,
+      x = listenerAlpha,
+      y = teacherAlpha,
+      label = round(LL),
+      fill = LL,
+      geom = 'tile',
+      color = I('white')
+      ) + geom_text(mapping = aes(label = round(LL,0)), color = 'white') + theme_classic()
+```
+
+listenerAlpha = 0 does a good job but that has terrible implications -- just says that people are guessing.
+the fact that the best teacherAlpha value is 0 is also bad, suggests that people expect teachers to say anything whatsoever.
+
+```{r}
+fits = fromJSON("../../../induction/L1-sharp-grid.json")
+```
+
+
+```{r, fig.width = 11, fig.height = 3}
+qplot(data = fits,
+      facets = . ~ outlierLP,
+      x = listenerAlpha,
+      y = teacherAlpha,
+      fill = LL,
+      geom = 'tile',
+      color = I('white')
+      ) + geom_text(mapping = aes(label = round(LL,0)), color = 'white') + theme_classic()
+```
+
+similar pattern although likelihoods are better
+
+L0 sharp:
+
+```{r}
+fits = fromJSON("../../../induction/L0-sharp-grid.json")
+
+qplot(data = fits,
+      x = listenerAlpha,
+      y = outlierLP,
+      fill = LL,
+      geom = 'tile',
+      color = I('white')
+      ) + geom_text(mapping = aes(label = round(LL,0)), color = 'white') + theme_classic()
+```
+
+yeah, this looks better than L1
+
+
+L1 smooth:
+```{r}
+fits = fromJSON("../../../induction/L0-smooth-grid.json")
+
+qplot(data = fits,
+      x = listenerAlpha,
+      y = outlierLP,
+      fill = LL,
+      geom = 'tile',
+      color = I('white')
+      ) + geom_text(mapping = aes(label = round(LL,0)), color = 'white') + theme_classic()
+```
+
+
+yeah, this is not the behavior of a good model
+

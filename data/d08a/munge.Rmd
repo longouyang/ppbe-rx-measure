@@ -4,6 +4,7 @@ output: html_document
 ---
 
 ```{r}
+library(plyr)
 library(tidyverse)
 library(jsonlite)
 library(lubridate)
@@ -12,8 +13,8 @@ library(digest)
 ```
 
 ```{r}
-results.dir = "sandbox-results/"
-#results.dir = "production-results/"
+#results.dir = "sandbox-results/"
+results.dir = "production-results/"
 ```
 
 ```{r}
