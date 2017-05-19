@@ -117,80 +117,112 @@ var generalizationQuestions = {
 
 global.generalizationQuestions = generalizationQuestions;
 
-// get randomization information from server
-var numRules = _.size(curricula);
-var receivingExamples = [];
-global.receivingExamples = receivingExamples;
-global.gotRandom = false;
-function setRandomize(ruleId, seqNumber) {
-  //console.log('setRandomize', ruleId, seqNumber);
+// get randomization information from server for learning
+if (false) {
+  var numRules = _.size(curricula);
+  var receivingExamples = [];
+  global.receivingExamples = receivingExamples;
+  global.gotRandom = false;
+  function setRandomize(ruleId, seqNumber) {
+    //console.log('setRandomize', ruleId, seqNumber);
 
 
 
-  if (_.filter(receivingExamples, {id: ruleId}).length > 0) {
-    // console.log('ignored second attempt to set randomization for ' + ruleId );
-    return;
+    if (_.filter(receivingExamples, {id: ruleId}).length > 0) {
+      // console.log('ignored second attempt to set randomization for ' + ruleId );
+      return;
+    }
+
+    var seqs = global.curricula[ruleId], // NB: global is necessary
+    generalizationQuestions = global.generalizationQuestions[ruleId],
+    seqIds = _.keys(seqs);
+
+    var randomization, seqId;
+
+    if (!_.isUndefined(seqNumber) && seqNumber > -1) {
+      randomization = 'server';
+      seqId = seqIds[seqNumber % seqIds.length];
+    } else {
+      randomization = 'client';
+      seqId = _.sample(seqIds);
+    }
+
+    var examples = seqs[seqId];
+
+    var sampledRule = {id: ruleId,
+                       seqId: seqId,
+                       examples: examples,
+                       questions: _.shuffle(generalizationQuestions),
+                       randomization: randomization
+                      };
+
+    receivingExamples.push(sampledRule);
+
+    if (receivingExamples.length == numRules) {
+      global.gotRandom = true
+      clearInterval(global.loadingTimer)
+      receivingExamples = _.shuffle(receivingExamples);
+
+      $('#intro button.next')
+        .text('Next')
+        .removeAttr('disabled')
+        .one('click', receive.next)
+    }
+  }
+  global.setRandomize = setRandomize;
+
+  var afterDo = function(ms, f) {
+    return setTimeout(f, ms);
   }
 
-  var seqs = global.curricula[ruleId], // NB: global is necessary
-      generalizationQuestions = global.generalizationQuestions[ruleId],
-      seqIds = _.keys(seqs);
+  _.each(curricula,
+         function(entry, k) {
+           // if we don't get a response from the server within 15 seconds, just randomize on client side
+           var secondsLeft = 15;
+           afterDo(0, function() { setRandomize(k) });
 
-  var randomization, seqId;
-
-  if (!_.isUndefined(seqNumber) && seqNumber > -1) {
-    randomization = 'server';
-    seqId = seqIds[seqNumber % seqIds.length];
-  } else {
-    randomization = 'client';
-    seqId = _.sample(seqIds);
-  }
-
-  var examples = seqs[seqId];
-
-  var sampledRule = {id: ruleId,
-                     seqId: seqId,
-                     examples: examples,
-                     questions: _.shuffle(generalizationQuestions),
-                     randomization: randomization
-                 };
-
-  receivingExamples.push(sampledRule);
-
-  if (receivingExamples.length == numRules) {
-    global.gotRandom = true
-    clearInterval(global.loadingTimer)
-    receivingExamples = _.shuffle(receivingExamples);
-
-    $('#intro button.next')
-      .text('Next')
-      .removeAttr('disabled')
-      .one('click', receive.next)
-  }
+           // var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
+           // var $script = $("<script>").attr("src", jsonpUrl);
+           // $(global.document.body).append($script);
+         }
+        )
 }
-global.setRandomize = setRandomize;
 
-var afterDo = function(ms, f) {
-  return setTimeout(f, ms);
+var distractors = {
+  'zip-code': [
+    {id: 'zip-code-1',
+     description: 'The sequence is exactly 5 characters long'
+    },
+    {id: 'zip-code-2',
+     description: 'The sequence contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)'
+    }
+  ],
+  '3a': [
+    {id: '3a-1',
+     description: "The sequence must be at least 6 characters long and contain <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) "
+    },
+    {id: '3a-2',
+     description: "The sequence contains <i>only</i> <code>a</code>'s, which can be either upper or lower case"
+    }
+  ],
+  'suffix-s': [
+    {id: 'suffix-s-1',
+     description: 'The sequence must contain at least one lower case <code>s</code>'},
+    {id: 'suffix-s-2',
+     description: 'The sequence must contain at least one lower case letter'}
+  ],
+  'delimiters': [
+    {id: 'delimiters-1',
+     description: 'The first character of the sequence must be <code>[</code> '},
+    {id: 'delimiters-2',
+     description: 'The last character of the sequence must be <code>]</code>'}]
 }
-
-_.each(curricula,
-       function(entry, k) {
-         // if we don't get a response from the server within 15 seconds, just randomize on client side
-         var secondsLeft = 15;
-         afterDo(0, function() { setRandomize(k) });
-
-         // var jsonpUrl = "https://web.stanford.edu/~louyang/cgi-bin/counter.php?callback=setRandomize&key=" + k;
-         // var $script = $("<script>").attr("src", jsonpUrl);
-         // $(global.document.body).append($script);
-       }
-      )
 
 var sendingRules = _.shuffle([
-  {'id': '3a', description: "The string contains <i>only</i> lowercase <code>a</code>'s (no other characters are allowed) and there must be at least 3 <code>a</code>'s in the string"},
-  {'id': 'suffix-s', description: "The string must end in <code>s</code>"},
-  {'id': 'zip-code', description: "The string is exactly 5 characters long and contains only numeric digits (<code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, <code>5</code>, <code>6</code>, <code>7</code>, <code>8</code>, or <code>9</code>)"},
-  {'id': 'delimiters', description: 'The string must begin with <code>[</code> and end with <code>]</code>'}
+  _.sample(distractors['3a']),
+  _.sample(distractors['zip-code']),
+  _.sample(distractors['suffix-s']),
+  _.sample(distractors['delimiters'])
 ]);
 
 var send = bound({
@@ -286,7 +318,6 @@ var receive = bound({
 });
 
 
-
 var questionnaire = {
   start: function() {
     showSlide('questionnaire')
@@ -303,7 +334,8 @@ var questionnaire = {
 }
 
 $(global.document).ready(function() {
- questionnaire.validator = $("#q").validate({submitHandler: questionnaire.submit});
+  questionnaire.validator = $("#q").validate({submitHandler: questionnaire.submit});
+
 })
 
 function submitter(results) {
@@ -324,17 +356,17 @@ function finishExperiment() {
     questionnaire: _.pick(questionnaire, 'outputs')
   };
 
-  // // clean up send results
-  // results.send = _.map(
-  //   send.outputs,
-  //   function(x,i) {
-  //     return _.extend({},
-  //                     // add rule info
-  //                     send.inputs[i],
-  //                     // ditch reveal info, munge into data frame
-  //                     {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) });
+  // clean up send results
+  results.send = _.map(
+    send.outputs,
+    function(x,i) {
+      return _.extend({},
+                      // add rule info
+                      send.inputs[i],
+                      // ditch reveal info, munge into data frame
+                      {examples: _.values(_.omit(x, 'revealRule', 'revealInterface'))}) });
 
-  results.receive = receive.outputs;
+  // results.receive = receive.outputs;
 
   global.results = results;
 
@@ -343,11 +375,11 @@ function finishExperiment() {
 
 // flow of experiment
 
-//$('#intro button.next').one('click', send.next)
+$('#intro button.next').one('click', send.next)
 //$('#intro button.next').one('click', receive.next)
 
-//send.after = questionnaire.start;
-receive.after = questionnaire.start;
+send.after = questionnaire.start;
+//receive.after = questionnaire.start;
 
 questionnaire.after = finishExperiment;
 

@@ -22,7 +22,7 @@ var Example = React.createClass({
     var doesnt = "doesn't"; // putting "doesn't" in the jsx screws up indentation
     var string = this.props.string == null ? "" : this.props.string;
     return (<form>
-            <span className='remove' onClick={deleteExample}>	&#9679;</span> The string <input type="text" name="string" onChange={updateString} value={string} />
+            <span className='remove' onClick={deleteExample}>	&#9679;</span> The sequence <input type="text" name="string" onChange={updateString} value={string} />
             <label>
             <input type="radio" name="type" value="positive" onChange={updatePolarity} />
             matches
@@ -93,7 +93,7 @@ var ExamplesEditor = React.createClass({
 
     var ruleContents = {__html: this.props.rule.description} ;
 
-    var communicationFraming = 'Imagine that you want to tell a friend of yours about a rule for making strings:';
+    var communicationFraming = 'Imagine that you want to tell a friend of yours about a rule for making sequences:';
 
     var revealRule = this.state.revealRule,
         revealInterface = this.state.revealInterface;
@@ -121,7 +121,7 @@ var ExamplesEditor = React.createClass({
             <p className={ruleWrapperClass}> Rule: <span className='rule' dangerouslySetInnerHTML={ruleContents} /></p>
             <button type="button" className={revealInterfaceButtonClass} onClick={this.revealInterface}>Continue</button>
             <div className={interfaceClass}>
-            <p>How would you communicate this rule by giving examples of strings that either match or don't match the rule? You can give any number of examples but try to give enough and make them helpful  so that your friend would guess the correct rule.</p>
+            <p>How would you communicate this rule by giving examples of sequences that either match or don't match the rule? You can give any number of examples but try to give enough and make them helpful  so that your friend would guess the correct rule.</p>
 
               <ExamplesList examples={examples} updateExample={this.updateExample} deleteExample={this.deleteExample} />
 
