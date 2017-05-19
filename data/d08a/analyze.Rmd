@@ -141,23 +141,24 @@ hmm, i wonder if these are predicted by the model?
 
 ```{r, fig.width = 11, fig.height = 8}
 e.agg = gloss %>% group_by(rule.id, seq.id, exs, gloss.id, gloss) %>% summarise(n = n()) %>%
-  transform(exs = paste0(seq.id,"\n", gsub('"', "", gsub("\n"," | ", exs))))
+  transform(exs = paste0("(sequence ", seq.id, ")\n",
+                         gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", exs)))))
 
 p1 = ggplot(data = e.agg %>% filter(rule.id == '3a')) +
   facet_grid(. ~ exs) +
   geom_bar(mapping = aes(x = gloss.id, y = n), stat = 'identity', position = 'dodge') +
-  theme(strip.text.x = element_text(size = 10))
+  theme(strip.text.x = element_text(size = 12))
 
 p2 = ggplot(data = e.agg %>% filter(rule.id == 'zip-code')) +
   facet_grid(. ~ exs) +
   geom_bar(mapping = aes(x = gloss.id, y = n), stat = 'identity', position = 'dodge') +
-  theme(strip.text.x = element_text(size = 10))
+  theme(strip.text.x = element_text(size = 12))
 
 
 p3 =  ggplot(data = e.agg %>% filter(rule.id == 'suffix-s')) +
   facet_grid(. ~ exs) +
   geom_bar(mapping = aes(x = gloss.id, y = n), stat = 'identity', position = 'dodge') + 
-  theme(strip.text.x = element_text(size = 10))
+  theme(strip.text.x = element_text(size = 12))
 
 grid.arrange(p1,p2,p3)
 ```
@@ -200,6 +201,11 @@ qplot(data = fits %>% filter(LL > -400),
 listenerAlpha = 0 does a good job but that has terrible implications -- just says that people are guessing.
 the fact that the best teacherAlpha value is 0 is also bad, suggests that people expect teachers to say anything whatsoever.
 
+(though i did a hack to do gradient descent in webppl and you can get -269ish )
+
+fits for L1 sharp:
+
+
 ```{r}
 fits = fromJSON("../../../induction/L1-sharp-grid.json")
 ```
@@ -217,6 +223,7 @@ qplot(data = fits,
 ```
 
 similar pattern although likelihoods are better
+(though i did a hack to do gradient descent in webppl and you can get -269ish )
 
 L0 sharp:
 

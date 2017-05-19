@@ -363,7 +363,7 @@ glosses.scored %>% group_by(rule.id) %>%
 
 hmm, i was wrong in thinking that suffix-s and delimiters were the easiest (though delimiters does appear to be pretty easy)
 
-## modelling
+## (js) modelling
 
 zip-code parameter sweep for L0:
 ```{r}
@@ -399,7 +399,7 @@ mod3a = mod3a %>%
 
 model.fits = mod3a %>% group_by(outlierLP, teacherAlpha) %>% summarise(LL = sum(LL))
 
-qplot(data = model.fits %>% filter(is.finite(LL)),
+qplot(data = model.fits,
       x = outlierLP,
       y = teacherAlpha,
       label = round(LL),
@@ -459,3 +459,268 @@ qplot(data = mod3a %>% spread(model, prob),
 ```
 
 
+
+
+
+## webppl modelling
+
+export scored glosses to json for nips-helper:
+
+```{r}
+j.glosses.scored = glosses.scored %>% select(-assignment.id, -exs, -gloss) %>% toJSON(pretty = TRUE)
+write(x = j.glosses.scored, file = "glosses-scored.json")
+```
+
+aggregate glosses by correctness:
+
+```{r}
+e.agg = glosses.scored %>%
+  select(-assignment.id, -exs, -gloss) %>%
+  group_by(rule.id, teacher.id) %>%
+  summarise(num.correct = sum(regex.correct),
+            num.total = n())
+
+j.e.agg = toJSON(e.agg, pretty = TRUE)
+
+write(x = j.e.agg, file = "glosses-scored-agg.json")
+```
+
+L1:
+
+```{r}
+model.results1 = fromJSON(txt = '[{"rule.id":"zip-code","teacher.id":"96ed36e","prob":0.673819724789454,"LL":-2.6703365310698217},{"rule.id":"zip-code","teacher.id":"844609e","prob":0.3661269461740991,"LL":-3.057959753886072},{"rule.id":"zip-code","teacher.id":"f9e86c3","prob":0.24010737444993827,"LL":-6.952320772297591},{"rule.id":"zip-code","teacher.id":"402a4e5","prob":0.48387015590892013,"LL":-5.522888448247518},{"rule.id":"zip-code","teacher.id":"a33a11b","prob":0.850878850923392,"LL":-2.6993112979399587},{"rule.id":"zip-code","teacher.id":"ebda6ed","prob":0.24271521277596136,"LL":-1.615424414983643},{"rule.id":"zip-code","teacher.id":"c09faf8","prob":0.20171897129283542,"LL":-1.3259458835287352},{"rule.id":"zip-code","teacher.id":"0f5e5fa","prob":0.8775493142193721,"LL":-5.623916021414173},{"rule.id":"zip-code","teacher.id":"49bb605","prob":0.6078500630168323,"LL":-1.773492341742906},{"rule.id":"zip-code","teacher.id":"dff3ecd","prob":0.14262729617803385,"LL":-3.36626932326107},{"rule.id":"zip-code","teacher.id":"13ab615","prob":0.2579748552486599,"LL":-1.4240955699198334},{"rule.id":"zip-code","teacher.id":"b2614f0","prob":0.10327248020322741,"LL":-1.4170420083663342},{"rule.id":"zip-code","teacher.id":"66584c1","prob":0.5203746292827119,"LL":-4.311021437331977},{"rule.id":"zip-code","teacher.id":"e12e476","prob":0.7373858087984143,"LL":-1.2231278844126114},{"rule.id":"zip-code","teacher.id":"0e0608d","prob":0.38719865934514225,"LL":-1.4075600011588412},{"rule.id":"zip-code","teacher.id":"51be3ed","prob":0.09614674876454253,"LL":-1.2130591736577607},{"rule.id":"zip-code","teacher.id":"1dc006e","prob":0.21471673510268022,"LL":-5.303041919417424},{"rule.id":"zip-code","teacher.id":"ec8b199","prob":0.16676800196236835,"LL":-1.1305550481107303},{"rule.id":"zip-code","teacher.id":"f29e6ff","prob":0.893338058109455,"LL":-3.65012734973263},{"rule.id":"zip-code","teacher.id":"6e119de","prob":0.13799292545745234,"LL":-4.812338781949526},{"rule.id":"zip-code","teacher.id":"9eabb06","prob":0.2631146434439196,"LL":-2.138526455585751},{"rule.id":"zip-code","teacher.id":"76aae7a","prob":0.07945691025387844,"LL":-0.7451232134844658},{"rule.id":"zip-code","teacher.id":"3808bfe","prob":0.31132401063325343,"LL":-3.3588080320218703},{"rule.id":"zip-code","teacher.id":"032d129","prob":0.3736068086828814,"LL":-1.7861883433093304},{"rule.id":"zip-code","teacher.id":"a23551a","prob":0.19663657872181164,"LL":-3.6973015124803177},{"rule.id":"zip-code","teacher.id":"ad928f0","prob":0.6701993056718989,"LL":-1.2980643299166346},{"rule.id":"zip-code","teacher.id":"ecba21d","prob":0.6865113989027687,"LL":-3.3851920458414297},{"rule.id":"zip-code","teacher.id":"bb0e730","prob":0.3444371170340886,"LL":-4.871413335215479},{"rule.id":"zip-code","teacher.id":"d2f7661","prob":0.9083899763954505,"LL":-6.391997054352571},{"rule.id":"zip-code","teacher.id":"7db670e","prob":0.35783297239748313,"LL":-1.449452805637983},{"rule.id":"zip-code","teacher.id":"7632bef","prob":0.10244585745450323,"LL":-3.5141373273234797},{"rule.id":"zip-code","teacher.id":"82b570d","prob":0.0932771562136844,"LL":-2.60417863585255}]')
+
+human.results = glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(human = mean(regex.correct))
+
+cmp = merge(model.results1 %>% rename(model = prob), human.results)
+
+qplot(data = cmp, x = model, y = human) + ggtitle(with(cmp, round(cor(human, model), 2))) + xlim(0, 1) + ylim(0, 1) + geom_abline()
+```
+
+```{r}
+model.results0 = fromJSON(txt = '[{"rule.id":"zip-code","teacher.id":"96ed36e","prob":0.6657074535996182,"LL":-2.7668931471824605},{"rule.id":"zip-code","teacher.id":"844609e","prob":0.5157038879471816,"LL":-1.7367001473743477},{"rule.id":"zip-code","teacher.id":"f9e86c3","prob":0.4088090141453703,"LL":-3.7292637054210647},{"rule.id":"zip-code","teacher.id":"402a4e5","prob":0.5943941684386581,"LL":-3.7066041410276958},{"rule.id":"zip-code","teacher.id":"a33a11b","prob":0.9149439045417282,"LL":-4.364359588584553},{"rule.id":"zip-code","teacher.id":"ebda6ed","prob":0.28853733415999455,"LL":-2.0042367182389373},{"rule.id":"zip-code","teacher.id":"c09faf8","prob":0.22789853478876615,"LL":-1.5040234326987312},{"rule.id":"zip-code","teacher.id":"0f5e5fa","prob":0.9172895703215584,"LL":-7.364279146481036},{"rule.id":"zip-code","teacher.id":"49bb605","prob":0.6659340947674148,"LL":-1.4552670213818062},{"rule.id":"zip-code","teacher.id":"dff3ecd","prob":0.0969824902269163,"LL":-4.597871799385352},{"rule.id":"zip-code","teacher.id":"13ab615","prob":0.2946407932283345,"LL":-1.3294667017764743},{"rule.id":"zip-code","teacher.id":"b2614f0","prob":0.12064526934928527,"LL":-1.671369714314744},{"rule.id":"zip-code","teacher.id":"66584c1","prob":0.40702653468195543,"LL":-6.309912633477501},{"rule.id":"zip-code","teacher.id":"e12e476","prob":0.6695016521868519,"LL":-1.4393398214872324},{"rule.id":"zip-code","teacher.id":"0e0608d","prob":0.27854062047235245,"LL":-1.9088796080558308},{"rule.id":"zip-code","teacher.id":"51be3ed","prob":0.20597266340095371,"LL":-2.767648672339337},{"rule.id":"zip-code","teacher.id":"1dc006e","prob":0.3347976232747559,"LL":-3.023361677119411},{"rule.id":"zip-code","teacher.id":"ec8b199","prob":0.1391534924784217,"LL":-1.0181441646872214},{"rule.id":"zip-code","teacher.id":"f29e6ff","prob":0.8091158694999553,"LL":-2.1143021366367254},{"rule.id":"zip-code","teacher.id":"6e119de","prob":0.09544251331697932,"LL":-6.142504868233754},{"rule.id":"zip-code","teacher.id":"9eabb06","prob":0.30336073408762615,"LL":-1.8200146913337845},{"rule.id":"zip-code","teacher.id":"76aae7a","prob":0.10288605479823829,"LL":-0.977151562023881},{"rule.id":"zip-code","teacher.id":"3808bfe","prob":0.45295930675219603,"LL":-1.885269954013948},{"rule.id":"zip-code","teacher.id":"032d129","prob":0.2794100618817113,"LL":-2.528006351791899},{"rule.id":"zip-code","teacher.id":"a23551a","prob":0.302109960715242,"LL":-2.253860637595176},{"rule.id":"zip-code","teacher.id":"ad928f0","prob":0.8720899064803852,"LL":-2.559642709618234},{"rule.id":"zip-code","teacher.id":"ecba21d","prob":0.9186117090636017,"LL":-0.7640258447841783},{"rule.id":"zip-code","teacher.id":"bb0e730","prob":0.3342921966655967,"LL":-5.035433258224543},{"rule.id":"zip-code","teacher.id":"d2f7661","prob":0.8610687670031425,"LL":-4.630801537367085},{"rule.id":"zip-code","teacher.id":"7db670e","prob":0.3433902401802616,"LL":-1.4363165244562426},{"rule.id":"zip-code","teacher.id":"7632bef","prob":0.0865468656750091,"LL":-4.030703176630274},{"rule.id":"zip-code","teacher.id":"82b570d","prob":0.11343299060233378,"LL":-2.2195885848523043}]')
+
+
+human.results = glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(human = mean(regex.correct))
+
+cmp = merge(model.results0 %>% rename(model0 = prob), human.results)
+
+
+qplot(data = cmp, x = model0, y = human) + ggtitle(with(cmp, round(cor(human, model0), 2))) + xlim(0, 1) + ylim(0, 1) + geom_abline()
+```
+
+
+
+compare L0, L1, and human results and whether L1 is a better explanation when, say, L0 predicts very low probability.
+
+```{r}
+cmp = merge(model.results0 %>% rename(model0 = prob), human.results)
+```
+
+```{r}
+e = rbind(transform(model.results0, model = 'L0'), transform(model.results1, model = 'L1')) %>% merge(human.results)
+
+# compute whether L1 fit or L0 fit is better
+e = ddply(e, .(teacher.id), function(ee) {
+  dir = sign((ee %>% filter(model == 'L1'))$LL - (ee %>% filter(model == 'L0'))$LL); transform(ee, dir = dir)
+  })
+
+ggplot(data = e, mapping = aes(x = prob, y = human)) + 
+  geom_abline(color = 'gray80') +
+  geom_point(aes(shape = model), size = 2) + scale_shape_manual(values = c(L0 = 32, L1 = 16)) +
+  geom_line(aes(group = teacher.id, color = factor(dir))) + xlim(0,1) + ylim(0,1) + theme_classic()
+```
+
+no clear pattern but i already knew this wasn't the right thing to do -- i think it's more about entropy of L0 versus L1 distributions.
+
+do a "composite model" of, for each sequence, taking whichever model has better LL
+
+```{r}
+mc = rbind(transform(model.results0, model = 'L0'), transform(model.results1, model = 'L1')) %>% merge(human.results)
+mc = ddply(mc, .(teacher.id), function(ee) {
+  arrange(ee,LL)[2,]
+  })
+
+qplot(data = mc,
+      x = prob,
+      y = human,
+      shape = model,
+      color = model,
+      size = I(3)
+      ) + geom_abline(color = 'gray') + theme_classic() + xlim(0,1) + ylim(0,1) +
+  ggtitle(paste0("r = ", with(mc, cor(prob, human))))
+```
+
+```{r}
+all.corpora = glosses.scored %>% select(teacher.id, rule.id, exs) %>% distinct
+```
+
+manually judge whether corpora use clustering or not:
+```{r}
+lines = "teacher.id,uses.clustering\n13ab615,0\n1dc006e,1\n3808bfe,0\n402a4e5,0\n49bb605,0\n7db670e,0\n82b570d,1\n844609e,1\n9eabb06,1\na23551a,0\nd2f7661,0\nec8b199,1\necba21d,1\nf29e6ff,1\nf9e86c3,0\n032d129,1\n0e0608d,1\n0f5e5fa,0\n51be3ed,0\n66584c1,0\n6e119de,1\n7632bef,1\n76aae7a,0\n96ed36e,1\na33a11b,1\nad928f0,0\nb2614f0,0\nbb0e730,1\nc09faf8,1\ndff3ecd,1\ne12e476,1\nebda6ed,1"
+con <- textConnection(lines)
+rate.clustering.behavior = read.csv(con) %>% transform(rule.id = 'zip-code')
+close(con)
+
+corpora = merge(all.corpora, rate.clustering.behavior)
+
+```
+
+now, do sequences that are better fit by L1 tend to use clustering than sequences better fit by L0?
+
+```{r}
+mc %>% merge(corpora) %>% group_by(model) %>% summarise(uses.clustering = sum(uses.clustering), no.clustering = n() - sum(uses.clustering))
+```
+
+sort of.. but this doesn't pass a chi square by any means
+
+examine composite model fit:
+
+```{r}
+model.resultsC = fromJSON(txt = '[{"rule.id":"zip-code","teacher.id":"96ed36e","prob":0.9999999996714279,"LL":-19.43836967653392},{"rule.id":"zip-code","teacher.id":"844609e","prob":0.9989915773804872,"LL":-21.805441592718946},{"rule.id":"zip-code","teacher.id":"f9e86c3","prob":0.9797421752409533,"LL":-4.358170164904977},{"rule.id":"zip-code","teacher.id":"402a4e5","prob":0.9999999495134153,"LL":-14.403663417713902},{"rule.id":"zip-code","teacher.id":"a33a11b","prob":0.9999999999999778,"LL":-119.54937504994774},{"rule.id":"zip-code","teacher.id":"ebda6ed","prob":0.600636776212338,"LL":-6.468135267857372},{"rule.id":"zip-code","teacher.id":"c09faf8","prob":0.02539822594817279,"LL":-1.6020278135483825},{"rule.id":"zip-code","teacher.id":"0f5e5fa","prob":0.9999999999896978,"LL":-120.96388745336738},{"rule.id":"zip-code","teacher.id":"49bb605","prob":0.9998607037865029,"LL":-14.175271922775316},{"rule.id":"zip-code","teacher.id":"dff3ecd","prob":1.4149053030866027e-13,"LL":-112.99906688400573},{"rule.id":"zip-code","teacher.id":"13ab615","prob":0.9913776024002897,"LL":-24.115515092759914},{"rule.id":"zip-code","teacher.id":"b2614f0","prob":1.102557365263232e-9,"LL":-1.4333245931382899e-8},{"rule.id":"zip-code","teacher.id":"66584c1","prob":0.07137148723881535,"LL":-21.530172855836078},{"rule.id":"zip-code","teacher.id":"e12e476","prob":0.9999999936421562,"LL":-34.16363418832},{"rule.id":"zip-code","teacher.id":"0e0608d","prob":0.025411569989675878,"LL":-9.98262098296439},{"rule.id":"zip-code","teacher.id":"51be3ed","prob":0.008038660086693739,"LL":-0.096853731819281},{"rule.id":"zip-code","teacher.id":"1dc006e","prob":0.06435646809008581,"LL":-12.86126704368024},{"rule.id":"zip-code","teacher.id":"ec8b199","prob":7.292924972472598e-10,"LL":-18.736361147169173},{"rule.id":"zip-code","teacher.id":"f29e6ff","prob":0.999999999083298,"LL":-77.03639671394298},{"rule.id":"zip-code","teacher.id":"6e119de","prob":1.4149053030866128e-13,"LL":-114.79082635323333},{"rule.id":"zip-code","teacher.id":"9eabb06","prob":0.993768784707891,"LL":-28.90397941958808},{"rule.id":"zip-code","teacher.id":"76aae7a","prob":0.0000029103205512682,"LL":-0.000026192923075893475},{"rule.id":"zip-code","teacher.id":"3808bfe","prob":0.9945917057106897,"LL":-19.46250703419095},{"rule.id":"zip-code","teacher.id":"032d129","prob":0.025411570591563314,"LL":-11.212074695197641},{"rule.id":"zip-code","teacher.id":"a23551a","prob":0.06376277259515417,"LL":-8.562931648053896},{"rule.id":"zip-code","teacher.id":"ad928f0","prob":0.9999999999938234,"LL":-72.99993549782454},{"rule.id":"zip-code","teacher.id":"ecba21d","prob":1,"LL":0},{"rule.id":"zip-code","teacher.id":"bb0e730","prob":0.9967141616804313,"LL":-3.791970805577269},{"rule.id":"zip-code","teacher.id":"d2f7661","prob":0.9995653915840537,"LL":-32.57236895382984},{"rule.id":"zip-code","teacher.id":"7db670e","prob":0.10409655523583602,"LL":-3.724568891554883},{"rule.id":"zip-code","teacher.id":"7632bef","prob":2.4741684832830747e-10,"LL":-81.9075036864104},{"rule.id":"zip-code","teacher.id":"82b570d","prob":0.000002910503631850575,"LL":-32.84795191539202}]')
+
+
+human.results = glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(human = mean(regex.correct))
+
+cmp = merge(model.resultsC %>% rename(model = prob), human.results)
+
+
+qplot(data = cmp, x = model, y = human) + ggtitle(with(cmp, round(cor(human, model), 2))) + xlim(0, 1) + ylim(0, 1) + geom_abline()
+```
+
+# try synthetic learners
+
+## zip-code
+
+how well does L0 sharp do for OLP = -1?
+
+```{r}
+xx = fromJSON("../../../induction/acc-L0.json")
+
+posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
+
+xx = xx %>% select(-post)
+
+posts0 = do.call(rbind,Map(1:nrow(xx),
+    posteriors,
+    f = function(i,post) {
+      post %>% merge(xx[i,])
+        
+    }
+    )) %>%
+  rename(rule = support,
+         prob = probs,
+         teacher.id = teacherId)
+
+```
+
+
+```{r}
+xx = fromJSON("../../../induction/acc-L1.json")
+
+posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
+
+xx = xx %>% select(-post)
+
+posts1 = do.call(rbind,Map(1:nrow(xx),
+    posteriors,
+    f = function(i,post) {
+      post %>% merge(xx[i,])
+    }
+    )) %>%
+  rename(rule = support,
+         prob = probs,
+         teacher.id = teacherId)
+```
+
+
+```{r}
+posts.combined = rbind(posts0 %>% transform(model = 'L0'),
+                       posts1 %>% transform(model = 'L1')
+                       ) %>%
+  mutate(teacher.id.trunc = substr(teacher.id, 0, 7),
+         correct.rule = ifelse(grepl("syn", teacher.id.trunc),
+                               c("syn-.{5" = ".{5}",  "syn-.+-" = ".+", "syn-\\d+" = "\\d+")[teacher.id.trunc],
+                               "\\d{5}"))
+```
+
+```{r}
+plots = Map(as.list(posts.combined$correct.rule %>% unique),
+            f = function(rule_) {
+              ggplot(data = posts.combined %>% filter(correct.rule == rule_)) +
+                facet_wrap(~ teacher.id, ncol = 8) +
+                geom_bar(aes(x = rule, y = prob, fill = model), position = 'dodge', stat = 'identity') +
+                theme(axis.text.x = element_text(angle = -35, hjust = 0))
+            })
+
+plots[[1]]
+
+```
+
+## 3a
+
+how well does L0 sharp do for OLP = -1?
+
+```{r}
+xx = fromJSON("../../../induction/acc-L0.json")
+
+posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
+
+xx = xx %>% select(-post)
+
+posts0 = do.call(rbind,Map(1:nrow(xx),
+    posteriors,
+    f = function(i,post) {
+      post %>% merge(xx[i,])
+        
+    }
+    )) %>%
+  rename(rule = support,
+         prob = probs,
+         teacher.id = teacherId)
+
+posts0 = posts0# %>%
+  #merge(all.corpora %>% filter(rule.id == '3a') %>% transform(teacher.id = as.character(teacher.id))) %>%
+  #transform(exs = paste0("(teacher ", teacher.id, ")\n",
+#                         gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", as.character(exs))))))
+
+```
+
+```{r}
+xx = fromJSON("../../../induction/acc-L1.json")
+
+posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
+
+xx = xx %>% select(-post)
+
+posts1 = do.call(rbind,Map(1:nrow(xx),
+    posteriors,
+    f = function(i,post) {
+      post %>% merge(xx[i,])
+        
+    }
+    )) %>%
+  rename(rule = support,
+         prob = probs,
+         teacher.id = teacherId)
+
+posts1 = posts1# %>%
+  #merge(all.corpora %>% filter(rule.id == '3a') %>% transform(teacher.id = as.character(teacher.id))) %>%
+  #transform(exs = paste0("(teacher ", teacher.id, ")\n",
+  #                       gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", as.character(exs))))))
+```
+
+
+```{r}
+posts.combined = rbind(posts0 %>% transform(model = 'L0'),
+                       posts1 %>% transform(model = 'L1')
+                       ) %>%
+  filter(teacher.id != 'fake') %>%
+  merge(all.corpora %>% filter(rule.id == '3a') %>% transform(teacher.id = as.character(teacher.id))) %>%
+  transform(exs = paste0("(teacher ", teacher.id, ")\n",
+                                                gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", as.character(exs))))))
+  
+ggplot(data = posts.combined) +
+  geom_bar(aes(x = rule, y = prob, fill = model), position = 'dodge', stat = 'identity') + facet_wrap(~ exs, ncol = 8) +
+  theme(axis.text.x = element_text(angle = -35, hjust = 0))
+```
