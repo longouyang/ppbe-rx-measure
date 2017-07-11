@@ -3,6 +3,8 @@ title: "d06b analysis"
 output: html_document
 ---
 
+# setup
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -13,6 +15,7 @@ library(plyr)
 library(tidyverse)
 library(lubridate)
 library(memoise)
+library(jsonlite)
 ```
 
 ```{r utilities}
@@ -65,6 +68,11 @@ example.matches = function(example, rx) {
 
 # # testing
 # View(responses %>% select(rule.id, polarity, string, correct, match) %>% arrange(rule.id, polarity))
+```
+
+
+```{r}
+glosses.scored = read.csv('glosses-scored.csv') %>% rename(teacher.id = seq.id)
 ```
 
 
@@ -343,17 +351,14 @@ p
 
 ## analyze gloss correctness
 
-```{r}
-glosses.scored = read.csv('glosses-scored.csv') %>% rename(teacher.id = seq.id)
-```
-
 ```{r, fig.width = 11, fig.height = 3}
-e.agg = glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct))
+e.agg = glosses.scored %>% group_by(rule.id, teacher.id) %>% summarise(correct = mean(regex.correct)) %>% ungroup()
 
-qplot(data = e.agg,
-      facets = . ~ rule.id,
-      x = correct,
-      geom = 'histogram') + xlab("fraction of correct glosses for a sequence")
+qplot(data = e.agg %>% mutate(rule.id = as.character(rule.id),rule.id = ifelse(rule.id == 'delimiters','bracketed',rule.id)), 
+      x = rule.id,
+      y = correct,
+      position = jitter,
+      geom = c('violin','point')) + xlab("Rule") + theme_classic(16) + ylab("Correct guesses")
 ```
 
 ```{r}
@@ -363,7 +368,7 @@ glosses.scored %>% group_by(rule.id) %>%
 
 hmm, i was wrong in thinking that suffix-s and delimiters were the easiest (though delimiters does appear to be pretty easy)
 
-## (js) modelling
+## js modelling
 
 zip-code parameter sweep for L0:
 ```{r}
@@ -588,139 +593,80 @@ cmp = merge(model.resultsC %>% rename(model = prob), human.results)
 qplot(data = cmp, x = model, y = human) + ggtitle(with(cmp, round(cor(human, model), 2))) + xlim(0, 1) + ylim(0, 1) + geom_abline()
 ```
 
-# try synthetic learners
-
-## zip-code
+# what is the absolute performance of L0 versus L1?
 
 how well does L0 sharp do for OLP = -1?
 
 ```{r}
-xx = fromJSON("../../../induction/acc-L0.json")
+dir.name = "../../../induction/"
+json.filenames = paste0(dir.name,list.files(dir.name,pattern = "acc-"))
+json.read = Map(fromJSON, json.filenames)
 
-posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
-
-xx = xx %>% select(-post)
-
-posts0 = do.call(rbind,Map(1:nrow(xx),
-    posteriors,
-    f = function(i,post) {
-      post %>% merge(xx[i,])
-        
-    }
-    )) %>%
+# read json result files
+preds = Map(json.read,
+            f = function(obj_) {
+              post = obj_$post
+              obj = obj_ %>% select(-post, -ruleProbs, -LL)
+              
+              posteriors = Map(function(x) { data.frame(fromJSON(x)) }, post)
+              
+              do.call(rbind,Map(1:nrow(obj),
+                                posteriors,
+                                f = function(i,post) {
+                                  post %>% merge(obj[i,])}
+              ))
+            })
+all.posts = do.call(rbind, preds)
+rownames(all.posts) = NULL
+all.posts = all.posts %>%
   rename(rule = support,
          prob = probs,
-         teacher.id = teacherId)
+         teacher.id = teacherId,
+         model = level) %>%
+  transform(model = paste0("L", model),
+            target = c("3a"="3a","3a-1"="3a","3a-2"="3a",
+            "zip-code"="zip-code","zip-code-1"="zip-code","zip-code-2"="zip-code",
+            "suffix-s"="suffix-s","suffix-s-1"="suffix-s","suffix-s-2"="suffix-s",
+            "delimiters"="delimiters","delimiters-1"="delimiters","delimiters-2"="delimiters")[stim],
+            correct.rule = c("3a"="a{3,}","3a-1"="a{6,}","3a-2"="[aA]{1,}",
+                             "zip-code"="\\d{5}","zip-code-1"=".{5}","zip-code-2"="\\d+",
+                             "suffix-s-1"=".*s.*","suffix-s-2"=".*[a-z].*","suffix-s"=".*s",
+                             "delimiters-1"="\\[.*","delimiters-2"=".*\\]","delimiters"="\\[.*\\]")[stim])
+
 
 ```
 
-
-```{r}
-xx = fromJSON("../../../induction/acc-L1.json")
-
-posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
-
-xx = xx %>% select(-post)
-
-posts1 = do.call(rbind,Map(1:nrow(xx),
-    posteriors,
-    f = function(i,post) {
-      post %>% merge(xx[i,])
-    }
-    )) %>%
-  rename(rule = support,
-         prob = probs,
-         teacher.id = teacherId)
-```
-
-
-```{r}
-posts.combined = rbind(posts0 %>% transform(model = 'L0'),
-                       posts1 %>% transform(model = 'L1')
-                       ) %>%
-  mutate(teacher.id.trunc = substr(teacher.id, 0, 7),
-         correct.rule = ifelse(grepl("syn", teacher.id.trunc),
-                               c("syn-.{5" = ".{5}",  "syn-.+-" = ".+", "syn-\\d+" = "\\d+")[teacher.id.trunc],
-                               "\\d{5}"))
-```
-
-```{r}
+```{r, fig.width = 11, fig.height = 30}
 plots = Map(as.list(posts.combined$correct.rule %>% unique),
             f = function(rule_) {
               ggplot(data = posts.combined %>% filter(correct.rule == rule_)) +
                 facet_wrap(~ teacher.id, ncol = 8) +
                 geom_bar(aes(x = rule, y = prob, fill = model), position = 'dodge', stat = 'identity') +
-                theme(axis.text.x = element_text(angle = -35, hjust = 0))
+                theme(axis.text.x = element_text(angle = -35, hjust = 0)) +
+                ggtitle(paste0("correct rule = ", c("zip-code-2"="\\d+","zip-code-1"=".{5}","zip-code"="\\d{5}")[rule_]))
             })
 
-plots[[1]]
-
-```
-
-## 3a
-
-how well does L0 sharp do for OLP = -1?
-
-```{r}
-xx = fromJSON("../../../induction/acc-L0.json")
-
-posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
-
-xx = xx %>% select(-post)
-
-posts0 = do.call(rbind,Map(1:nrow(xx),
-    posteriors,
-    f = function(i,post) {
-      post %>% merge(xx[i,])
-        
-    }
-    )) %>%
-  rename(rule = support,
-         prob = probs,
-         teacher.id = teacherId)
-
-posts0 = posts0# %>%
-  #merge(all.corpora %>% filter(rule.id == '3a') %>% transform(teacher.id = as.character(teacher.id))) %>%
-  #transform(exs = paste0("(teacher ", teacher.id, ")\n",
-#                         gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", as.character(exs))))))
+grid.arrange(plots[[1]],
+             plots[[2]],
+             plots[[3]])
 
 ```
 
 ```{r}
-xx = fromJSON("../../../induction/acc-L1.json")
+e.agg = all.posts %>% filter(rule == correct.rule, stim %in% c('3a','zip-code','suffix-s','delimiters')) %>% spread(model, prob) %>%
+  transform(teacherAlpha = paste0("alpha = ", teacherAlpha),
+            outlierLP = paste0("log beta = ", outlierLP)
+            )
 
-posteriors = Map(function(x) { data.frame(fromJSON(x)) }, xx$post)
-
-xx = xx %>% select(-post)
-
-posts1 = do.call(rbind,Map(1:nrow(xx),
-    posteriors,
-    f = function(i,post) {
-      post %>% merge(xx[i,])
-        
-    }
-    )) %>%
-  rename(rule = support,
-         prob = probs,
-         teacher.id = teacherId)
-
-posts1 = posts1# %>%
-  #merge(all.corpora %>% filter(rule.id == '3a') %>% transform(teacher.id = as.character(teacher.id))) %>%
-  #transform(exs = paste0("(teacher ", teacher.id, ")\n",
-  #                       gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", as.character(exs))))))
+qplot(data = e.agg, x = L0, y = L1, color = stim, size = I(2)) + 
+  facet_grid(teacherAlpha ~ outlierLP) +
+  geom_abline() + xlim(0,1) + ylim(0,1) + theme_classic(16) + ylab("L1 accuracy") + xlab("L0 accuracy") + scale_color_brewer(palette = "Dark2") + guides(color=guide_legend(title="Corpus for:")) + theme(axis.text.x = element_text(size = 12))
 ```
 
+do error analysis: where did L1 underperform L0?
 
 ```{r}
-posts.combined = rbind(posts0 %>% transform(model = 'L0'),
-                       posts1 %>% transform(model = 'L1')
-                       ) %>%
-  filter(teacher.id != 'fake') %>%
-  merge(all.corpora %>% filter(rule.id == '3a') %>% transform(teacher.id = as.character(teacher.id))) %>%
-  transform(exs = paste0("(teacher ", teacher.id, ")\n",
-                                                gsub('(.{1,40})(\\s|$)', '\\1\n', gsub('\n', ' | ', gsub('"', "", as.character(exs))))))
-  
-ggplot(data = posts.combined) +
-  geom_bar(aes(x = rule, y = prob, fill = model), position = 'dodge', stat = 'identity') + facet_wrap(~ exs, ncol = 8) +
-  theme(axis.text.x = element_text(angle = -35, hjust = 0))
+e.agg %>% filter(teacherAlpha != "alpha = 1", L1 < L0) %>% select(stim, teacher.id) %>% distinct %>% rename(rule.id = stim) %>% merge(all.corpora)
 ```
+
+note for future study: 032d129 is really good pragmatic evidence for delimiters rule ("[cat]", "cat", etc)
