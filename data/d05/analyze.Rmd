@@ -48,9 +48,18 @@ assignments = assignments %>% arrange(accept.time)
 
 ```{r compute-example-correctness}
 regexes = c('3a' = 'aaa+',
+            '3a-1' = 'aaaaaa+',
+            '3a-2' = '[aA]+',
             'zip-code' = '[0123456789]{5}',
+            'zip-code-1' = '.{5}',
+            'zip-code-2' = '[0123456789]+',
             'suffix-s' = '.*s\\>',
-            'delimiters' = "\\[.*\\]")
+            'suffix-s-1' = '.*s.*',
+            'suffix-s-2' = '.*[a-z].*',
+            'delimiters' = "\\[.*\\]",
+            'delimiters-1' = '\\[.*',
+            'delimiters-2' = '.*\\]'
+            )
 
 example.matches = function(example, rx) {
   res = regexpr(pattern = rx, text = example)
@@ -1203,4 +1212,48 @@ p = ggplot(data = dimred) +
 
 
 
-# how close are positive examples? are they further apart than you'd expect by chance?
+# looking at distractors
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('3a-1','3a-2')) %>% pretty.print.examples
+```
+
+
+the "must have at least 6 letters" thing is annoying -- get rid of 4719db6
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('suffix-s-1','suffix-s-2')) %>% pretty.print.examples
+```
+
+again 4719db6 is problematic
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2')) %>% pretty.print.examples
+```
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('delimiters-1','delimiters-2')) %>% pretty.print.examples
+```
+
+export these distractor corpora:
+
+
+```{r}
+distractor.corpora.j = valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2','3a-1','3a-2','delimiters-1','delimiters-2','suffix-s-1','suffix-s-2')) %>%
+  rename(teacher.id = worker.id) %>%
+  toJSON()
+
+
+```
+
+
+```{r}
+texify.examples = function(polarity, string) {
+  pols = ifelse(polarity == 'positive', "+", "-")
+  strings = paste0("{\\color{magenta} {\\tt ", string, "}}")
+  paste0("\\item ", paste0(strings, " ", pols, " ", collapse = ", "))
+}
+
+writeLines(yy %>% group_by(rule.id, worker.id) %>% summarise(tex = texify.examples(polarity, string)) %>% ungroup() %>% {.$tex})
+```
+
