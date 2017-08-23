@@ -73,6 +73,8 @@ example.matches = function(example, rx) {
 
 ```{r}
 glosses.scored = read.csv('glosses-scored.csv') %>% rename(teacher.id = seq.id)
+
+all.corpora = glosses.scored %>% select(teacher.id, rule.id, exs) %>% distinct
 ```
 
 
@@ -556,9 +558,7 @@ qplot(data = mc,
   ggtitle(paste0("r = ", with(mc, cor(prob, human))))
 ```
 
-```{r}
-all.corpora = glosses.scored %>% select(teacher.id, rule.id, exs) %>% distinct
-```
+
 
 manually judge whether corpora use clustering or not:
 ```{r}
