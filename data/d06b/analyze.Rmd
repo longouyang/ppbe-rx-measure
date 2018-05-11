@@ -363,6 +363,19 @@ qplot(data = e.agg %>% mutate(rule.id = as.character(rule.id),rule.id = ifelse(r
       geom = c('violin','point')) + xlab("Rule") + theme_classic(16) + ylab("Correct guesses")
 ```
 
+alternative view (for nips workshop poster):
+
+```{r}
+e.agg = glosses.scored %>% group_by(rule.id) %>% summarise(correct = mean(regex.correct)) %>% ungroup()
+
+qplot(data = e.agg %>% mutate(rule.id = as.character(rule.id),rule.id = ifelse(rule.id == 'delimiters','bracketed',rule.id)), 
+      x = rule.id,
+      y = correct,
+      position = jitter,
+      geom = c('violin','point')) + xlab("Rule") + theme_classic(16) + ylab("Correct guesses")
+```
+
+
 ```{r}
 glosses.scored %>% group_by(rule.id) %>% 
   summarise(correct = mean(regex.correct))
