@@ -1212,23 +1212,70 @@ p = ggplot(data = dimred) +
 
 
 
-# looking at distractors
+# how far are negative examples from the language?
 
 ```{r}
-valid.responses %>%  filter(rule.id %in% c('3a-1','3a-2')) %>% pretty.print.examples
+# generating 3as
+# sapply(3:20, function(times) { paste(rep('a',times), collapse = "")})
+
+language.strings = list(
+  '3a' = sapply(3:20, function(times) { paste(rep('a',times), collapse = "")}),
+  'zip-code' = expand.grid(d1 = 0:9, d2 = 0:9, d3 = 0:9, d4 = 0:9, d5 = 0:9) %>% transform(str = paste0(d1,d2,d3,d4,d5)) %>% {.$str}
+)
+
+# vectorized for string but not rule.id
+distance.to.language = function(string, rule.id) {
+  # if suffix-s: return 1 if it ends in s and 0 otherwise
+  # brackets: 
+  if (rule.id == '3a' || rule.id == 'zip-code') {
+    apply(adist(string, language.strings[[rule.id]]),
+          1,
+          min)
+  } else if (rule.id == 'suffix-s') {
+    ifelse(grepl("s$", string), 0, 1)
+  } else if (rule.id == 'delimiters') {
+    missing.opening = !grepl("^\\[", string)
+    missing.closing = !grepl("\\]$", string)
+    missing.opening + missing.closing
+  } else {
+    stop(paste0("unhandled rule.id in distance.to.language: ", rule.id))
+  }
+  
+}
+distance.to.language(c('a','aa'),
+                     '3a')
+
+distance.to.language(c('abc','abcs','abcss','abcS'),
+                     'suffix-s')
+
+distance.to.language(c('1234','5678','12345','123456'),
+                     'zip-code')
+
+distance.to.language(c('','[a]','[a','a]'),
+                     'delimiters')
+```
+
+```{r}
+neg.distances = responses %>% filter(polarity == 'negative', correct, rule.id %in% c('3a','delimiters','suffix-s','zip-code')) %>% group_by(rule.id) %>% mutate(dist.to.language = distance.to.language(string, rule.id[1])) %>%
+```
+
+```{r  neg-distances, fig.width = 11, fig.height = 3, dev="pdf"}
+e.viz = neg.distances %>% group_by(dist.to.language, rule.id) %>%
+  summarise(freq = n()) %>%
+  group_by(rule.id) %>%
+  mutate(prob = freq / sum(freq))
+
+ggplot(data = e.viz) +
+  facet_grid(. ~ rule.id) +
+  geom_bar(mapping = aes(x = dist.to.language, y = freq), stat = 'identity') + 
+  scale_x_continuous(limits = c(0,10), breaks = 0:10) + 
+  xlab("Edit distance to language") +
+  ylab("Frequency") + 
+  theme_classic(14)
 ```
 
 
-the "must have at least 6 letters" thing is annoying -- get rid of 4719db6
 
-```{r}
-valid.responses %>%  filter(rule.id %in% c('suffix-s-1','suffix-s-2')) %>% pretty.print.examples
-```
-
-again 4719db6 is problematic
-
-```{r}
-valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2')) %>% pretty.print.examples
 ```
 
 ```{r}
@@ -1246,6 +1293,23 @@ distractor.corpora.j = valid.responses %>%  filter(rule.id %in% c('zip-code-1','
 
 ```
 
+# looking at distractors
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('3a-1','3a-2')) %>% pretty.print.examples
+```
+
+
+the "must have at least 6 letters" thing is annoying -- get rid of 4719db6
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('suffix-s-1','suffix-s-2')) %>% pretty.print.examples
+```
+
+again 4719db6 is problematic
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2')) %>% pretty.print.examples
 
 ```{r}
 texify.examples = function(polarity, string) {
