@@ -1098,6 +1098,23 @@ pretty.print.examples = function(d) {
     arrange(num.examples) %>% select(-num.examples) %>%
     select(exs, worker.id)
 }
+
+pretty.print.examples.for.regex.induction = function(d) {
+  d %>% 
+    transform(str.quoted = paste0('"', string, '"')) %>% 
+    group_by(worker.id, rule.id, polarity) %>%
+    summarise(single.string = paste0("[", paste(str.quoted, collapse = ", "), "]")) %>%
+    group_by(worker.id, rule.id) %>%
+    spread("polarity", "single.string") %>%
+    transform(js.decl = paste0("var posStrings = ", positive, ", negStrings = ", ifelse(is.na(negative),"[]", negative))) %>%
+    select(-positive, -negative)
+}
+```
+
+format in javascript syntax for running in regex induction code:
+
+```{r}
+valid.responses %>% pretty.print.examples.for.regex.induction %>% arrange(rule.id)
 ```
 
 
@@ -1276,23 +1293,6 @@ ggplot(data = e.viz) +
 
 
 
-```
-
-```{r}
-valid.responses %>%  filter(rule.id %in% c('delimiters-1','delimiters-2')) %>% pretty.print.examples
-```
-
-export these distractor corpora:
-
-
-```{r}
-distractor.corpora.j = valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2','3a-1','3a-2','delimiters-1','delimiters-2','suffix-s-1','suffix-s-2')) %>%
-  rename(teacher.id = worker.id) %>%
-  toJSON()
-
-
-```
-
 # looking at distractors
 
 ```{r}
@@ -1310,6 +1310,23 @@ again 4719db6 is problematic
 
 ```{r}
 valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2')) %>% pretty.print.examples
+```
+
+```{r}
+valid.responses %>%  filter(rule.id %in% c('delimiters-1','delimiters-2')) %>% pretty.print.examples
+```
+
+export these distractor corpora:
+
+
+```{r}
+distractor.corpora.j = valid.responses %>%  filter(rule.id %in% c('zip-code-1','zip-code-2','3a-1','3a-2','delimiters-1','delimiters-2','suffix-s-1','suffix-s-2')) %>%
+  rename(teacher.id = worker.id) %>%
+  toJSON()
+
+
+```
+
 
 ```{r}
 texify.examples = function(polarity, string) {
